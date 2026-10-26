@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import PublicNavbar from '../components/PublicNavbar'
 import PublicFooter from '../components/PublicFooter'
+import PublicPartnerSection from '../components/PublicPartnerSection'
 import {
   getPublicNewsApi,
   getPublicEventsApi,
@@ -89,27 +90,6 @@ const testimonials = [
     img:
       'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80',
   },
-]
-
-const allPartners = [
-  'Kementerian Kominfo',
-  'Kementerian BUMN',
-  'RSUP Fatmawati',
-  'RS Siloam Group',
-  'Telkom Indonesia',
-  'Bank BRI',
-  'Pertamina',
-  'PLN',
-  'Bulog',
-  'Kemenkes RI',
-  'Gojek',
-  'Tokopedia',
-  'Traveloka',
-  'OVO',
-  'Dana',
-  'Shopee',
-  'Blibli',
-  'Lazada',
 ]
 
 const actionBoxes = [
@@ -579,44 +559,6 @@ export default function LandingPage({ onNavigate }) {
           : currentIdx + 1
       )
     }, 5000)
-
-    return () => clearInterval(interval)
-  }, [])
-
-  // ─── PARTNERS ──────────────────────────────────────────────────────────────
-
-  const [activePartners, setActivePartners] = useState(
-    allPartners.slice(0, 12)
-  )
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActivePartners((current) => {
-        const newPartners = [...current]
-
-        const numChanges =
-          Math.floor(Math.random() * 3) + 1
-
-        for (let i = 0; i < numChanges; i++) {
-          const slotIndex = Math.floor(Math.random() * 12)
-
-          const availablePartners = allPartners.filter(
-            (p) => !newPartners.includes(p)
-          )
-
-          if (availablePartners.length > 0) {
-            const randomNew =
-              availablePartners[
-                Math.floor(Math.random() * availablePartners.length)
-              ]
-
-            newPartners[slotIndex] = randomNew
-          }
-        }
-
-        return newPartners
-      })
-    }, 3000)
 
     return () => clearInterval(interval)
   }, [])
@@ -1239,32 +1181,7 @@ export default function LandingPage({ onNavigate }) {
 
       {/* ── 6. PARTNER KAMI ── */}
 
-      <section className="py-24 bg-white overflow-hidden">
-        <div className="max-w-6xl mx-auto px-6 mb-14 text-center">
-          <h2 className="text-3xl md:text-5xl font-bold text-[#1a202c]">
-            Bergabunglah dengan Ekosistem Kami, Akselerasi Kemitraan Anda!
-          </h2>
-        </div>
-
-        <div className="relative max-w-5xl mx-auto px-4">
-          <div className="absolute inset-y-0 left-0 w-16 md:w-32 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
-
-          <div className="absolute inset-y-0 right-0 w-16 md:w-32 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
-
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 md:gap-5 relative z-0">
-            {activePartners.map((partner, idx) => (
-              <div
-                key={idx}
-                className="w-full aspect-square bg-white border border-gray-50 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex items-center justify-center p-4 sm:p-6"
-              >
-                <span className="text-gray-400 font-bold text-xs sm:text-sm text-center animate-[fadeIn_0.6s_ease-in-out]">
-                  {partner}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <PublicPartnerSection />
 
       {/* ── 7. SAATNYA BERSAMA BERAKSI ── */}
 

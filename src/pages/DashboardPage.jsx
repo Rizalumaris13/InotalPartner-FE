@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import Sidebar from '../components/Sidebar'
 import Topbar from '../components/Topbar'
 import MonthlyActivityChart from '../components/MonthlyActivityChart'
@@ -13,6 +13,7 @@ import PostList from './PostListPage'
 import CreateSlider from './CreateSlider'
 import ListSliderPage from './ListSliderPage'
 import KontakInboxPage from './KontakInboxPage'
+import KemitraanPage from './KemitraanPage'
 
 
 import { useAuth } from '../hooks/useAuth'
@@ -84,6 +85,9 @@ export default function DashboardPage({ onNavigate }) {
 
       case 'contact':
         return <KontakInboxPage />
+
+      case 'partners':
+        return <KemitraanPage role={user?.role} />
         
       case 'createPost':
         return (
