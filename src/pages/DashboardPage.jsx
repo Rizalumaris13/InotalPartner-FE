@@ -14,6 +14,7 @@ import CreateSlider from './CreateSlider'
 import ListSliderPage from './ListSliderPage'
 import KontakInboxPage from './KontakInboxPage'
 import KemitraanPage from './KemitraanPage'
+import KartuTentangPage from './KartuTentangPage'
 
 
 import { useAuth } from '../hooks/useAuth'
@@ -88,6 +89,9 @@ export default function DashboardPage({ onNavigate }) {
 
       case 'partners':
         return <KemitraanPage role={user?.role} />
+
+      case 'aboutCards':
+        return <KartuTentangPage role={user?.role} />
         
       case 'createPost':
         return (

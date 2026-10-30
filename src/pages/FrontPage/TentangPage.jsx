@@ -1,28 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
 import PublicNavbar from '../../components/PublicNavbar'
 import {
-  ChevronRight, Home, Lightbulb, Award, Headset, ArrowRight,
-  Phone, Mail, MapPin, CheckCircle2, Plus,
+  ChevronRight, Home, ArrowRight,
+  CheckCircle2, Plus,
 } from 'lucide-react'
 import PublicFooter from '../../components/PublicFooter'
-
-const chooseItems = [
-  {
-    icon: Lightbulb,
-    title: 'Solusi Terukur',
-    desc: 'Setiap kolaborasi dimulai dari pemetaan kebutuhan nyata, bukan paket template. Tim teknis kami terlibat langsung sejak hari pertama.',
-  },
-  {
-    icon: Award,
-    title: 'Rekam Jejak Terbukti',
-    desc: 'Program kolaborasi kami telah berjalan lintas industri — dari perusahaan teknologi sampai komunitas kampus yang baru mulai tumbuh.',
-  },
-  {
-    icon: Headset,
-    title: 'Pendampingan Berkelanjutan',
-    desc: 'Tim pembina siap merespons setiap kendala mitra. Evaluasi berjalan tiap kuartal, jadi arah kolaborasi tidak pernah mengambang.',
-  },
-]
+import PublicAboutCards from '../../components/PublicAboutCards'
 
 const progressStats = [
   { label: 'Kolaborasi berjalan', percent: 82 },
@@ -383,7 +366,7 @@ export default function TentangPage({ onNavigate }) {
         </div>
       </section>
       <section className="max-w-7xl mx-auto px-6 py-20 md:py-28">
-        <div className="grid md:grid-cols-[1fr_auto] md:items-end gap-6 mb-14">
+        <div className="mb-14">
           <Reveal>
             <SubTitle>Pilih yang Terbaik</SubTitle>
             <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight leading-[1.15] max-w-2xl">
@@ -391,32 +374,10 @@ export default function TentangPage({ onNavigate }) {
               <span className="text-[#0284c7]">Keahlian.</span>
             </h2>
           </Reveal>
-          <Reveal delay={150}>
-            <PillButton onClick={() => onNavigate?.('partnership')}>Hubungi Kami</PillButton>
-          </Reveal>
+
         </div>
 
-        <div className="grid md:grid-cols-3 gap-5">
-          {chooseItems.map(({ icon: Icon, title, desc }, i) => (
-            <Reveal key={title} delay={i * 120}>
-              <div className="group relative h-full bg-white border border-gray-200/80 rounded-xl p-8 overflow-hidden hover:border-[#0284c7]/60 transition-colors">
-                <span className="absolute -top-2 right-4 text-[88px] leading-none font-extrabold text-[#F0F4F8] select-none transition-colors duration-500 group-hover:text-[#0284c7]/15">
-                  0{i + 1}
-                </span>
-                <span className="relative inline-flex w-12 h-12 rounded-lg bg-[#F0F4F8] items-center justify-center mb-16 transition-colors duration-500 group-hover:bg-[#0284c7]">
-                  <Icon size={22} strokeWidth={1.6} className="text-[#0284c7] transition-colors duration-500 group-hover:text-white" />
-                </span>
-                <h3 className="relative text-xl font-bold mb-3">{title}</h3>
-                <p className="relative text-[14.5px] leading-relaxed text-[#364e52] mb-6">{desc}</p>
-                <span className="relative inline-flex items-center gap-2 text-[12px] font-bold tracking-[0.14em] uppercase text-[#0284c7]">
-                  Selengkapnya
-                  <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1.5" />
-                </span>
-                <span className="absolute bottom-0 left-0 h-1 bg-sky-500 w-0 transition-all duration-500 group-hover:w-full" />
-              </div>
-            </Reveal>
-          ))}
-        </div>
+        <PublicAboutCards onNavigate={onNavigate} />
       </section>
       <section className="max-w-7xl mx-auto px-6 pt-20 md:pt-28 pb-20 md:pb-28">
         <div className="grid lg:grid-cols-[1.35fr_1fr] gap-10 lg:gap-14 items-center">

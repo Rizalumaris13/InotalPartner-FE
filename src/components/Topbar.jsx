@@ -1,6 +1,5 @@
-import React from 'react'
-import { Menu, ChevronRight, Search, Bell } from 'lucide-react'
-import { navItems } from './Sidebar'
+import { Menu, ChevronRight } from 'lucide-react'
+import { navItems } from '../data/dashboardNavItems'
 
 export default function Topbar({ activeNav, setSidebarOpen }) {
   return (
