@@ -2,7 +2,7 @@
 
 ## Batas dan sumber kontrak
 
-Frontend + kontrak saja. Tidak ada file Go, database, maupun route backend yang diubah. Endpoint berikut belum diimplementasikan; backend uji tidak membuktikan persistensi di Go.
+Frontend + kontrak. Backend Go sudah diimplementasikan di `InotalPartner-BE` (branch `akuh`): model `about_cards`, repository transaksional, service validasi, handler, route admin/publik, dan AutoMigrate. Dokumen ini tetap menjadi acuan semantik yang dipakai kedua sisi.
 
 Bentuk data utama: `src/contracts/aboutCard.schema.json`. Frontend membaca field, batas panjang dan enum dari schema ini. Dokumen ini menjelaskan semantik koleksi dan URL. Tidak ada penyimpanan konten ke localStorage; localStorage hanya tetap untuk sesi autentikasi.
 
@@ -95,6 +95,6 @@ Status: 400 validasi, 401 sesi, 403 role, 404 record/route, 409 konflik posisi, 
 
 ## Verifikasi
 
-Frontend: npm test, npm run build, ESLint file perubahan; tes CRUD, payload, readback, posisi, ikon, URL, role, kosong/error dan pratinjau. Browser memakai mock terisolasi tanpa menyentuh backend user.
+Frontend: npm test, npm run build, ESLint file perubahan; tes CRUD, payload, readback, posisi, ikon, URL, role, kosong/error dan pratinjau.
 
-Setelah latihan Go selesai: akun/data uji, POST → GET publik → PUT posisi → GET publik → DELETE → GET publik dan cek database. Integrasi Go ini belum dilakukan oleh pekerjaan frontend.
+Integrasi Go: server dijalankan pada PostgreSQL sementara, lalu 37 pemeriksaan API lolos (401 tanpa token, 403 operator, validasi, insert/pindah/hapus dengan posisi kontigu, 409 rentang, enam POST paralel pada posisi 1, konsistensi database) dan CRUD dashboard diuji lewat browser pada backend yang sama. Database sementara dihapus setelah pengujian.
