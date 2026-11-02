@@ -2,9 +2,12 @@ import { useState, useRef, useEffect } from 'react'
 import PublicNavbar from '../../components/PublicNavbar'
 import {
   ChevronRight, Home, Lightbulb, Award, Headset, ArrowRight,
-  Phone, Mail, MapPin, CheckCircle2, Plus,
+  Phone, Mail, MapPin, CheckCircle2, Plus, User,
 } from 'lucide-react'
 import PublicFooter from '../../components/PublicFooter'
+import { getPublicAboutSettingApi, getPublicTeamMembersApi, getPublicAboutFAQsApi, getPublicAboutVideosApi, getPublicAboutVideoSettingApi, getPublicAboutVideoHighlightsApi, resolveImageUrl } from '../../api/about'
+import { getPublicPageBannerApi } from '../../api/pageBanner'
+import { DynamicHighlightIcon } from '../../components/HighlightIconHelper'
 
 const chooseItems = [
   {
@@ -39,32 +42,6 @@ const team = [
   { name: 'Dimas Saputra', role: 'Tech Director', img: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600&q=80' },
 ]
 
-const faqs = [
-  {
-    q: 'Apa itu INOTAL Partner?',
-    a: 'INOTAL Partner adalah wadah kemitraan ekosistem INOTAL. Kami menghubungkan perusahaan, komunitas, dan individu dengan program kolaborasi teknologi — dari pembagian proyek, pelatihan tim, sampai akses divisi teknis kami.',
-  },
-  {
-    q: 'Siapa yang bisa bergabung?',
-    a: 'Perusahaan teknologi, komunitas IT kampus, freelancer dengan portofolio, dan perusahaan non-teknologi yang sedang bertransformasi digital. Pendaftaran melalui halaman Partnership, tim kami akan merespons dalam 3 hari kerja.',
-  },
-  {
-    q: 'Apakah ada biaya untuk menjadi mitra?',
-    a: 'Untuk tier komunitas dan edukasi tidak ada biaya pendaftaran. Tier korporat menyesuaikan lingkup program — rinciannya dibahas transparan di pertemuan awal sebelum ada komitmen apa pun.',
-  },
-  {
-    q: 'Bagaimana proses kolaborasi berjalan?',
-    a: 'Pertemuan pertama memetakan kebutuhanmu, lalu kebutuhan itu dicocokkan dengan program berjalan atau membuka program baru. Evaluasi dijadwalkan tiap kuartal agar hasil selalu terukur.',
-  },
-  {
-    q: 'Program seperti apa yang sedang berjalan?',
-    a: 'Detail lengkap ada di halaman Program — umumnya mencakup kolaborasi proyek, program magang bersama, dan sesi berbagi keahlian antar mitra yang dijadwalkan tiap kuartal.',
-  },
-  {
-    q: 'Bisakah mitra mengusulkan program sendiri?',
-    a: 'Bisa dan sangat kami dukung. Usulan program masuk lewat grup internal lalu ditinjau bulanan. Beberapa program yang sekarang berjalan awalnya usulan mitra.',
-  },
-]
 
 // satu tempat buat "element ini udah keliatan di layar" — Reveal, kartu stat,
 // sama progress bar semuanya butuh hal yang sama: observer + jaring pengaman
@@ -131,12 +108,6 @@ function PillButton({ children, onClick, dark = false }) {
 // Iframe YouTube cuma dimount setelah diklik, jadi halaman ini nggak
 // request ke YouTube cuma karena orang kebetulan scroll lewat.
 
-const PROFILE_VIDEO = {
-  id: 'aqz-KE-bpKQ',
-  title: 'Profil INOTAL Partner',
-  duration: '03:24',
-  poster: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=1600&q=80',
-}
 
 const videoHighlights = [
   {
@@ -213,55 +184,144 @@ function SvgIcon({ shape, className = '' }) {
   )
 }
 
-function VideoProfile() {
+
+function extractYouTubeId(url) {
+  if (!url) return ''
+  try {
+    const parsed = new URL(url.trim())
+    const host = parsed.hostname.toLowerCase()
+    if (host === 'youtu.be' || host.endsWith('.youtu.be')) {
+      const parts = parsed.pathname.replace(/^\/+/, '').split('/')
+      return parts[0] || ''
+    }
+    if (host === 'youtube.com' || host.endsWith('.youtube.com')) {
+      if (parsed.pathname.startsWith('/watch')) {
+        return parsed.searchParams.get('v') || ''
+      }
+      if (
+        parsed.pathname.startsWith('/embed/') ||
+        parsed.pathname.startsWith('/shorts/') ||
+        parsed.pathname.startsWith('/live/')
+      ) {
+        const parts = parsed.pathname.split('/')
+        return parts[2] || ''
+      }
+    }
+  } catch {
+    // Abaikan jika parsing gagal
+  }
+  return ''
+}
+
+function VideoProfile({ video, loading }) {
   const [playing, setPlaying] = useState(false)
+
+  if (loading) {
+    return (
+      <div className="relative rounded-2xl overflow-hidden bg-[#0c4a6e]/90 aspect-[16/10] w-full flex items-center justify-center">
+        <div className="text-center text-white/80 space-y-3">
+          <div className="w-8 h-8 border-2 border-sky-400 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-xs font-medium tracking-wide">Memuat video profil...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!video) {
+    return (
+      <div className="relative rounded-2xl overflow-hidden bg-[#0c4a6e] aspect-[16/10] w-full flex items-center justify-center p-8 border border-white/10">
+        <div className="text-center text-white/70 max-w-sm space-y-2">
+          <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mx-auto text-sky-400">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18" />
+              <line x1="7" y1="2" x2="7" y2="22" />
+              <line x1="17" y1="2" x2="17" y2="22" />
+              <line x1="2" y1="12" x2="22" y2="12" />
+              <line x1="2" y1="7" x2="7" y2="7" />
+              <line x1="2" y1="17" x2="7" y2="17" />
+              <line x1="17" y1="17" x2="22" y2="17" />
+              <line x1="17" y1="7" x2="22" y2="7" />
+            </svg>
+          </div>
+          <p className="text-sm font-semibold text-white">Video Profil Belum Tersedia</p>
+          <p className="text-xs text-white/60">
+            Video profil resmi sedang dalam proses pembaruan oleh tim kami.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  const ytId = extractYouTubeId(video.video_url)
+  const poster =
+    (video.thumbnail_url && video.thumbnail_url.trim())
+      ? (video.thumbnail_url.startsWith('http') ? video.thumbnail_url : resolveImageUrl(video.thumbnail_url))
+      : (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : '')
 
   return (
     <div className="relative">
       <div className="relative rounded-2xl overflow-hidden bg-[#0c4a6e]">
         <div className="relative aspect-[16/10] w-full">
-          {playing ? (
+          {playing && ytId ? (
             <iframe
               className="absolute inset-0 h-full w-full border-0"
-              src={`https://www.youtube-nocookie.com/embed/${PROFILE_VIDEO.id}?autoplay=1&rel=0&modestbranding=1`}
-              title={PROFILE_VIDEO.title}
+              src={`https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1`}
+              title={video.title || 'Video Profil'}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
           ) : (
             <>
-              <img
-                src={PROFILE_VIDEO.poster}
-                alt="Sesi kolaborasi INOTAL Partner bersama mitra"
-                className="absolute inset-0 h-full w-full object-cover"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0c4a6e]/85 via-[#0c4a6e]/20 to-[#0c4a6e]/45" />
-              <button
-                onClick={() => setPlaying(true)}
-                aria-label={`Putar video: ${PROFILE_VIDEO.title}`}
-                className="group absolute inset-0 flex items-center justify-center"
-              >
-                <span className="absolute w-[104px] h-[104px] rounded-full border border-white/25 transition-transform duration-500 group-hover:scale-110" />
-                <span className="absolute w-[78px] h-[78px] rounded-full bg-white/10 backdrop-blur-sm transition-transform duration-500 group-hover:scale-110" />
-                <span className="relative grid place-items-center w-[64px] h-[64px] rounded-full bg-white shadow-[0_18px_40px_rgba(0,0,0,0.35)] transition-transform duration-300 group-hover:scale-[1.06]">
-                  <svg width="18" height="22" viewBox="0 0 18 22" fill="#0c4a6e" aria-hidden="true">
-                    <path d="M17 10.05 1.7 20.9A1 1 0 0 1 0 20V2a1 1 0 0 1 1.7-.9L17 11.95a1 1 0 0 1 0 1.7Z" />
-                  </svg>
-                </span>
-              </button>
+              {poster ? (
+                <img
+                  src={poster}
+                  alt={video.title || 'Video Profil'}
+                  className="absolute inset-0 h-full w-full object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="absolute inset-0 bg-[#0c4a6e]" />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0c4a6e]/90 via-[#0c4a6e]/25 to-[#0c4a6e]/50" />
+              
+              {ytId ? (
+                <button
+                  onClick={() => setPlaying(true)}
+                  aria-label={`Putar video: ${video.title || 'Video Profil'}`}
+                  className="group absolute inset-0 flex items-center justify-center cursor-pointer"
+                >
+                  <span className="absolute w-[104px] h-[104px] rounded-full border border-white/25 transition-transform duration-500 group-hover:scale-110" />
+                  <span className="absolute w-[78px] h-[78px] rounded-full bg-white/10 backdrop-blur-sm transition-transform duration-500 group-hover:scale-110" />
+                  <span className="relative grid place-items-center w-[64px] h-[64px] rounded-full bg-white shadow-[0_18px_40px_rgba(0,0,0,0.35)] transition-transform duration-300 group-hover:scale-[1.06]">
+                    <svg width="18" height="22" viewBox="0 0 18 22" fill="#0c4a6e" aria-hidden="true">
+                      <path d="M17 10.05 1.7 20.9A1 1 0 0 1 0 20V2a1 1 0 0 1 1.7-.9L17 11.95a1 1 0 0 1 0 1.7Z" />
+                    </svg>
+                  </span>
+                </button>
+              ) : (
+                <a
+                  href={video.video_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group absolute inset-0 flex items-center justify-center cursor-pointer"
+                >
+                  <span className="relative grid place-items-center w-[64px] h-[64px] rounded-full bg-white shadow-[0_18px_40px_rgba(0,0,0,0.35)] transition-transform duration-300 group-hover:scale-[1.06]">
+                    <svg width="18" height="22" viewBox="0 0 18 22" fill="#0c4a6e" aria-hidden="true">
+                      <path d="M17 10.05 1.7 20.9A1 1 0 0 1 0 20V2a1 1 0 0 1 1.7-.9L17 11.95a1 1 0 0 1 0 1.7Z" />
+                    </svg>
+                  </span>
+                </a>
+              )}
+
               <div className="absolute left-0 right-0 bottom-0 flex items-end justify-between gap-4 p-5 md:p-6">
                 <div className="min-w-0">
                   <p className="text-white font-bold text-[15px] md:text-[17px] leading-snug truncate">
-                    {PROFILE_VIDEO.title}
+                    {video.title}
                   </p>
-                  <p className="text-white/60 text-[12.5px] mt-1">
-                    Cuplikan program &amp; testimonial mitra
+                  <p className="text-white/70 text-[12.5px] mt-1 line-clamp-1">
+                    {video.description || 'Profil resmi INOTAL Partner'}
                   </p>
                 </div>
-                <span className="shrink-0 bg-black/45 backdrop-blur text-white text-[12px] font-semibold px-2.5 py-1 rounded-md tabular-nums">
-                  {PROFILE_VIDEO.duration}
-                </span>
               </div>
             </>
           )}
@@ -331,10 +391,180 @@ function StatCard({ icon, value, decimals, suffix, label, note, index }) {
   )
 }
 
+function renderTeamHeading(title) {
+  const clean = (title || '').trim() || 'Orang-orang di Balik Ekosistem Ini.'
+  const words = clean.split(/\s+/)
+  if (words.length <= 2) {
+    return <span className="text-[#0284c7]">{clean}</span>
+  }
+  const mainPart = words.slice(0, -2).join(' ')
+  const accentPart = words.slice(-2).join(' ')
+  return (
+    <>
+      {mainPart} <span className="text-[#0284c7]">{accentPart}</span>
+    </>
+  )
+}
+
 export default function TentangPage({ onNavigate }) {
   const [scrolled, setScrolled] = useState(false)
   const [openFaq, setOpenFaq] = useState(0)
   const [progRef, barsSeen] = useInView({ threshold: 0.4, fallbackMs: 1200 })
+
+  // Hero Banner State (Dinamis dari GET /api/public/page-banners/about)
+  const [heroBanner, setHeroBanner] = useState({
+    subtitle: 'Siapa Kami — Sejak 2019',
+    title: 'Tentang Kami',
+    description: 'Ekosistem kemitraan teknologi INOTAL — menghubungkan perusahaan, komunitas, dan talenta digital dalam satu jaringan yang saling menopang.',
+    image_url: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1600&q=80',
+  })
+
+  // ─── DATA DINAMIS DARI BACKEND ─────────────────────────────────────────────
+  const [teamSectionTitle, setTeamSectionTitle] = useState('Orang-orang di Balik Ekosistem Ini.')
+  const [teamMembers, setTeamMembers] = useState([])
+  const [teamLoading, setTeamLoading] = useState(true)
+
+  const [faqList, setFaqList] = useState([])
+  const [faqLoading, setFaqLoading] = useState(true)
+  const [faqError, setFaqError] = useState('')
+
+  // Video Profil State
+  const [profileVideo, setProfileVideo] = useState(null)
+  const [videoLoading, setVideoLoading] = useState(true)
+  const [videoSetting, setVideoSetting] = useState({
+    section_label: 'Video Profil',
+    section_title: 'Lihat sendiri bagaimana kolaborasi bekerja.',
+    section_description:
+      'Keripitannya kami tampilkan apa adanya: obrolan panjang, request yang berubah, sampai proses panjang yang berakhir sesuai rencana. Video ini rekaman, bukan brosur.',
+  })
+  const [videoHighlightsList, setVideoHighlightsList] = useState([])
+
+  useEffect(() => {
+    let isMounted = true
+
+    const loadAboutData = async () => {
+      try {
+        setTeamLoading(true)
+        setFaqLoading(true)
+        setFaqError('')
+        setVideoLoading(true)
+        const [settingRes, teamRes, faqRes, videoRes, videoSettingRes, videoHighlightsRes, heroBannerRes] = await Promise.allSettled([
+          getPublicAboutSettingApi(),
+          getPublicTeamMembersApi(),
+          getPublicAboutFAQsApi(),
+          getPublicAboutVideosApi(),
+          getPublicAboutVideoSettingApi(),
+          getPublicAboutVideoHighlightsApi(),
+          getPublicPageBannerApi('about'),
+        ])
+
+        if (isMounted) {
+          if (settingRes.status === 'fulfilled') {
+            const rawTeamTitle =
+              settingRes.value?.data?.team_title ||
+              (typeof settingRes.value?.team_title === 'string' ? settingRes.value.team_title : null)
+            if (rawTeamTitle && typeof rawTeamTitle === 'string' && rawTeamTitle.trim()) {
+              setTeamSectionTitle(rawTeamTitle.trim())
+            }
+          }
+
+          if (teamRes.status === 'fulfilled') {
+            const data = Array.isArray(teamRes.value?.data)
+              ? teamRes.value.data
+              : Array.isArray(teamRes.value)
+                ? teamRes.value
+                : []
+            // Filter hanya yang memiliki nama dan foto valid
+            const validMembers = data.filter(m => m?.name && m?.photo_url)
+            setTeamMembers(validMembers.length > 0 ? validMembers : team)
+          } else {
+            setTeamMembers(team)
+          }
+
+          if (faqRes.status === 'fulfilled') {
+            const rawFaqs = Array.isArray(faqRes.value?.data)
+              ? faqRes.value.data
+              : Array.isArray(faqRes.value)
+                ? faqRes.value
+                : []
+            setFaqList(rawFaqs)
+          } else {
+            setFaqError(
+              faqRes.reason?.response?.data?.message ||
+              faqRes.reason?.message ||
+              'Gagal memuat pertanyaan FAQ saat ini.'
+            )
+          }
+
+          if (videoRes.status === 'fulfilled') {
+            const rawVideos = Array.isArray(videoRes.value?.data)
+              ? videoRes.value.data
+              : Array.isArray(videoRes.value)
+                ? videoRes.value
+                : []
+            // Ambil video profil aktif terbaru (elemen pertama karena backend sudah urut ID DESC)
+            if (rawVideos.length > 0) {
+              setProfileVideo(rawVideos[0])
+            } else {
+              setProfileVideo(null)
+            }
+          } else {
+            setProfileVideo(null)
+          }
+
+          if (videoSettingRes.status === 'fulfilled' && videoSettingRes.value?.data) {
+            const sData = videoSettingRes.value.data
+            setVideoSetting({
+              section_label: sData.section_label?.trim() || 'Video Profil',
+              section_title: sData.section_title?.trim() || 'Lihat sendiri bagaimana kolaborasi bekerja.',
+              section_description:
+                sData.section_description?.trim() ||
+                'Keripitannya kami tampilkan apa adanya: obrolan panjang, request yang berubah, sampai proses panjang yang berakhir sesuai rencana. Video ini rekaman, bukan brosur.',
+            })
+          }
+
+          if (videoHighlightsRes.status === 'fulfilled') {
+            const rawHighlights = Array.isArray(videoHighlightsRes.value?.data)
+              ? videoHighlightsRes.value.data
+              : Array.isArray(videoHighlightsRes.value)
+                ? videoHighlightsRes.value
+                : []
+            setVideoHighlightsList(rawHighlights)
+          }
+
+          if (heroBannerRes.status === 'fulfilled' && heroBannerRes.value) {
+            const bData = heroBannerRes.value?.data || heroBannerRes.value
+            if (bData && typeof bData === 'object') {
+              setHeroBanner((prev) => ({
+                subtitle: bData.subtitle?.trim() || prev.subtitle,
+                title: bData.title?.trim() || prev.title,
+                description: bData.description?.trim() || prev.description,
+                image_url: bData.image_url?.trim() || prev.image_url,
+              }))
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Gagal mengambil data Tentang Kami:', err)
+        if (isMounted) {
+          setTeamMembers(team)
+          setFaqError('Gagal memuat pertanyaan FAQ saat ini.')
+        }
+      } finally {
+        if (isMounted) {
+          setTeamLoading(false)
+          setFaqLoading(false)
+          setVideoLoading(false)
+        }
+      }
+    }
+
+    loadAboutData()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24)
@@ -352,17 +582,21 @@ export default function TentangPage({ onNavigate }) {
       <section className="mx-3 md:mx-4 mt-3 rounded-2xl bg-[#0c4a6e] relative overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center opacity-60"
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1600&q=80')" }}
+          style={{
+            backgroundImage: `url('${heroBanner.image_url ? resolveImageUrl(heroBanner.image_url) : 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1600&q=80'}')`,
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#0c4a6e]/85 via-[#0c4a6e]/55 to-[#0c4a6e]/85" />
         <div className="relative max-w-7xl mx-auto px-6 py-16 md:py-24">
           <div className="grid lg:grid-cols-[1.25fr_1fr] gap-8 lg:items-end">
             <div>
-              <p className="text-[12px] font-bold tracking-[0.2em] uppercase text-sky-400 mb-4">
-                Siapa Kami — Sejak 2019
-              </p>
+              {heroBanner.subtitle && (
+                <p className="text-[12px] font-bold tracking-[0.2em] uppercase text-sky-400 mb-4">
+                  {heroBanner.subtitle}
+                </p>
+              )}
               <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight leading-[1.05] mb-6">
-                Tentang Kami
+                {heroBanner.title || 'Tentang Kami'}
               </h1>
               <div className="inline-flex items-center gap-2 text-[13px] font-medium">
                 <span className="w-8 h-8 rounded-full bg-white/10 backdrop-blur border border-white/15 flex items-center justify-center">
@@ -372,13 +606,14 @@ export default function TentangPage({ onNavigate }) {
                   Beranda
                 </button>
                 <ChevronRight size={14} className="text-white/40" />
-                <span className="text-sky-400 font-semibold">Tentang Kami</span>
+                <span className="text-sky-400 font-semibold">{heroBanner.title || 'Tentang Kami'}</span>
               </div>
             </div>
-            <p className="text-white/70 text-[15px] leading-relaxed lg:text-right max-w-md lg:justify-self-end">
-              Ekosistem kemitraan teknologi INOTAL — menghubungkan perusahaan,
-              komunitas, dan talenta digital dalam satu jaringan yang saling menopang.
-            </p>
+            {heroBanner.description && (
+              <p className="text-white/70 text-[15px] leading-relaxed lg:text-right max-w-md lg:justify-self-end whitespace-pre-line">
+                {heroBanner.description}
+              </p>
+            )}
           </div>
         </div>
       </section>
@@ -421,38 +656,39 @@ export default function TentangPage({ onNavigate }) {
       <section className="max-w-7xl mx-auto px-6 pt-20 md:pt-28 pb-20 md:pb-28">
         <div className="grid lg:grid-cols-[1.35fr_1fr] gap-10 lg:gap-14 items-center">
           <Reveal>
-            <VideoProfile />
+            <VideoProfile video={profileVideo} loading={videoLoading} />
           </Reveal>
 
           <div className="pt-6 lg:pt-0">
             <Reveal>
-              <SubTitle>Video Profil</SubTitle>
+              <SubTitle>{videoSetting.section_label || 'Video Profil'}</SubTitle>
               <h2 className="text-3xl md:text-[42px] font-extrabold tracking-tight leading-[1.18] mb-6">
-                Lihat sendiri bagaimana{' '}
-                <span className="text-[#0284c7]">kolaborasi bekerja.</span>
+                {renderTeamHeading(videoSetting.section_title || 'Lihat sendiri bagaimana kolaborasi bekerja.')}
               </h2>
-              <p className="text-[14.5px] leading-relaxed text-[#364e52] max-w-lg">
-                Keripitannya kami tampilkan apa adanya: obrolan panjang, request yang berubah,
-                sampai proses panjang yang berakhir sesuai rencana. Video ini rekaman,
-                bukan brosur.
-              </p>
+              {videoSetting.section_description && (
+                <p className="text-[14.5px] leading-relaxed text-[#364e52] max-w-lg whitespace-pre-line">
+                  {videoSetting.section_description}
+                </p>
+              )}
             </Reveal>
 
-            <div className="mt-9 space-y-5">
-              {videoHighlights.map(({ icon, title, desc }, i) => (
-                <Reveal key={title} delay={i * 120}>
-                  <div className="flex items-start gap-4">
-                    <span className="shrink-0 grid place-items-center w-11 h-11 rounded-lg bg-[#F0F4F8] text-[#0284c7]">
-                      <SvgIcon shape={icon} className="w-[22px] h-[22px]" />
-                    </span>
-                    <div>
-                      <h3 className="font-bold text-[15.5px] mb-1.5">{title}</h3>
-                      <p className="text-[13.5px] leading-relaxed text-[#364e52]">{desc}</p>
+            {videoHighlightsList.length > 0 ? (
+              <div className="mt-9 space-y-5">
+                {videoHighlightsList.map((item, i) => (
+                  <Reveal key={item.id || item.title || i} delay={i * 120}>
+                    <div className="flex items-start gap-4">
+                      <span className="shrink-0 grid place-items-center w-11 h-11 rounded-xl bg-[#F0F4F8] text-[#0284c7] shadow-xs">
+                        <DynamicHighlightIcon name={item.icon} size={20} />
+                      </span>
+                      <div>
+                        <h3 className="font-bold text-[15.5px] mb-1.5 text-gray-900">{item.title}</h3>
+                        <p className="text-[13.5px] leading-relaxed text-[#364e52]">{item.description}</p>
+                      </div>
                     </div>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
+                  </Reveal>
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
       </section>
@@ -538,30 +774,52 @@ export default function TentangPage({ onNavigate }) {
         <Reveal className="text-center max-w-xl mx-auto mb-14">
           <SubTitle>Tim Kami</SubTitle>
           <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight leading-[1.15]">
-            Orang-orang di Balik <span className="text-[#0284c7]">Ekosistem Ini.</span>
+            {renderTeamHeading(teamSectionTitle)}
           </h2>
         </Reveal>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6">
-          {team.map(({ name, role, img }, i) => (
-            <Reveal key={name} delay={i * 90} className={i % 2 === 1 ? 'lg:mt-10' : ''}>
-              <div className="group">
-                <div className="relative rounded-xl overflow-hidden mb-4">
-                  <img
-                    src={img}
-                    alt={name}
-                    className="w-full aspect-[3/4] object-cover transition-transform duration-500 group-hover:scale-105"
-                    loading="lazy"
-                  />
-                  <div className="absolute left-3 bottom-3 bg-white/95 backdrop-blur rounded-md px-2.5 py-1.5 text-[11px] font-bold text-[#0c4a6e] translate-y-2 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-                    {role}
+          {teamMembers.map((member, i) => {
+            const memberName = member.name || ''
+            const memberRole = member.position || member.role || ''
+            const rawPhoto = member.photo_url || member.img || ''
+            const photoSrc = rawPhoto ? (rawPhoto.startsWith('http') ? rawPhoto : resolveImageUrl(rawPhoto)) : ''
+
+            return (
+              <Reveal key={member.id || memberName || i} delay={i * 90} className={i % 2 === 1 ? 'lg:mt-10' : ''}>
+                <div className="group">
+                  <div className="relative rounded-xl overflow-hidden mb-4 bg-gray-100 aspect-[3/4] flex items-center justify-center">
+                    {photoSrc ? (
+                      <img
+                        src={photoSrc}
+                        alt={memberName}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        loading="lazy"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none'
+                          if (e.currentTarget.nextSibling) {
+                            e.currentTarget.nextSibling.style.display = 'flex'
+                          }
+                        }}
+                      />
+                    ) : null}
+                    <div className={`w-full h-full items-center justify-center bg-gray-100 text-gray-400 ${photoSrc ? 'hidden' : 'flex'}`}>
+                      <User size={48} className="text-gray-400" />
+                    </div>
+                    {memberRole && (
+                      <div className="absolute left-3 bottom-3 bg-white/95 backdrop-blur rounded-md px-2.5 py-1.5 text-[11px] font-bold text-[#0c4a6e] translate-y-2 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+                        {memberRole}
+                      </div>
+                    )}
                   </div>
+                  <h3 className="font-bold text-[15px] md:text-base">{memberName}</h3>
+                  {memberRole && (
+                    <p className="text-[12.5px] text-[#0284c7] font-semibold lg:hidden">{memberRole}</p>
+                  )}
                 </div>
-                <h3 className="font-bold text-[15px] md:text-base">{name}</h3>
-                <p className="text-[12.5px] text-[#0284c7] font-semibold lg:hidden">{role}</p>
-              </div>
-            </Reveal>
-          ))}
+              </Reveal>
+            )
+          })}
         </div>
       </section>
       <section className="bg-[#F0F4F8] py-20 md:py-28">
@@ -580,42 +838,59 @@ export default function TentangPage({ onNavigate }) {
           </Reveal>
 
           <div className="space-y-4">
-            {faqs.map((f, i) => {
-              const open = openFaq === i
-              return (
-                <Reveal key={f.q} delay={i * 60}>
-                  <div className={`rounded-xl border transition-all duration-300 ${
-                    open
-                      ? 'bg-white border-[#0284c7]/40 shadow-lg shadow-blue-100'
-                      : 'bg-white/70 border-gray-200 hover:border-gray-300'
-                  }`}>
-                    <button
-                      onClick={() => setOpenFaq(open ? -1 : i)}
-                      aria-expanded={open}
-                      className="w-full flex items-center justify-between gap-4 px-7 py-5 text-left"
-                    >
-                      <span className={`font-semibold text-[15px] leading-relaxed transition-colors ${
-                        open ? 'text-[#0284c7]' : 'text-[#0c4a6e]'
-                      }`}>
-                        {f.q}
-                      </span>
-                      <span className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 ${
-                        open ? 'bg-[#0284c7] rotate-45' : 'bg-[#F0F4F8]'
-                      }`}>
-                        <Plus size={16} className={open ? 'text-white' : 'text-[#0c4a6e]'} strokeWidth={2.5} />
-                      </span>
-                    </button>
-                    <div className={`grid transition-all duration-300 ease-out ${
-                      open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+            {faqLoading ? (
+              <div className="p-8 text-center bg-white/60 border border-gray-200/80 rounded-xl text-gray-500">
+                <div className="w-7 h-7 border-2 border-[#0284c7] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                <p className="text-[13.5px] font-medium text-[#364e52]">Memuat pertanyaan umum...</p>
+              </div>
+            ) : faqError ? (
+              <div className="p-6 text-center bg-white/80 border border-red-200/80 rounded-xl text-red-600">
+                <p className="text-[13.5px] font-medium mb-1">{faqError}</p>
+                <p className="text-[12px] text-gray-500">Silakan muat ulang halaman beberapa saat lagi.</p>
+              </div>
+            ) : faqList.length === 0 ? (
+              <div className="p-8 text-center bg-white/60 border border-gray-200/80 rounded-xl text-gray-500">
+                <p className="text-[14px] font-medium text-[#364e52]">Belum ada pertanyaan yang tersedia saat ini.</p>
+                <p className="text-[12.5px] text-gray-400 mt-1">Gunakan tombol di samping untuk mengajukan pertanyaan Anda.</p>
+              </div>
+            ) : (
+              faqList.map((f, i) => {
+                const open = openFaq === i
+                return (
+                  <Reveal key={f.id || f.question || i} delay={i * 60}>
+                    <div className={`rounded-xl border transition-all duration-300 ${
+                      open
+                        ? 'bg-white border-[#0284c7]/40 shadow-lg shadow-blue-100'
+                        : 'bg-white/70 border-gray-200 hover:border-gray-300'
                     }`}>
-                      <div className="overflow-hidden">
-                        <p className="px-7 pb-6 text-[14px] leading-relaxed text-[#364e52]">{f.a}</p>
+                      <button
+                        onClick={() => setOpenFaq(open ? -1 : i)}
+                        aria-expanded={open}
+                        className="w-full flex items-center justify-between gap-4 px-7 py-5 text-left cursor-pointer"
+                      >
+                        <span className={`font-semibold text-[15px] leading-relaxed transition-colors ${
+                          open ? 'text-[#0284c7]' : 'text-[#0c4a6e]'
+                        }`}>
+                          {f.question}
+                        </span>
+                        <span className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 ${
+                          open ? 'bg-[#0284c7] rotate-45' : 'bg-[#F0F4F8]'
+                        }`}>
+                          <Plus size={16} className={open ? 'text-white' : 'text-[#0c4a6e]'} strokeWidth={2.5} />
+                        </span>
+                      </button>
+                      <div className={`grid transition-all duration-300 ease-out ${
+                        open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                      }`}>
+                        <div className="overflow-hidden">
+                          <p className="px-7 pb-6 text-[14px] leading-relaxed text-[#364e52] whitespace-pre-wrap">{f.answer}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </Reveal>
-              )
-            })}
+                  </Reveal>
+                )
+              })
+            )}
           </div>
         </div>
       </section>

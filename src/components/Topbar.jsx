@@ -16,7 +16,19 @@ export default function Topbar({ activeNav, setSidebarOpen }) {
           <span>Home</span>
           <ChevronRight size={12} />
           <span className="text-gray-700 font-medium capitalize">
-            {activeNav === 'dashboard' ? 'Dashboard' : navItems.find(n => n.key === activeNav)?.label}
+            {(() => {
+              if (activeNav === 'dashboard') return 'Dashboard'
+              for (const n of navItems) {
+                if (n.key === activeNav) return n.label
+                if (n.subItems) {
+                  const sub = n.subItems.find(s => s.key === activeNav)
+                  if (sub) return `${n.label} / ${sub.label}`
+                }
+              }
+              if (activeNav === 'formAboutMember') return 'About / Form Member'
+              if (activeNav === 'changePassword') return 'Change Password'
+              return activeNav
+            })()}
           </span>
         </div>
       </div>

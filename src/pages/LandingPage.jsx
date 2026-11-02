@@ -13,6 +13,8 @@ import {
   resolveBannerImageUrl,
 } from '../api/homepageBanners'
 
+import { getPublicTestimonialsApi } from '../api/testimonials'
+
 import {
   MonitorCog,
   Layers,
@@ -25,6 +27,7 @@ import {
   Camera,
   Calendar,
   Users,
+  User,
 } from 'lucide-react'
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
@@ -53,41 +56,6 @@ const partnershipBoxes = [
     title: 'SOFTWARE DEVELOPMENT',
     desc:
       'Pengembangan solusi perangkat lunak kustom yang disesuaikan dengan kebutuhan spesifik dan visi bisnis klien.',
-  },
-]
-
-const testimonials = [
-  {
-    quote:
-      'INOTAL membuka wawasan saya tentang bagaimana teknologi dan kolaborasi bisa berjalan beriringan untuk membangun Indonesia yang lebih maju.',
-    name: 'Andi Prasetyo',
-    role: 'CEO, TechNusa Ventures',
-    img:
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
-  },
-  {
-    quote:
-      'Program kemitraan INOTAL memberikan saya akses ke jaringan yang tidak ternilai. Dalam 6 bulan, bisnis kami berkembang pesat berkat ekosistem ini.',
-    name: 'Sari Dewi',
-    role: 'Founder, GreenLoop ID',
-    img:
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80',
-  },
-  {
-    quote:
-      'Sebagai pemuda yang baru terjun ke dunia bisnis, INOTAL hadir sebagai mentor sekaligus jembatan menuju peluang yang lebih besar.',
-    name: 'Bima Sakti',
-    role: 'Direktur, Inovasi Muda',
-    img:
-      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80',
-  },
-  {
-    quote:
-      'Kualitas program pelatihan INOTAL jauh melampaui ekspektasi kami. Tim profesional dan kurikulumnya relevan.',
-    name: 'Rina Melati',
-    role: 'VP Strategy, DataCore Asia',
-    img:
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80',
   },
 ]
 
@@ -567,21 +535,113 @@ export default function LandingPage({ onNavigate }) {
 
   const articleC = useCarousel(articleItems.length, 3)
 
-  // ─── TESTIMONIAL CAROUSEL ──────────────────────────────────────────────────
+  // ─── TESTIMONIAL DARI API PUBLIC ───────────────────────────────────────────
 
-  const testiC = useCarousel(testimonials.length, 2)
+  const [testimonials, setTestimonials] = useState([])
+  const [testiLoading, setTestiLoading] = useState(true)
+  const [testiError, setTestiError] = useState('')
 
   useEffect(() => {
+    let isMounted = true
+
+    const fetchTestimonials = async () => {
+      try {
+        setTestiLoading(true)
+        setTestiError('')
+
+        const response = await getPublicTestimonialsApi()
+        const data = Array.isArray(response?.data)
+          ? response.data
+          : Array.isArray(response)
+            ? response
+            : []
+
+        if (isMounted) {
+          setTestimonials(data)
+        }
+      } catch (error) {
+        console.error('Gagal mengambil testimoni:', error)
+        if (isMounted) {
+          setTestiError(error.message || 'Gagal mengambil data testimoni')
+          setTestimonials([])
+        }
+      } finally {
+        if (isMounted) {
+          setTestiLoading(false)
+        }
+      }
+    }
+
+    fetchTestimonials()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  // ─── TESTIMONIAL CAROUSEL ──────────────────────────────────────────────────
+
+  const testiTotal = testimonials.length
+  const testiMaxIdx = Math.max(0, testiTotal > 2 ? testiTotal - 1 : 0)
+  const [testiIdx, setTestiIdx] = useState(0)
+  const [testiTouchStart, setTestiTouchStart] = useState(null)
+  const [testiTouchEnd, setTestiTouchEnd] = useState(null)
+
+  // Pastikan indeks selalu valid jika data berubah
+  useEffect(() => {
+    if (testiIdx > testiMaxIdx) {
+      setTestiIdx(0)
+    }
+  }, [testiMaxIdx, testiIdx])
+
+  // Navigasi manual melingkar (circular)
+  const handleTestiPrev = () => {
+    if (testiMaxIdx === 0) return
+    setTestiIdx((curr) => (curr <= 0 ? testiMaxIdx : curr - 1))
+  }
+
+  const handleTestiNext = () => {
+    if (testiMaxIdx === 0) return
+    setTestiIdx((curr) => (curr >= testiMaxIdx ? 0 : curr + 1))
+  }
+
+  const handleTestiDot = (targetIdx) => {
+    setTestiIdx(targetIdx)
+  }
+
+  // Touch handlers untuk swipe di mobile/touchscreen
+  const handleTestiTouchStart = (e) => {
+    setTestiTouchEnd(null)
+    setTestiTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const handleTestiTouchMove = (e) => {
+    setTestiTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const handleTestiTouchEnd = () => {
+    if (!testiTouchStart || !testiTouchEnd) return
+    const distance = testiTouchStart - testiTouchEnd
+    const isLeftSwipe = distance > 50
+    const isRightSwipe = distance < -50
+
+    if (isLeftSwipe) {
+      handleTestiNext()
+    } else if (isRightSwipe) {
+      handleTestiPrev()
+    }
+  }
+
+  // Auto-slide interval: berjalan normal dan timer di-restart setelah navigasi manual
+  useEffect(() => {
+    if (testiTotal <= 2 || testiMaxIdx === 0) return
+
     const interval = setInterval(() => {
-      testiC.setIdx((currentIdx) =>
-        currentIdx >= testimonials.length - 2
-          ? 0
-          : currentIdx + 1
-      )
+      setTestiIdx((curr) => (curr >= testiMaxIdx ? 0 : curr + 1))
     }, 5000)
 
     return () => clearInterval(interval)
-  }, [])
+  }, [testiIdx, testiTotal, testiMaxIdx])
 
   // ─── PARTNERS ──────────────────────────────────────────────────────────────
 
@@ -1180,60 +1240,130 @@ export default function LandingPage({ onNavigate }) {
             </h2>
           </div>
 
-          <div className="overflow-hidden">
-            <div
-              className="flex gap-8 transition-transform duration-700 ease-in-out"
-              style={{
-                transform: `translateX(calc(-${testiC.idx} * (50% + 16px)))`,
-              }}
-            >
-              {testimonials.map((t, i) => (
-                <div
-                  key={i}
-                  className="flex-shrink-0 w-[calc(50%-16px)] flex flex-col sm:flex-row items-center sm:items-start gap-5 sm:gap-6"
-                >
-                  <div className="w-24 h-24 sm:w-[110px] sm:h-[110px] flex-shrink-0 rounded-[1.25rem] overflow-hidden shadow-sm bg-gray-100">
-                    <img
-                      src={t.img}
-                      alt={t.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-
-                  <div className="flex flex-col text-center sm:text-left">
-                    <p className="text-[#0f172a] text-[15px] sm:text-[17px] font-medium italic leading-relaxed mb-4">
-                      {t.quote}
-                    </p>
-
-                    <p className="font-bold text-[#0f172a] text-base">
-                      {t.name}
-                    </p>
-
-                    <p className="text-gray-500 text-sm">
-                      {t.role}
-                    </p>
-                  </div>
-                </div>
-              ))}
+          {testiLoading && (
+            <div className="flex items-center justify-center py-20">
+              <p className="text-gray-400">Memuat testimoni...</p>
             </div>
-          </div>
+          )}
 
-          <div className="flex items-center justify-center gap-2.5 mt-16">
-            {Array.from({
-              length: testimonials.length - 1,
-            }).map((_, i) => (
-              <button
-                key={i}
-                onClick={() => testiC.setIdx(i)}
-                className={`rounded-full transition-all duration-300 ${
-                  i === testiC.idx
-                    ? 'w-3.5 h-3.5 bg-[#6366f1]'
-                    : 'w-3.5 h-3.5 bg-gray-200 hover:bg-gray-300'
-                }`}
-                aria-label={`Ke slide ${i + 1}`}
-              />
-            ))}
-          </div>
+          {!testiLoading && testiError && (
+            <div className="flex items-center justify-center py-20">
+              <p className="text-red-500">{testiError}</p>
+            </div>
+          )}
+
+          {!testiLoading && !testiError && testimonials.length === 0 && (
+            <div className="flex items-center justify-center py-20">
+              <p className="text-gray-400">Belum ada testimoni yang ditampilkan.</p>
+            </div>
+          )}
+
+          {!testiLoading && !testiError && testimonials.length > 0 && (
+            <>
+              <div
+                className="relative overflow-hidden"
+                onTouchStart={handleTestiTouchStart}
+                onTouchMove={handleTestiTouchMove}
+                onTouchEnd={handleTestiTouchEnd}
+              >
+                <div
+                  className="flex gap-8 transition-transform duration-700 ease-in-out"
+                  style={{
+                    transform: `translateX(calc(-${testiIdx} * (50% + 16px)))`,
+                  }}
+                >
+                  {testimonials.map((t) => {
+                    const photoSrc = t.photo_url ? resolveImageUrl(t.photo_url) : ''
+                    const subtitle = [t.position, t.company].filter(Boolean).join(', ')
+
+                    return (
+                      <div
+                        key={t.id}
+                        className="flex-shrink-0 w-[calc(50%-16px)] flex flex-col sm:flex-row items-center sm:items-start gap-5 sm:gap-6"
+                      >
+                        <div className="w-24 h-24 sm:w-[110px] sm:h-[110px] flex-shrink-0 rounded-[1.25rem] overflow-hidden shadow-sm bg-gray-100 flex items-center justify-center">
+                          {photoSrc ? (
+                            <img
+                              src={photoSrc}
+                              alt={t.name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none'
+                                if (e.currentTarget.nextSibling) {
+                                  e.currentTarget.nextSibling.style.display = 'flex'
+                                }
+                              }}
+                            />
+                          ) : null}
+                          <div
+                            className={`w-full h-full items-center justify-center bg-gray-100 text-gray-400 ${
+                              photoSrc ? 'hidden' : 'flex'
+                            }`}
+                          >
+                            <User size={36} className="text-gray-400" />
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col text-center sm:text-left flex-1 min-w-0">
+                          <p className="text-[#0f172a] text-[15px] sm:text-[17px] font-medium italic leading-relaxed mb-4">
+                            "{t.content}"
+                          </p>
+
+                          <p className="font-bold text-[#0f172a] text-base">
+                            {t.name}
+                          </p>
+
+                          {subtitle && (
+                            <p className="text-gray-500 text-sm">
+                              {subtitle}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {testiMaxIdx > 0 && (
+                <div className="flex items-center justify-center gap-4 mt-12 sm:mt-16">
+                  <button
+                    type="button"
+                    onClick={handleTestiPrev}
+                    aria-label="Testimonial sebelumnya"
+                    className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-sky-400 hover:text-sky-500 hover:bg-sky-50 transition-all focus:outline-none focus:ring-2 focus:ring-sky-400"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+
+                  <div className="flex items-center gap-2.5">
+                    {Array.from({ length: testiMaxIdx + 1 }).map((_, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => handleTestiDot(i)}
+                        className={`rounded-full transition-all duration-300 focus:outline-none ${
+                          i === testiIdx
+                            ? 'w-3.5 h-3.5 bg-[#6366f1]'
+                            : 'w-3.5 h-3.5 bg-gray-200 hover:bg-gray-300'
+                        }`}
+                        aria-label={`Ke slide ${i + 1}`}
+                      />
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleTestiNext}
+                    aria-label="Testimonial berikutnya"
+                    className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-sky-400 hover:text-sky-500 hover:bg-sky-50 transition-all focus:outline-none focus:ring-2 focus:ring-sky-400"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </section>
 
