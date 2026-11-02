@@ -66,15 +66,19 @@ export default function PageBannerPage({ pageKey, role }) {
         setErrors({})
       } catch (err) {
         if (controller.signal.aborted) return
+        if (err?.response?.status === 404) {
+          setResult({ status: 'ready', record: null, message: '' })
+          setForm(emptyForm)
+          setErrors({})
+          return
+        }
         const backendMessage = getPageBannerErrorMessage(err, '')
         setResult({
           status: 'error',
           record: null,
           message:
-            err?.response?.status === 404
-              ? `Endpoint GET /api/page-banners/${pageKey} belum tersedia di backend.${backendMessage && backendMessage !== 'Not Found' ? ` Pesan backend: ${backendMessage}` : ''}`
-              : backendMessage ||
-                `Banner ${pageName} belum dapat dimuat. Pastikan backend dan endpoint GET /api/page-banners/${pageKey} tersedia.`,
+            backendMessage ||
+            `Banner ${pageName} belum dapat dimuat. Pastikan backend dan endpoint GET /api/page-banners/${pageKey} tersedia.`,
         })
       }
     }
