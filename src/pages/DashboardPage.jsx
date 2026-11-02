@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import Sidebar from '../components/Sidebar'
 import Topbar from '../components/Topbar'
 import MonthlyActivityChart from '../components/MonthlyActivityChart'
@@ -24,6 +24,11 @@ import ListFAQPage from './ListFAQPage'
 import FormVideoSettingPage from './FormVideoSettingPage'
 import FormVideoHighlightPage from './FormVideoHighlightPage'
 import ListVideoHighlightPage from './ListVideoHighlightPage'
+import KontakInboxPage from './KontakInboxPage'
+import KemitraanPage from './KemitraanPage'
+import KartuTentangPage from './KartuTentangPage'
+import PageBannerPage from './PageBannerPage'
+import { PAGE_BANNER_PAGES } from '../data/pageBanners'
 
 import { useAuth } from '../hooks/useAuth'
 
@@ -156,6 +161,28 @@ export default function DashboardPage({ onNavigate }) {
         return <ChangePasswordPage />
       case 'users':
         return <UserPage />
+
+      case 'contact':
+        return <KontakInboxPage />
+
+      case 'partners':
+        return <KemitraanPage role={user?.role} />
+
+      case 'aboutCards':
+        return <KartuTentangPage role={user?.role} />
+
+      case 'bannerTentang':
+      case 'bannerEvent':
+      case 'bannerBerita':
+      case 'bannerArtikel':
+      case 'bannerKontak':
+        return (
+          <PageBannerPage
+            key={activeNav}
+            pageKey={PAGE_BANNER_PAGES.find((page) => page.navKey === activeNav)?.key}
+            role={user?.role}
+          />
+        )
         
       case 'createPost':
         return (

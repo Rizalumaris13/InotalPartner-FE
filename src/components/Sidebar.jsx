@@ -1,5 +1,21 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { LayoutDashboard, Building2, Users, Settings, LogOut, Key, Pin, ChevronDown, House, MessageSquare, Info } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import {
+  LayoutDashboard,
+  Building2,
+  Users,
+  Settings,
+  LogOut,
+  Key,
+  Pin,
+  ChevronDown,
+  House,
+  MessageSquare,
+  Info,
+  Handshake,
+  LayoutList,
+  PanelsTopLeft,
+} from 'lucide-react'
+import { PAGE_BANNER_PAGES, PAGE_BANNER_ROLES } from '../data/pageBanners'
 
 export const navItems = [
   { key: 'dashboard', label: 'Dashboard',     icon: LayoutDashboard, roles: ['super_admin','admin','operator','guest'] },
@@ -11,8 +27,8 @@ export const navItems = [
     roles: ['super_admin','admin','operator'],
     subItems: [
       { key: 'createPost', label: 'Create Post' },
-      { key: 'listPost',   label: 'List Post' }
-    ]
+      { key: 'listPost',   label: 'List Post' },
+    ],
   },
   { key: 'contact',   label: 'Kontak',        icon: MessageSquare,   roles: ['super_admin','admin','operator'] },
   { 
@@ -26,18 +42,18 @@ export const navItems = [
         label: 'Slider',
         items: [
           { key: 'createSlider', label: 'Create Slider' },
-          { key: 'listSlider',   label: 'List Slider' }
-        ]
+          { key: 'listSlider',   label: 'List Slider' },
+        ],
       },
       {
         key: 'homeTestimonialGroup',
         label: 'Testimoni',
         items: [
           { key: 'createTestimonial', label: 'Create Testimoni' },
-          { key: 'listTestimonial',   label: 'List Testimoni' }
-        ]
-      }
-    ]
+          { key: 'listTestimonial',   label: 'List Testimoni' },
+        ],
+      },
+    ],
   },
   { 
     key: 'about',      
@@ -50,8 +66,8 @@ export const navItems = [
         label: 'Tim Kami',
         items: [
           { key: 'createAbout', label: 'Tambah Tim Kami' },
-          { key: 'listAbout',   label: 'List Tim Kami' }
-        ]
+          { key: 'listAbout',   label: 'List Tim Kami' },
+        ],
       },
       {
         key: 'aboutVideoGroup',
@@ -66,22 +82,44 @@ export const navItems = [
             isSubGroup: true,
             items: [
               { key: 'createVideoHighlight', label: 'Tambah Poin Video' },
-              { key: 'listVideoHighlight',   label: 'Daftar Poin Video' }
-            ]
-          }
-        ]
+              { key: 'listVideoHighlight',   label: 'Daftar Poin Video' },
+            ],
+          },
+        ],
       },
       {
         key: 'aboutFAQGroup',
         label: 'FAQ',
         items: [
           { key: 'createFAQ',   label: 'Create FAQ' },
-          { key: 'listFAQ',     label: 'List FAQ' }
-        ]
-      }
-    ]
+          { key: 'listFAQ',     label: 'List FAQ' },
+        ],
+      },
+    ],
+  },
+  {
+    key: 'partners',
+    label: 'Kemitraan',
+    icon: Handshake,
+    roles: ['super_admin', 'admin'],
+  },
+  {
+    key: 'aboutCards',
+    label: 'Kartu Tentang',
+    icon: LayoutList,
+    roles: ['super_admin', 'admin'],
   },
   { key: 'users',     label: 'Users',         icon: Users,           roles: ['super_admin','admin'] },
+  {
+    key: 'pageBanners',
+    label: 'Banner Halaman',
+    icon: PanelsTopLeft,
+    roles: PAGE_BANNER_ROLES,
+    subItems: PAGE_BANNER_PAGES.map((page) => ({
+      key: page.navKey,
+      label: page.name,
+    })),
+  },
   { key: 'settings',  label: 'Settings',      icon: Settings,        roles: ['super_admin','admin','operator','guest'] },
 ]
 
@@ -219,6 +257,9 @@ export default function Sidebar({ user, activeNav, setActiveNav, sidebarOpen, se
               <div key={item.key} className="flex flex-col space-y-1">
                 {/* Menu Utama (Level 1) */}
                 <button
+                  type="button"
+                  aria-expanded={hasSubItems ? Boolean(isOpen) : undefined}
+                  aria-controls={hasSubItems && isOpen ? `sidebar-${item.key}` : undefined}
                   onClick={() => {
                     if (hasChildren) {
                       toggleDropdown(item.key)
@@ -247,7 +288,7 @@ export default function Sidebar({ user, activeNav, setActiveNav, sidebarOpen, se
 
                 {/* Sub-items biasa (1 tingkat, misal: Post) */}
                 {hasSubItems && isOpen && (
-                  <div className="flex flex-col space-y-0.5 mt-0.5">
+                  <div id={`sidebar-${item.key}`} role="group" aria-label={item.label} className="flex flex-col space-y-0.5 mt-0.5">
                     {item.subItems.map(subItem => {
                       const isSubActive = activeNav === subItem.key
                       return (

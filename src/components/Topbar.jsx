@@ -1,8 +1,36 @@
-import React from 'react'
-import { Menu, ChevronRight, Search, Bell } from 'lucide-react'
-import { navItems } from './Sidebar'
+import { Menu, ChevronRight } from 'lucide-react'
+import { navItems } from '../data/dashboardNavItems'
 
 export default function Topbar({ activeNav, setSidebarOpen }) {
+  const getActiveLabel = () => {
+    if (activeNav === 'dashboard') return 'Dashboard'
+    if (activeNav === 'formAboutMember') return 'About / Form Member'
+    if (activeNav === 'changePassword') return 'Change Password'
+
+    for (const item of navItems) {
+      if (item.key === activeNav) return item.label
+      if (item.subItems) {
+        const sub = item.subItems.find((s) => s.key === activeNav)
+        if (sub) return `${item.label} / ${sub.label}`
+      }
+      if (item.subGroups) {
+        for (const group of item.subGroups) {
+          if (group.items) {
+            for (const sub of group.items) {
+              if (sub.key === activeNav) return `${item.label} / ${group.label} / ${sub.label}`
+              if (sub.isSubGroup && sub.items) {
+                const nested = sub.items.find((n) => n.key === activeNav)
+                if (nested) return `${item.label} / ${group.label} / ${sub.label} / ${nested.label}`
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return activeNav
+  }
+
   return (
     <header className="h-14 bg-white border-b border-sky-100 flex items-center justify-between px-5 shrink-0">
       <div className="flex items-center gap-3">
@@ -16,19 +44,7 @@ export default function Topbar({ activeNav, setSidebarOpen }) {
           <span>Home</span>
           <ChevronRight size={12} />
           <span className="text-gray-700 font-medium capitalize">
-            {(() => {
-              if (activeNav === 'dashboard') return 'Dashboard'
-              for (const n of navItems) {
-                if (n.key === activeNav) return n.label
-                if (n.subItems) {
-                  const sub = n.subItems.find(s => s.key === activeNav)
-                  if (sub) return `${n.label} / ${sub.label}`
-                }
-              }
-              if (activeNav === 'formAboutMember') return 'About / Form Member'
-              if (activeNav === 'changePassword') return 'Change Password'
-              return activeNav
-            })()}
+            {getActiveLabel()}
           </span>
         </div>
       </div>

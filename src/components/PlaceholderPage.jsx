@@ -1,6 +1,6 @@
 import React from 'react'
 import { LayoutDashboard } from 'lucide-react'
-import { navItems } from './Sidebar'
+import { navItems } from '../data/dashboardNavItems'
 
 export default function PlaceholderPage({ activeNav }) {
   return (

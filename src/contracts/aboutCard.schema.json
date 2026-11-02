@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:inotal:about-card",
+  "title": "AboutCard",
+  "type": "object",
+  "required": ["id", "title", "description", "icon", "url", "sort_order"],
+  "properties": {
+    "id": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+    "title": { "type": "string", "minLength": 2, "maxLength": 150 },
+    "description": { "type": "string", "minLength": 10, "maxLength": 2000 },
+    "icon": {
+      "type": "string",
+      "enum": [
+        "lightbulb",
+        "award",
+        "headset",
+        "handshake",
+        "target",
+        "rocket",
+        "shield-check",
+        "users",
+        "trending-up",
+        "code",
+        "briefcase",
+        "globe"
+      ]
+    },
+    "url": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048,
+      "format": "about-card-target"
+    },
+    "sort_order": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    }
+  },
+  "$defs": {
+    "payload": {
+      "type": "object",
+      "required": ["title", "description", "icon", "url", "sort_order"],
+      "additionalProperties": false,
+      "properties": {
+        "title": { "$ref": "#/properties/title" },
+        "description": { "$ref": "#/properties/description" },
+        "icon": { "$ref": "#/properties/icon" },
+        "url": { "$ref": "#/properties/url" },
+        "sort_order": { "$ref": "#/properties/sort_order" }
+      }
+    }
+  },
+  "description": "Record untuk kartu Pilih yang Terbaik. Posisi unik dan berurutan 1..N pada koleksi. Format about-card-target adalah URL HTTP(S) tanpa kredensial atau hash route publik yang dikenal, sebagaimana docs/api-kartu-tentang.md."
+}
