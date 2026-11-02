@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import { LayoutDashboard, Building2, Users, Settings, LogOut, Key, Pin, ChevronDown,GalleryVerticalEnd, MessageSquare, Handshake } from 'lucide-react'
+import { LayoutDashboard, Building2, Users, Settings, LogOut, Key, Pin, ChevronDown,GalleryVerticalEnd, MessageSquare, Handshake, PanelsTopLeft } from 'lucide-react'
+import { PAGE_BANNER_PAGES, PAGE_BANNER_ROLES } from '../data/pageBanners'
 
 export const navItems = [
   { key: 'dashboard', label: 'Dashboard',     icon: LayoutDashboard, roles: ['super_admin','admin','operator','guest'] },
@@ -26,6 +27,13 @@ export const navItems = [
     ]
   },
   { key: 'partners',  label: 'Kemitraan',     icon: Handshake,       roles: ['super_admin','admin'] },
+  {
+    key: 'pageBanners',
+    label: 'Banner Halaman',
+    icon: PanelsTopLeft,
+    roles: PAGE_BANNER_ROLES,
+    subItems: PAGE_BANNER_PAGES.map((page) => ({ key: page.navKey, label: page.name })),
+  },
   { key: 'users',     label: 'Users',         icon: Users,           roles: ['super_admin','admin'] },
   { key: 'settings',  label: 'Settings',      icon: Settings,        roles: ['super_admin','admin','operator','guest'] },
 ]
@@ -108,6 +116,9 @@ export default function Sidebar({ user, activeNav, setActiveNav, sidebarOpen, se
             return (
               <div key={item.key} className="flex flex-col space-y-1">
                 <button
+                  type="button"
+                  aria-expanded={hasSubItems ? Boolean(isOpen) : undefined}
+                  aria-controls={hasSubItems && isOpen ? `sidebar-${item.key}` : undefined}
                   onClick={() => {
                     if (hasSubItems) {
                       toggleDropdown(item.key)
@@ -136,7 +147,7 @@ export default function Sidebar({ user, activeNav, setActiveNav, sidebarOpen, se
 
                 {/* Sub-items: Teks sejajar dengan label induk, tanpa kotak pembungkus */}
                 {hasSubItems && isOpen && (
-                  <div className="flex flex-col space-y-0.5 mt-0.5">
+                  <div id={`sidebar-${item.key}`} role="group" aria-label={item.label} className="flex flex-col space-y-0.5 mt-0.5">
                     {item.subItems.map(subItem => {
                       const isSubActive = activeNav === subItem.key
                       return (
