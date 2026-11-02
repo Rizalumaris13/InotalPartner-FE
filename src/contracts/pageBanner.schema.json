@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Konfigurasi banner halaman",
+  "type": "object",
+  "required": ["page", "label", "title", "description", "image_url"],
+  "properties": {
+    "page": { "type": "string", "enum": ["tentang", "event", "berita", "artikel", "kontak"] },
+    "label": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "title": { "type": "string", "minLength": 1, "maxLength": 150 },
+    "description": { "type": "string", "minLength": 1, "maxLength": 600 },
+    "image_url": { "type": "string", "minLength": 1, "maxLength": 2048 }
+  },
+  "x-upload": {
+    "mimeTypes": ["image/jpeg", "image/png", "image/webp"],
+    "maxBytes": 5242880
+  }
+}

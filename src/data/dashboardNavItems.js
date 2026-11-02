@@ -8,7 +8,9 @@ import {
   MessageSquare,
   Handshake,
   LayoutList,
+  PanelsTopLeft,
 } from 'lucide-react'
+import { PAGE_BANNER_PAGES, PAGE_BANNER_ROLES } from './pageBanners'
 
 export const navItems = [
   {
@@ -66,6 +68,16 @@ export const navItems = [
     label: 'Users',
     icon: Users,
     roles: ['super_admin', 'admin'],
+  },
+  {
+    key: 'pageBanners',
+    label: 'Banner Halaman',
+    icon: PanelsTopLeft,
+    roles: PAGE_BANNER_ROLES,
+    subItems: PAGE_BANNER_PAGES.map((page) => ({
+      key: page.navKey,
+      label: page.name,
+    })),
   },
   {
     key: 'settings',

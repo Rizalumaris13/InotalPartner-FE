@@ -80,6 +80,9 @@ export default function Sidebar({ user, activeNav, setActiveNav, sidebarOpen, se
             return (
               <div key={item.key} className="flex flex-col space-y-1">
                 <button
+                  type="button"
+                  aria-expanded={hasSubItems ? Boolean(isOpen) : undefined}
+                  aria-controls={hasSubItems && isOpen ? `sidebar-${item.key}` : undefined}
                   onClick={() => {
                     if (hasSubItems) {
                       toggleDropdown(item.key)
@@ -108,7 +111,7 @@ export default function Sidebar({ user, activeNav, setActiveNav, sidebarOpen, se
 
                 {/* Sub-items: Teks sejajar dengan label induk, tanpa kotak pembungkus */}
                 {hasSubItems && isOpen && (
-                  <div className="flex flex-col space-y-0.5 mt-0.5">
+                  <div id={`sidebar-${item.key}`} role="group" aria-label={item.label} className="flex flex-col space-y-0.5 mt-0.5">
                     {item.subItems.map(subItem => {
                       const isSubActive = activeNav === subItem.key
                       return (

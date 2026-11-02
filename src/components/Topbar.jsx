@@ -2,6 +2,11 @@ import { Menu, ChevronRight } from 'lucide-react'
 import { navItems } from '../data/dashboardNavItems'
 
 export default function Topbar({ activeNav, setSidebarOpen }) {
+  const activeLabel =
+    navItems.find((item) => item.key === activeNav)?.label ||
+    navItems
+      .flatMap((item) => item.subItems || [])
+      .find((item) => item.key === activeNav)?.label
   return (
     <header className="h-14 bg-white border-b border-sky-100 flex items-center justify-between px-5 shrink-0">
       <div className="flex items-center gap-3">
@@ -15,7 +20,7 @@ export default function Topbar({ activeNav, setSidebarOpen }) {
           <span>Home</span>
           <ChevronRight size={12} />
           <span className="text-gray-700 font-medium capitalize">
-            {activeNav === 'dashboard' ? 'Dashboard' : navItems.find(n => n.key === activeNav)?.label}
+            {activeNav === 'dashboard' ? 'Dashboard' : activeLabel}
           </span>
         </div>
       </div>
