@@ -12,12 +12,23 @@ import CreatePost from './CreatePost'
 import PostList from './PostListPage'
 import CreateSlider from './CreateSlider'
 import ListSliderPage from './ListSliderPage'
+import FormTestimonialPage from './FormTestimonialPage'
+import ListTestimonialPage from './ListTestimonialPage'
+import CreateAboutPage from './CreateAboutPage'
+import ListAboutPage from './ListAboutPage'
+import FormTeamMemberPage from './FormTeamMemberPage'
+import FormVideoPage from './FormVideoPage'
+import ListVideoPage from './ListVideoPage'
+import FormFAQPage from './FormFAQPage'
+import ListFAQPage from './ListFAQPage'
+import FormVideoSettingPage from './FormVideoSettingPage'
+import FormVideoHighlightPage from './FormVideoHighlightPage'
+import ListVideoHighlightPage from './ListVideoHighlightPage'
 import KontakInboxPage from './KontakInboxPage'
 import KemitraanPage from './KemitraanPage'
 import KartuTentangPage from './KartuTentangPage'
 import PageBannerPage from './PageBannerPage'
 import { PAGE_BANNER_PAGES } from '../data/pageBanners'
-
 
 import { useAuth } from '../hooks/useAuth'
 
@@ -28,6 +39,11 @@ export default function DashboardPage({ onNavigate }) {
   // State untuk mode edit 
   const [editingPost, setEditingPost] = useState(null)
   const [editingSlider, setEditingSlider] = useState(null)
+  const [editingTestimonial, setEditingTestimonial] = useState(null)
+  const [editingMember, setEditingMember] = useState(null)
+  const [editingVideo, setEditingVideo] = useState(null)
+  const [editingHighlight, setEditingHighlight] = useState(null)
+  const [editingFAQ, setEditingFAQ] = useState(null)
 
   const { user } = useAuth()
 
@@ -35,6 +51,11 @@ export default function DashboardPage({ onNavigate }) {
   const handleNav = (key) => { 
     setEditingPost(null);
     setEditingSlider(null);
+    setEditingTestimonial(null);
+    setEditingMember(null);
+    setEditingVideo(null);
+    setEditingHighlight(null);
+    setEditingFAQ(null);
     setActiveNav(key) 
   }
 
@@ -51,13 +72,68 @@ export default function DashboardPage({ onNavigate }) {
   }
 
   const handleEditSlider = (slider) => {
-  setEditingSlider(slider)
-  setActiveNav('createSlider')
-}
+    setEditingSlider(slider)
+    setActiveNav('createSlider')
+  }
 
   const finishEditSlider = () => {
     setEditingSlider(null)
     setActiveNav('listSlider')
+  }
+
+  // Testimonial handlers
+  const handleEditTestimonial = (testimonial) => {
+    setEditingTestimonial(testimonial)
+    setActiveNav('createTestimonial')
+  }
+
+  const finishEditTestimonial = () => {
+    setEditingTestimonial(null)
+    setActiveNav('listTestimonial')
+  }
+
+  // About member handlers
+  const handleEditMember = (member) => {
+    setEditingMember(member)
+    setActiveNav('formAboutMember')
+  }
+
+  const finishEditMember = () => {
+    setEditingMember(null)
+    setActiveNav('listAbout')
+  }
+
+  // Video handlers
+  const handleEditVideo = (video) => {
+    setEditingVideo(video)
+    setActiveNav('createVideo')
+  }
+
+  const finishEditVideo = () => {
+    setEditingVideo(null)
+    setActiveNav('listVideo')
+  }
+
+  // Highlight handlers
+  const handleEditHighlight = (highlight) => {
+    setEditingHighlight(highlight)
+    setActiveNav('createVideoHighlight')
+  }
+
+  const finishEditHighlight = () => {
+    setEditingHighlight(null)
+    setActiveNav('listVideoHighlight')
+  }
+
+  // FAQ handlers
+  const handleEditFAQ = (faq) => {
+    setEditingFAQ(faq)
+    setActiveNav('createFAQ')
+  }
+
+  const finishEditFAQ = () => {
+    setEditingFAQ(null)
+    setActiveNav('listFAQ')
   }
 
   const renderContent = () => {
@@ -142,6 +218,143 @@ export default function DashboardPage({ onNavigate }) {
         return (
           <ListSliderPage
             onEdit={handleEditSlider}
+          />
+        )
+
+      case 'createTestimonial':
+        return (
+          <FormTestimonialPage
+            key={editingTestimonial ? `edit-testi-${editingTestimonial.id}` : 'new-testi'}
+            editingTestimonial={editingTestimonial}
+            onFinish={finishEditTestimonial}
+            onOpenList={() => {
+              setEditingTestimonial(null)
+              setActiveNav('listTestimonial')
+            }}
+          />
+        )
+
+      case 'listTestimonial':
+        return (
+          <ListTestimonialPage
+            onAddNew={() => {
+              setEditingTestimonial(null)
+              setActiveNav('createTestimonial')
+            }}
+            onEdit={handleEditTestimonial}
+          />
+        )
+
+      case 'createAbout':
+        return (
+          <CreateAboutPage
+            onFinishEdit={finishEditMember}
+            onCancelEdit={() => setEditingMember(null)}
+            onAddNew={() => {
+              setEditingMember(null)
+              setActiveNav('formAboutMember')
+            }}
+            onEdit={handleEditMember}
+            onOpenList={() => setActiveNav('listAbout')}
+          />
+        )
+
+      case 'listAbout':
+        return (
+          <ListAboutPage
+            onAddNew={() => {
+              setEditingMember(null)
+              setActiveNav('formAboutMember')
+            }}
+            onEdit={handleEditMember}
+          />
+        )
+
+      case 'formAboutMember':
+        return (
+          <FormTeamMemberPage
+            key={editingMember ? `edit-member-${editingMember.id}` : 'new-member'}
+            editingMember={editingMember}
+            onFinish={finishEditMember}
+            onOpenList={() => {
+              setEditingMember(null)
+              setActiveNav('listAbout')
+            }}
+          />
+        )
+
+      case 'createVideo':
+        return (
+          <FormVideoPage
+            key={editingVideo ? `edit-video-${editingVideo.id}` : 'new-video'}
+            editingVideo={editingVideo}
+            onFinish={finishEditVideo}
+            onOpenList={() => {
+              setEditingVideo(null)
+              setActiveNav('listVideo')
+            }}
+          />
+        )
+
+      case 'listVideo':
+        return (
+          <ListVideoPage
+            onAddNew={() => {
+              setEditingVideo(null)
+              setActiveNav('createVideo')
+            }}
+            onEdit={handleEditVideo}
+          />
+        )
+
+      case 'videoSetting':
+        return <FormVideoSettingPage />
+
+      case 'createVideoHighlight':
+        return (
+          <FormVideoHighlightPage
+            key={editingHighlight ? 'edit-highlight-' + editingHighlight.id : 'new-highlight'}
+            editingHighlight={editingHighlight}
+            onFinish={finishEditHighlight}
+            onOpenList={() => {
+              setEditingHighlight(null)
+              setActiveNav('listVideoHighlight')
+            }}
+          />
+        )
+
+      case 'listVideoHighlight':
+        return (
+          <ListVideoHighlightPage
+            onAddNew={() => {
+              setEditingHighlight(null)
+              setActiveNav('createVideoHighlight')
+            }}
+            onEdit={handleEditHighlight}
+          />
+        )
+
+      case 'createFAQ':
+        return (
+          <FormFAQPage
+            key={editingFAQ ? `edit-faq-${editingFAQ.id}` : 'new-faq'}
+            editingFAQ={editingFAQ}
+            onFinish={finishEditFAQ}
+            onOpenList={() => {
+              setEditingFAQ(null)
+              setActiveNav('listFAQ')
+            }}
+          />
+        )
+
+      case 'listFAQ':
+        return (
+          <ListFAQPage
+            onAddNew={() => {
+              setEditingFAQ(null)
+              setActiveNav('createFAQ')
+            }}
+            onEdit={handleEditFAQ}
           />
         )
 

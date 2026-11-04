@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ChevronRight, Home } from 'lucide-react'
 import { getPublicPageBannerApi } from '../api/pageBanners'
 import { DEFAULT_PAGE_BANNERS } from '../data/pageBanners'
+import { resolveImageUrl } from '../api/posts'
 
 /**
  * Banner paling atas halaman publik. Teks bawaan halaman dipakai selama
@@ -24,11 +25,13 @@ export default function PublicPageBanner({ pageKey, breadcrumb, onNavigate }) {
     return () => controller.abort()
   }, [pageKey, fallback])
 
+  const bgImageUrl = resolveImageUrl(config.image_url)
+
   return (
     <section className="mx-3 md:mx-4 mt-3 rounded-2xl bg-[#0c4a6e] relative overflow-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center opacity-60"
-        style={{ backgroundImage: `url('${config.image_url}')` }}
+        style={{ backgroundImage: `url('${bgImageUrl}')` }}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-[#0c4a6e]/85 via-[#0c4a6e]/55 to-[#0c4a6e]/85" />
       <div className="relative max-w-7xl mx-auto px-6 py-16 md:py-24">
