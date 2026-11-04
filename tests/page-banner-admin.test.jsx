@@ -3,6 +3,7 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import PageBannerPage from '../src/pages/PageBannerPage'
+import { DEFAULT_PAGE_BANNERS } from '../src/data/pageBanners'
 import { server } from './setup'
 
 const saved = {
@@ -111,16 +112,33 @@ test('field wajib divalidasi sebelum mengirim request', async () => {
   expect(writes).toBe(0)
 })
 
-test('endpoint belum tersedia menonaktifkan simpan dan menyebut endpointnya', async () => {
+test('banner 404 dapat dibuat lewat POST lalu diverifikasi dengan GET', async () => {
+  let record = null
+  let payload
+  let reads = 0
   server.use(
-    http.get('*/api/page-banners/kontak', () =>
-      HttpResponse.json({ success: false, message: 'Not Found' }, { status: 404 }),
-    ),
+    http.get('*/api/page-banners/kontak', () => {
+      reads += 1
+      return record
+        ? json(record)
+        : HttpResponse.json({ success: false, message: 'Not Found' }, { status: 404 })
+    }),
+    http.post('*/api/page-banners/kontak', async ({ request }) => {
+      payload = await request.json()
+      record = { page: 'kontak', ...payload }
+      return HttpResponse.json({ success: true, data: record }, { status: 201 })
+    }),
   )
-  openAdmin('kontak')
+  const user = openAdmin('kontak')
   const form = await screen.findByRole('form', { name: 'Banner Kontak' })
-  expect(await within(form).findByText(/GET \/api\/page-banners\/kontak/)).not.toBeNull()
-  expect(within(form).getByRole('button', { name: 'Simpan Banner' }).disabled).toBe(true)
+  expect(await screen.findByText(/belum diatur/i)).not.toBeNull()
+  await user.click(within(form).getByRole('button', { name: 'Isi Teks Bawaan' }))
+  const save = within(form).getByRole('button', { name: 'Simpan Banner' })
+  expect(save.matches(':disabled')).toBe(false)
+  await user.click(save)
+  expect(await screen.findByText('Banner berhasil disimpan.')).not.toBeNull()
+  expect(payload).toEqual(DEFAULT_PAGE_BANNERS.kontak)
+  expect(reads).toBe(2)
 })
 
 test('unggah gambar memakai field image dan URL hasil unggah disimpan sebagai image_url', async () => {

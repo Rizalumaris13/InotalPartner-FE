@@ -8,6 +8,8 @@ import { resolveImageUrl } from '../api/posts'
  * Banner paling atas halaman publik. Teks bawaan halaman dipakai selama
  * konfigurasi belum ada atau endpoint publik belum tersedia, supaya halaman
  * tidak pernah kehilangan judul/breadcrumb-nya.
+ * Ukuran ringkas berlaku konsisten untuk semua banner halaman publik.
+ * Judul 70% dari skala tema; tinggi baris dijaga agar banner tidak ikut menyusut.
  */
 export default function PublicPageBanner({ pageKey, breadcrumb, onNavigate }) {
   const fallback = DEFAULT_PAGE_BANNERS[pageKey]
@@ -34,13 +36,13 @@ export default function PublicPageBanner({ pageKey, breadcrumb, onNavigate }) {
         style={{ backgroundImage: `url('${bgImageUrl}')` }}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-[#0c4a6e]/85 via-[#0c4a6e]/55 to-[#0c4a6e]/85" />
-      <div className="relative max-w-7xl mx-auto px-6 py-16 md:py-24">
-        <div className="grid lg:grid-cols-[1.25fr_1fr] gap-8 lg:items-end">
+      <div className="relative max-w-7xl mx-auto px-6 py-6">
+        <div className="grid lg:grid-cols-[1.25fr_1fr] gap-4 md:gap-2 lg:gap-8 lg:items-end">
           <div>
-            <p className="text-[12px] font-bold tracking-[0.2em] uppercase text-sky-400 mb-4 break-words">
+            <p className="text-[12px] font-bold tracking-[0.2em] uppercase text-sky-400 mb-2 md:mb-4 break-words">
               {config.label}
             </p>
-            <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight leading-[1.05] mb-6 break-words">
+            <h1 className="text-[length:calc(var(--text-4xl)*0.7)] md:text-[length:calc(var(--text-6xl)*0.7)] lg:text-[length:calc(var(--text-7xl)*0.7)] mb-3 md:mb-5 lg:mb-6 font-extrabold text-white tracking-tight leading-[1.5] break-words">
               {config.title}
             </h1>
             <div className="inline-flex items-center gap-2 text-[13px] font-medium">

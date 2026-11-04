@@ -1,7 +1,9 @@
 import { expect, test } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import { renderToStaticMarkup } from 'react-dom/server'
 import { http, HttpResponse } from 'msw'
 import PublicPageBanner from '../src/components/PublicPageBanner'
+import { DEFAULT_PAGE_BANNERS } from '../src/data/pageBanners'
 import { server } from './setup'
 
 const remote = {
@@ -31,3 +33,28 @@ test.each([
   expect(screen.getByText('Kontak — Kami Siap Membantu')).not.toBeNull()
   expect(screen.getByText('Beranda')).not.toBeNull()
 })
+
+test.each(Object.keys(DEFAULT_PAGE_BANNERS))(
+  'banner %s memakai judul 70 persen dari skala sebelumnya',
+  (pageKey) => {
+    const container = document.createElement('div')
+    container.innerHTML = renderToStaticMarkup(
+      <PublicPageBanner pageKey={pageKey} breadcrumb="Halaman" />,
+    )
+    const title = container.querySelector('h1')
+    const banner = title.closest('section')
+    const content = banner.querySelector('.relative.max-w-7xl')
+
+    expect(content.classList.contains('py-6')).toBe(true)
+    expect(content.classList.contains('py-16')).toBe(false)
+    expect(content.classList.contains('md:py-24')).toBe(false)
+    expect(title.classList.contains('text-[length:calc(var(--text-4xl)*0.7)]')).toBe(true)
+    expect(title.classList.contains('md:text-[length:calc(var(--text-6xl)*0.7)]')).toBe(true)
+    expect(title.classList.contains('lg:text-[length:calc(var(--text-7xl)*0.7)]')).toBe(true)
+    expect(title.classList.contains('leading-[1.5]')).toBe(true)
+    expect(title.textContent).toBe(DEFAULT_PAGE_BANNERS[pageKey].title)
+    expect(banner.textContent).toContain(DEFAULT_PAGE_BANNERS[pageKey].description)
+    expect(banner.classList.contains('mx-3')).toBe(true)
+    expect(banner.classList.contains('md:mx-4')).toBe(true)
+  },
+)
