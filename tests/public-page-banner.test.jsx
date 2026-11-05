@@ -22,6 +22,17 @@ test('banner publik menampilkan konfigurasi backend bila tersedia', async () => 
   expect(screen.getByText('Deskripsi banner yang diatur admin lewat dashboard.')).not.toBeNull()
 })
 
+test('URL gambar admin yang mengandung apostrof tetap menjadi background publik', async () => {
+  const image = "https://images.example.test/team's-banner.webp"
+  server.use(http.get('*/api/public/page-banners/tentang', () => HttpResponse.json({
+    success: true,
+    data: { ...remote, image_url: image },
+  })))
+  render(<PublicPageBanner pageKey="tentang" breadcrumb="Tentang Kami" />)
+  const title = await screen.findByRole('heading', { name: remote.title })
+  expect(title.closest('section').querySelector('[style]').style.backgroundImage).toContain(image)
+})
+
 test.each([
   ['null', () => HttpResponse.json({ success: true, data: null })],
   ['404', () => HttpResponse.json({ success: false, message: 'Not Found' }, { status: 404 })],

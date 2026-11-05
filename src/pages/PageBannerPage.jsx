@@ -48,10 +48,12 @@ export default function PageBannerPage({ pageKey, role }) {
   const [uploadError, setUploadError] = useState('')
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [pendingSave, setPendingSave] = useState(null)
   const [deleting, setDeleting] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const labelRef = useRef(null)
   const busy = saving || uploading || deleting
+  const editingDisabled = busy || Boolean(pendingSave)
   const savedRecord = result.record
 
   useEffect(() => {
@@ -105,7 +107,7 @@ export default function PageBannerPage({ pageKey, role }) {
   const uploadImage = async (event) => {
     const file = event.target.files?.[0]
     event.target.value = ''
-    if (!file || busy) return
+    if (!file || editingDisabled) return
     const validationError = validateBannerImageFile(file)
     if (validationError) {
       setUploadError(validationError)
@@ -125,9 +127,39 @@ export default function PageBannerPage({ pageKey, role }) {
     }
   }
 
+  const verifySavedBanner = async (payload) => {
+    const record = await getPageBannerApi(pageKey)
+    if (!isPageBannerRecord(record, pageKey)) {
+      throw new Error('Banner terkirim, tetapi belum dapat diverifikasi. Pilih Verifikasi Ulang.')
+    }
+    const savedPayload = toPageBannerPayload(record)
+    if (Object.keys(payload).some((key) => savedPayload[key] !== payload[key])) {
+      throw new Error(
+        'Banner terkirim, tetapi data dari server belum mencerminkan perubahan. Pilih Verifikasi Ulang tanpa mengirim ulang.',
+      )
+    }
+    setResult({ status: 'ready', record, message: '' })
+    setForm(savedPayload)
+    setPendingSave(null)
+    setNotice('Banner berhasil disimpan.')
+  }
+
+  const retrySaveVerification = async () => {
+    if (!canManage || busy || !pendingSave) return
+    setSaving(true)
+    setError('')
+    try {
+      await verifySavedBanner(pendingSave)
+    } catch (err) {
+      setError(getPageBannerErrorMessage(err, 'Banner belum dapat diverifikasi. Pilih Verifikasi Ulang untuk mencoba lagi.'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const save = async (event) => {
     event.preventDefault()
-    if (busy || result.status !== 'ready') return
+    if (!canManage || editingDisabled || result.status !== 'ready') return
     const validationErrors = validatePageBannerForm({ ...form, page: pageKey })
     setErrors(validationErrors)
     const firstError = Object.keys(validationErrors)[0]
@@ -139,24 +171,21 @@ export default function PageBannerPage({ pageKey, role }) {
     setError('')
     setNotice('')
     const payload = toPageBannerPayload(form)
+    let accepted = false
     try {
       if (savedRecord) await updatePageBannerApi(pageKey, payload)
       else await createPageBannerApi(pageKey, payload)
+      accepted = true
+      setPendingSave(payload)
       // Bukti simpan = baca ulang target yang sama, bukan respons tulis saja.
-      const record = await getPageBannerApi(pageKey)
-      if (!isPageBannerRecord(record, pageKey)) {
-        throw new Error(
-          `Banner terkirim, tetapi GET /api/page-banners/${pageKey} belum mengembalikan data yang bisa diverifikasi. Coba Muat Ulang.`,
-        )
-      }
-      setResult({ status: 'ready', record, message: '' })
-      setForm(toPageBannerPayload(record))
-      setNotice('Banner berhasil disimpan.')
+      await verifySavedBanner(payload)
     } catch (err) {
       setError(
         getPageBannerErrorMessage(
           err,
-          `Endpoint simpan /api/page-banners/${pageKey} belum tersedia di backend.`,
+          accepted
+            ? 'Banner terkirim, tetapi belum dapat diverifikasi. Pilih Verifikasi Ulang tanpa mengirim ulang.'
+            : `Gagal menyimpan banner ${pageName}. Periksa koneksi dan coba lagi.`,
         ),
       )
     } finally {
@@ -165,6 +194,7 @@ export default function PageBannerPage({ pageKey, role }) {
   }
 
   const removeBanner = async () => {
+    if (!canManage || editingDisabled || !savedRecord) return
     setDeleting(true)
     setError('')
     try {
@@ -225,12 +255,12 @@ export default function PageBannerPage({ pageKey, role }) {
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={reload}
+            onClick={pendingSave ? retrySaveVerification : reload}
             disabled={busy || result.status === 'loading'}
             className="inline-flex items-center gap-2 rounded-xl bg-sky-50 px-4 py-2.5 text-sm font-semibold text-sky-700 hover:bg-sky-100 disabled:opacity-50"
           >
             <RefreshCw size={16} aria-hidden="true" />
-            Muat Ulang
+            {pendingSave ? 'Verifikasi Ulang' : 'Muat Ulang'}
           </button>
           {savedRecord && (
             <button
@@ -240,7 +270,7 @@ export default function PageBannerPage({ pageKey, role }) {
                 setError('')
                 setConfirmDelete(true)
               }}
-              disabled={busy}
+              disabled={editingDisabled}
               className="inline-flex items-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-100 disabled:opacity-50"
             >
               <Trash2 size={16} aria-hidden="true" />
@@ -274,7 +304,7 @@ export default function PageBannerPage({ pageKey, role }) {
             className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)]"
           >
             <section className="rounded-2xl border border-sky-100 bg-white p-5 shadow-sm sm:p-6">
-              <fieldset disabled={busy} className="space-y-5">
+              <fieldset disabled={editingDisabled} className="space-y-5">
                 {result.status === 'error' && (
                   <p role="alert" className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm leading-relaxed text-red-700">
                     {result.message}
@@ -371,7 +401,7 @@ export default function PageBannerPage({ pageKey, role }) {
                     />
                     <label
                       htmlFor="banner-image-file"
-                      className={`inline-flex items-center gap-2 rounded-xl border border-sky-100 bg-sky-50 px-3.5 py-2.5 text-xs font-semibold text-sky-700 peer-focus:ring-2 peer-focus:ring-sky-400 ${busy ? 'opacity-50' : 'cursor-pointer hover:bg-sky-100'}`}
+                      className={`inline-flex items-center gap-2 rounded-xl border border-sky-100 bg-sky-50 px-3.5 py-2.5 text-xs font-semibold text-sky-700 peer-focus:ring-2 peer-focus:ring-sky-400 ${editingDisabled ? 'opacity-50' : 'cursor-pointer hover:bg-sky-100'}`}
                     >
                       <Upload size={15} aria-hidden="true" />
                       Unggah Gambar
@@ -395,16 +425,17 @@ export default function PageBannerPage({ pageKey, role }) {
                     setErrors({})
                     setError('')
                     setNotice('')
-                    setForm(toPageBannerPayload(DEFAULT_PAGE_BANNERS[pageKey] || emptyForm))
+                    const defaults = toPageBannerPayload(DEFAULT_PAGE_BANNERS[pageKey] || emptyForm)
+                    setForm((current) => ({ ...defaults, image_url: current.image_url || defaults.image_url }))
                   }}
-                  disabled={busy}
+                  disabled={editingDisabled}
                   className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-50"
                 >
                   Isi Teks Bawaan
                 </button>
                 <button
                   type="submit"
-                  disabled={busy || result.status !== 'ready'}
+                  disabled={editingDisabled || result.status !== 'ready'}
                   className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-50"
                 >
                   <Save size={16} aria-hidden="true" />
@@ -427,7 +458,7 @@ export default function PageBannerPage({ pageKey, role }) {
                   {preview.image ? (
                     <div
                       className="absolute inset-0 bg-cover bg-center opacity-60"
-                      style={{ backgroundImage: `url('${preview.image}')` }}
+                      style={{ backgroundImage: `url(${JSON.stringify(preview.image)})` }}
                     />
                   ) : (
                     <div className="absolute inset-0 bg-gradient-to-br from-sky-700/60 to-[#0c4a6e]" />

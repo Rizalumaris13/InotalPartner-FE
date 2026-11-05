@@ -1,13 +1,46 @@
-import { expect, test } from 'vitest'
+import { expect, test, vi } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
+import { http, HttpResponse } from 'msw'
 import TentangPage from '../src/pages/FrontPage/TentangPage'
+import { server } from './setup'
 
 function renderPage() {
   const container = document.createElement('div')
   container.innerHTML = renderToStaticMarkup(<TentangPage />)
   return within(container)
 }
+
+test('Tentang memuat gambar dari resource yang sama dengan editor tanpa request banner kedua', async () => {
+  const bannerRequests = []
+  const banner = {
+    page: 'tentang',
+    label: 'Tentang INOTAL',
+    title: 'Banner dari dashboard',
+    description: 'Gambar dan teks pilihan admin.',
+    image_url: '/uploads/tentang-dari-admin.webp',
+  }
+  vi.stubGlobal('IntersectionObserver', class {
+    observe() {}
+    disconnect() {}
+  })
+  server.use(
+    http.get('*/api/public/about*', () => HttpResponse.json({ success: true, data: [] })),
+    http.get('*/api/public/page-banners/:page', ({ params }) => {
+      bannerRequests.push(params.page)
+      return HttpResponse.json({ success: true, data: banner })
+    }),
+  )
+  try {
+    render(<TentangPage />)
+    const title = await screen.findByRole('heading', { name: banner.title })
+    await waitFor(() => expect(screen.queryByText('Memuat video profil...')).toBeNull())
+    expect(title.closest('section').querySelector('[style]').style.backgroundImage).toContain(banner.image_url)
+    expect(bannerRequests).toEqual(['tentang'])
+  } finally {
+    vi.unstubAllGlobals()
+  }
+})
 
 test('halaman Tentang tidak menampilkan tombol Hubungi Kami', () => {
   const page = renderPage()

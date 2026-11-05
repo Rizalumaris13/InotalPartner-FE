@@ -33,7 +33,7 @@ export default function PublicPageBanner({ pageKey, breadcrumb, onNavigate }) {
     <section className="mx-3 md:mx-4 mt-3 rounded-2xl bg-[#0c4a6e] relative overflow-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center opacity-60"
-        style={{ backgroundImage: `url('${bgImageUrl}')` }}
+        style={{ backgroundImage: `url(${JSON.stringify(bgImageUrl)})` }}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-[#0c4a6e]/85 via-[#0c4a6e]/55 to-[#0c4a6e]/85" />
       <div className="relative max-w-7xl mx-auto px-6 py-6">

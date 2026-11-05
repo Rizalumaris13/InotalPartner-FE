@@ -33,6 +33,14 @@ test('admin melihat form terisi dan pratinjau banner tersimpan', async () => {
   expect(preview.textContent).toContain('SIAPA KAMI — SEJAK 2019')
 })
 
+test('URL gambar dengan apostrof tetap terlihat di pratinjau admin', async () => {
+  const image = "https://images.example.test/team's-banner.webp"
+  server.use(http.get('*/api/page-banners/tentang', () => json({ ...saved, image_url: image })))
+  openAdmin()
+  const preview = await screen.findByRole('region', { name: 'Pratinjau banner' })
+  expect(preview.querySelector('.bg-cover').style.backgroundImage).toContain(image)
+})
+
 test('konfigurasi kosong menawarkan teks bawaan halaman tanpa mengklaim tersimpan', async () => {
   server.use(http.get('*/api/page-banners/event', () => json(null)))
   const user = openAdmin('event')
@@ -94,6 +102,45 @@ test('simpan perubahan memakai PUT dan mempertahankan isian bila gagal', async (
   expect(method).toBe('PUT')
   expect(payload.title).toBe('Berita Terbaru')
   expect(within(form).getByLabelText('Judul').value).toBe('Berita Terbaru')
+})
+
+test('gambar lama dari GET tidak dianggap tersimpan dan retry hanya memverifikasi', async () => {
+  let stored = saved
+  let submitted
+  let writes = 0
+  let reads = 0
+  const newImage = '/uploads/banner-admin-baru.webp'
+  server.use(
+    http.get('*/api/page-banners/tentang', () => {
+      reads += 1
+      return json(stored)
+    }),
+    http.put('*/api/page-banners/tentang', async ({ request }) => {
+      writes += 1
+      submitted = { page: 'tentang', ...await request.json() }
+      return json(submitted)
+    }),
+  )
+  const user = openAdmin()
+  const form = await screen.findByRole('form', { name: 'Banner Tentang' })
+  const image = within(form).getByLabelText('URL Gambar')
+  await user.clear(image)
+  await user.type(image, newImage)
+  await user.click(within(form).getByRole('button', { name: 'Simpan Banner' }))
+
+  expect(await screen.findByText(/belum mencerminkan perubahan/i)).not.toBeNull()
+  expect(screen.queryByText('Banner berhasil disimpan.')).toBeNull()
+  expect(image.value).toBe(newImage)
+  expect(within(form).getByRole('region', { name: 'Pratinjau banner' }).querySelector('[style]').style.backgroundImage).toContain(newImage)
+  expect(within(form).getByRole('button', { name: 'Simpan Banner' }).matches(':disabled')).toBe(true)
+
+  stored = submitted
+  await user.click(screen.getByRole('button', { name: 'Verifikasi Ulang' }))
+  expect(await screen.findByText('Banner berhasil disimpan.')).not.toBeNull()
+  expect(writes).toBe(1)
+  expect(reads).toBe(3)
+  expect(image.value).toBe(newImage)
+  expect(within(form).getByRole('button', { name: 'Simpan Banner' }).matches(':disabled')).toBe(false)
 })
 
 test('field wajib divalidasi sebelum mengirim request', async () => {

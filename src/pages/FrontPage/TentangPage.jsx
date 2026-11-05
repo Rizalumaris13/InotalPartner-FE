@@ -8,7 +8,6 @@ import {
 } from 'lucide-react'
 import PublicFooter from '../../components/PublicFooter'
 import { getPublicAboutSettingApi, getPublicTeamMembersApi, getPublicAboutFAQsApi, getPublicAboutVideosApi, getPublicAboutVideoSettingApi, getPublicAboutVideoHighlightsApi, resolveImageUrl } from '../../api/about'
-import { getPublicPageBannerApi } from '../../api/pageBanner'
 import { DynamicHighlightIcon } from '../../components/HighlightIconHelper'
 
 
@@ -396,14 +395,6 @@ export default function TentangPage({ onNavigate }) {
   const [openFaq, setOpenFaq] = useState(0)
   const [progRef, barsSeen] = useInView({ threshold: 0.4, fallbackMs: 1200 })
 
-  // Hero Banner State (Dinamis dari GET /api/public/page-banners/about)
-  const [heroBanner, setHeroBanner] = useState({
-    subtitle: 'Siapa Kami — Sejak 2019',
-    title: 'Tentang Kami',
-    description: 'Ekosistem kemitraan teknologi INOTAL — menghubungkan perusahaan, komunitas, dan talenta digital dalam satu jaringan yang saling menopang.',
-    image_url: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1600&q=80',
-  })
-
   // ─── DATA DINAMIS DARI BACKEND ─────────────────────────────────────────────
   const [teamSectionTitle, setTeamSectionTitle] = useState('Orang-orang di Balik Ekosistem Ini.')
   const [teamMembers, setTeamMembers] = useState([])
@@ -433,14 +424,13 @@ export default function TentangPage({ onNavigate }) {
         setFaqLoading(true)
         setFaqError('')
         setVideoLoading(true)
-        const [settingRes, teamRes, faqRes, videoRes, videoSettingRes, videoHighlightsRes, heroBannerRes] = await Promise.allSettled([
+        const [settingRes, teamRes, faqRes, videoRes, videoSettingRes, videoHighlightsRes] = await Promise.allSettled([
           getPublicAboutSettingApi(),
           getPublicTeamMembersApi(),
           getPublicAboutFAQsApi(),
           getPublicAboutVideosApi(),
           getPublicAboutVideoSettingApi(),
           getPublicAboutVideoHighlightsApi(),
-          getPublicPageBannerApi('about'),
         ])
 
         if (isMounted) {
@@ -515,18 +505,6 @@ export default function TentangPage({ onNavigate }) {
                 ? videoHighlightsRes.value
                 : []
             setVideoHighlightsList(rawHighlights)
-          }
-
-          if (heroBannerRes.status === 'fulfilled' && heroBannerRes.value) {
-            const bData = heroBannerRes.value?.data || heroBannerRes.value
-            if (bData && typeof bData === 'object') {
-              setHeroBanner((prev) => ({
-                subtitle: bData.subtitle?.trim() || prev.subtitle,
-                title: bData.title?.trim() || prev.title,
-                description: bData.description?.trim() || prev.description,
-                image_url: bData.image_url?.trim() || prev.image_url,
-              }))
-            }
           }
         }
       } catch (err) {
