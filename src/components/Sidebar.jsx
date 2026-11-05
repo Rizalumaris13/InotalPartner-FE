@@ -16,6 +16,7 @@ import {
   PanelsTopLeft,
 } from 'lucide-react'
 import { PAGE_BANNER_PAGES, PAGE_BANNER_ROLES } from '../data/pageBanners'
+import { JOIN_SECTION_NAV_GROUP } from '../data/homepageJoinSection'
 
 export const navItems = [
   { key: 'dashboard', label: 'Dashboard',     icon: LayoutDashboard, roles: ['super_admin','admin','operator','guest'] },
@@ -53,6 +54,7 @@ export const navItems = [
           { key: 'listTestimonial',   label: 'List Testimoni' },
         ],
       },
+      JOIN_SECTION_NAV_GROUP,
     ],
   },
   { 

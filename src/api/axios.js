@@ -21,12 +21,23 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
+// Endpoint publik tidak butuh sesi: 401 di sana bukan alasan mengeluarkan pengunjung.
+const isPublicPath = (url = '') => {
+  let path = String(url)
+  try {
+    path = new URL(path, window.location.origin).pathname
+  } catch {
+    // URL relatif yang tidak bisa diparse tetap diperiksa apa adanya.
+  }
+  return path.startsWith('/api/public/') || path.startsWith('/public/')
+}
+
 // Response interceptor 
 // Tangani error 401 secara global: hapus token dan redirect ke login
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && !isPublicPath(error.config?.url)) {
       localStorage.removeItem('inotal_token')
       localStorage.removeItem('inotal_user')
       // Redirect ke login

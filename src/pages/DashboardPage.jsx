@@ -28,6 +28,8 @@ import KontakInboxPage from './KontakInboxPage'
 import KemitraanPage from './KemitraanPage'
 import KartuTentangPage from './KartuTentangPage'
 import PageBannerPage from './PageBannerPage'
+import HomepageJoinImagesPage from './HomepageJoinImagesPage'
+import HomepageJoinCardsPage from './HomepageJoinCardsPage'
 import { PAGE_BANNER_PAGES } from '../data/pageBanners'
 
 import { useAuth } from '../hooks/useAuth'
@@ -196,6 +198,12 @@ export default function DashboardPage({ onNavigate }) {
         
       case 'listPost':
         return <PostList onEdit={handleEditPost} />
+
+      case 'homeJoinImages':
+        return <HomepageJoinImagesPage role={user?.role} />
+
+      case 'homeJoinCards':
+        return <HomepageJoinCardsPage role={user?.role} />
 
       case 'createSlider':
         return (

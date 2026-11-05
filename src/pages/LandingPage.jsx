@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react'
 import PublicNavbar from '../components/PublicNavbar'
 import PublicFooter from '../components/PublicFooter'
 import PublicPartnerSection from '../components/PublicPartnerSection'
+import HomepageJoinImages from '../components/HomepageJoinImages'
+import HomepageJoinCard from '../components/HomepageJoinCard'
+import useHomepageJoinCards from '../hooks/useHomepageJoinCards'
 import {
   getPublicNewsApi,
   getPublicEventsApi,
@@ -60,39 +63,6 @@ const partnershipBoxes = [
   },
 ]
 
-
-const actionBoxes = [
-  {
-    title: 'Dunia Cepat Berubah',
-    desc:
-      'Perubahan teknologi dan pasar terjadi begitu cepat — mereka yang adaptif akan memimpin gelombang berikutnya.',
-  },
-  {
-    title: 'Blue Ocean',
-    desc:
-      'Masih banyak ruang tak terjamah di ekosistem digital Indonesia. Jadilah yang pertama mengisinya bersama INOTAL.',
-  },
-  {
-    title: 'Ekonomi Inovasi Bikin Aksi',
-    desc:
-      'Inovasi bukan sekadar ide — ia adalah aksi nyata yang menggerakkan roda ekonomi dan menciptakan dampak sosial.',
-  },
-  {
-    title: 'Momentum Pergerakan',
-    desc:
-      'Saat ini adalah waktu terbaik untuk bergerak. Bergabunglah dengan komunitas pemuda yang tidak menunggu.',
-  },
-  {
-    title: 'Potensi Bangsa',
-    desc:
-      'Indonesia memiliki 270 juta jiwa dengan semangat luar biasa. INOTAL hadir untuk mengoptimalkan setiap potensi itu.',
-  },
-  {
-    title: 'Investasi Masa Depan',
-    desc:
-      'Bergabung hari ini adalah investasi terbaik untuk karier, jaringan, dan dampak yang akan kamu rasakan bertahun-tahun ke depan.',
-  },
-]
 
 const stats = [
   { value: '2021', label: 'TAHUN BERDIRI' },
@@ -182,6 +152,7 @@ function useCarousel(total, perView = 1) {
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 
 export default function LandingPage({ onNavigate }) {
+  const actionBoxes = useHomepageJoinCards()
   // Navbar transparency on scroll
   const [scrolled, setScrolled] = useState(false)
 
@@ -1358,72 +1329,20 @@ export default function LandingPage({ onNavigate }) {
 
           <div className="flex flex-col lg:flex-row items-center justify-between gap-10 lg:gap-4">
             <div className="flex flex-col gap-6 w-full lg:w-[32%]">
-              {actionBoxes.slice(0, 3).map((box, idx) => (
-                <div
-                  key={box.title}
-                  className="group flex gap-5 items-start p-6 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:bg-[#1a202c] transition-all duration-300 cursor-pointer"
-                >
-                  <span className="text-gray-300 group-hover:text-white font-bold text-3xl transition-colors duration-300">
-                    0{idx + 1}
-                  </span>
-
-                  <div>
-                    <h3 className="text-xl font-bold text-[#0f172a] group-hover:text-white mb-2 transition-colors duration-300">
-                      {box.title}
-                    </h3>
-
-                    <p className="text-gray-500 group-hover:text-gray-300 text-sm leading-relaxed transition-colors duration-300">
-                      {box.desc}
-                    </p>
-                  </div>
-                </div>
+              {actionBoxes.slice(0, 3).map((box) => (
+                <HomepageJoinCard key={box.position} card={box} />
               ))}
             </div>
 
             <div className="w-full sm:w-2/3 lg:w-[36%] flex items-center justify-center relative min-h-[380px] lg:min-h-[450px] my-10 lg:my-0">
               <div className="absolute inset-0 m-auto w-3/4 h-3/4 bg-gradient-to-tr from-sky-200 to-violet-200 rounded-full blur-3xl opacity-50 pointer-events-none" />
 
-              <div className="relative w-full max-w-[320px] h-[340px]">
-                <img
-                  src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=500&q=80"
-                  alt="Tim diskusi"
-                  className="absolute top-0 left-0 w-2/3 aspect-square object-cover shadow-lg -rotate-6 transition-transform duration-500 hover:scale-105 hover:z-30 cursor-pointer"
-                />
-
-                <img
-                  src="https://images.unsplash.com/photo-1573497491208-6b1acb260507?w=500&q=80"
-                  alt="Kemitraan"
-                  className="absolute bottom-0 right-0 w-2/3 aspect-square object-cover shadow-lg rotate-6 transition-transform duration-500 hover:scale-105 hover:z-30 cursor-pointer"
-                />
-
-                <img
-                  src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=500&q=80"
-                  alt="Kolaborasi"
-                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[75%] aspect-[4/3] object-cover shadow-2xl z-20 transition-transform duration-500 hover:scale-105 cursor-pointer"
-                />
-              </div>
+              <HomepageJoinImages />
             </div>
 
             <div className="flex flex-col gap-6 w-full lg:w-[32%]">
-              {actionBoxes.slice(3, 6).map((box, idx) => (
-                <div
-                  key={box.title}
-                  className="group flex gap-5 items-start p-6 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:bg-[#1a202c] transition-all duration-300 cursor-pointer"
-                >
-                  <span className="text-gray-300 group-hover:text-white font-bold text-3xl transition-colors duration-300">
-                    0{idx + 4}
-                  </span>
-
-                  <div>
-                    <h3 className="text-xl font-bold text-[#0f172a] group-hover:text-white mb-2 transition-colors duration-300">
-                      {box.title}
-                    </h3>
-
-                    <p className="text-gray-500 group-hover:text-gray-300 text-sm leading-relaxed transition-colors duration-300">
-                      {box.desc}
-                    </p>
-                  </div>
-                </div>
+              {actionBoxes.slice(3, 6).map((box) => (
+                <HomepageJoinCard key={box.position} card={box} />
               ))}
             </div>
           </div>

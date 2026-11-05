@@ -1,11 +1,15 @@
 import { Menu, ChevronRight } from 'lucide-react'
 import { navItems } from '../data/dashboardNavItems'
+import { JOIN_SECTION_NAV_GROUP } from '../data/homepageJoinSection'
 
 export default function Topbar({ activeNav, setSidebarOpen }) {
   const getActiveLabel = () => {
     if (activeNav === 'dashboard') return 'Dashboard'
     if (activeNav === 'formAboutMember') return 'About / Form Member'
     if (activeNav === 'changePassword') return 'Change Password'
+
+    const joinItem = JOIN_SECTION_NAV_GROUP.items.find((item) => item.key === activeNav)
+    if (joinItem) return `Home Page / ${JOIN_SECTION_NAV_GROUP.label} / ${joinItem.label}`
 
     for (const item of navItems) {
       if (item.key === activeNav) return item.label
