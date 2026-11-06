@@ -1,6 +1,8 @@
 import { Menu, ChevronRight } from 'lucide-react'
 import { navItems } from '../data/dashboardNavItems'
 import { JOIN_SECTION_NAV_GROUP } from '../data/homepageJoinSection'
+import { ABOUT_INTRO_NAV } from '../data/aboutIntro'
+import { HOMEPAGE_SERVICES_NAV } from '../data/homepageServices'
 
 export default function Topbar({ activeNav, setSidebarOpen }) {
   const getActiveLabel = () => {
@@ -10,6 +12,14 @@ export default function Topbar({ activeNav, setSidebarOpen }) {
 
     const joinItem = JOIN_SECTION_NAV_GROUP.items.find((item) => item.key === activeNav)
     if (joinItem) return `Home Page / ${JOIN_SECTION_NAV_GROUP.label} / ${joinItem.label}`
+
+    if (activeNav === ABOUT_INTRO_NAV.key) {
+      return `${ABOUT_INTRO_NAV.parent} / ${ABOUT_INTRO_NAV.group} / ${ABOUT_INTRO_NAV.label}`
+    }
+
+    if (activeNav === HOMEPAGE_SERVICES_NAV.key) {
+      return `${HOMEPAGE_SERVICES_NAV.parent} / ${HOMEPAGE_SERVICES_NAV.group} / ${HOMEPAGE_SERVICES_NAV.label}`
+    }
 
     for (const item of navItems) {
       if (item.key === activeNav) return item.label

@@ -2,22 +2,16 @@ import { useState, useRef, useEffect } from 'react'
 import PublicNavbar from '../../components/PublicNavbar'
 import PublicPageBanner from '../../components/PublicPageBanner'
 import PublicAboutCards from '../../components/PublicAboutCards'
+import AboutIntroSection from '../../components/AboutIntroSection'
+import useAboutIntro from '../../hooks/useAboutIntro'
 import {
   ChevronRight, Home, Lightbulb, Award, Headset, ArrowRight,
-  Phone, Mail, MapPin, CheckCircle2, Plus, User,
+  Phone, Mail, MapPin, Plus, User,
 } from 'lucide-react'
 import PublicFooter from '../../components/PublicFooter'
 import { getPublicAboutSettingApi, getPublicTeamMembersApi, getPublicAboutFAQsApi, getPublicAboutVideosApi, getPublicAboutVideoSettingApi, getPublicAboutVideoHighlightsApi, resolveImageUrl } from '../../api/about'
 import { DynamicHighlightIcon } from '../../components/HighlightIconHelper'
 
-
-const progressStats = [
-  { label: 'Kolaborasi berjalan', percent: 82 },
-  { label: 'Kepuasan mitra', percent: 90 },
-]
-
-const missionList = ['Kejelasan arah sejak awal', 'Komunikasi tanpa birokrasi', 'Program yang dituntaskan']
-const visionList = ['Ekosistem mitra terbesar di Indonesia', 'Dampak nyata lintas industri', 'Pertumbuhan bersama jangka panjang']
 
 const team = [
   { name: 'Andini Prameswari', role: 'Chief Executive', img: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&q=80' },
@@ -393,7 +387,7 @@ function renderTeamHeading(title) {
 export default function TentangPage({ onNavigate }) {
   const [scrolled, setScrolled] = useState(false)
   const [openFaq, setOpenFaq] = useState(0)
-  const [progRef, barsSeen] = useInView({ threshold: 0.4, fallbackMs: 1200 })
+  const intro = useAboutIntro()
 
   // ─── DATA DINAMIS DARI BACKEND ─────────────────────────────────────────────
   const [teamSectionTitle, setTeamSectionTitle] = useState('Orang-orang di Balik Ekosistem Ini.')
@@ -602,77 +596,7 @@ export default function TentangPage({ onNavigate }) {
           ))}
         </div>
       </section>
-      <section className="bg-[#F0F4F8] py-20 md:py-28">
-        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-14 lg:gap-20 items-center">
-          <Reveal className="relative">
-            <div className="rounded-2xl overflow-hidden">
-              <img
-                src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&q=80"
-                alt="Tim INOTAL Partner dalam sesi diskusi kolaborasi"
-                className="w-full h-[420px] md:h-[500px] object-cover"
-                loading="lazy"
-              />
-            </div>
-            <div ref={progRef} className="absolute -bottom-8 left-6 md:left-10 bg-white rounded-xl shadow-xl border border-gray-100 px-7 py-6 w-[280px]">
-              <h4 className="font-bold text-[15px] mb-4">Progres Kemitraan</h4>
-              <div className="space-y-4">
-                {progressStats.map(({ label, percent }) => (
-                  <div key={label}>
-                    <div className="flex justify-between text-[12px] font-semibold mb-1.5">
-                      <span className="text-[#364e52]">{label}</span>
-                      <span className="text-[#0284c7]">{percent}%</span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-gray-200 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-[#0284c7] transition-all duration-[1400ms] ease-out"
-                        style={{ width: barsSeen ? `${percent}%` : '0%' }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Reveal>
-          <div className="pt-10 lg:pt-0">
-            <Reveal>
-              <SubTitle>Kenal Kami Lebih Dekat</SubTitle>
-              <h2 className="text-3xl md:text-[42px] font-extrabold tracking-tight leading-[1.18] mb-10">
-                Menggerakkan kolaborasi yang berdampak untuk{' '}
-                <span className="text-[#0284c7]">pertumbuhan bersama.</span>
-              </h2>
-            </Reveal>
-
-            <div className="grid sm:grid-cols-2 gap-5 mb-10">
-              {[
-                { title: 'Misi Kami', desc: 'Memberdayakan mitra melalui solusi kolaborasi yang terukur dan layanan yang sungguh-sungguh.', items: missionList, dot: 'bg-[#0284c7]' },
-                { title: 'Visi Kami', desc: 'Menjadi ekosistem kemitraan teknologi paling dipercaya di Indonesia.', items: visionList, dot: 'bg-sky-500' },
-              ].map(({ title, desc, items, dot }, i) => (
-                <Reveal key={title} delay={i * 120}>
-                  <div className="bg-white rounded-xl border border-gray-200/80 p-7 h-full hover:border-[#0284c7]/50 transition-colors">
-                    <h3 className="text-lg font-bold mb-2.5 flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${dot}`} />
-                      {title}
-                    </h3>
-                    <p className="text-[13.5px] leading-relaxed text-[#364e52] mb-4">{desc}</p>
-                    <ul className="space-y-2.5">
-                      {items.map((it) => (
-                        <li key={it} className="flex items-start gap-2 text-[13px] text-[#0c4a6e]">
-                          <CheckCircle2 size={15} className="text-[#0284c7] shrink-0 mt-0.5" />
-                          {it}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
-
-            <Reveal delay={200}>
-              <PillButton onClick={() => onNavigate?.('program')}>Lihat Program Kami</PillButton>
-            </Reveal>
-          </div>
-        </div>
-      </section>
+      <AboutIntroSection intro={intro} onNavigate={onNavigate} />
       <section className="max-w-7xl mx-auto px-6 py-20 md:py-28">
         <Reveal className="text-center max-w-xl mx-auto mb-14">
           <SubTitle>Tim Kami</SubTitle>

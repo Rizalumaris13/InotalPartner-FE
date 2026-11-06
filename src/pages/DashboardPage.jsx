@@ -27,9 +27,11 @@ import ListVideoHighlightPage from './ListVideoHighlightPage'
 import KontakInboxPage from './KontakInboxPage'
 import KemitraanPage from './KemitraanPage'
 import KartuTentangPage from './KartuTentangPage'
+import AboutIntroPage from './AboutIntroPage'
 import PageBannerPage from './PageBannerPage'
 import HomepageJoinImagesPage from './HomepageJoinImagesPage'
 import HomepageJoinCardsPage from './HomepageJoinCardsPage'
+import HomepageServicesPage from './HomepageServicesPage'
 import { PAGE_BANNER_PAGES } from '../data/pageBanners'
 
 import { useAuth } from '../hooks/useAuth'
@@ -173,6 +175,9 @@ export default function DashboardPage({ onNavigate }) {
       case 'aboutCards':
         return <KartuTentangPage role={user?.role} />
 
+      case 'aboutIntro':
+        return <AboutIntroPage role={user?.role} />
+
       case 'bannerTentang':
       case 'bannerEvent':
       case 'bannerBerita':
@@ -204,6 +209,9 @@ export default function DashboardPage({ onNavigate }) {
 
       case 'homeJoinCards':
         return <HomepageJoinCardsPage role={user?.role} />
+
+      case 'homeServices':
+        return <HomepageServicesPage role={user?.role} />
 
       case 'createSlider':
         return (

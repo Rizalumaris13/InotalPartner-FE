@@ -17,6 +17,8 @@ import {
 } from 'lucide-react'
 import { PAGE_BANNER_PAGES, PAGE_BANNER_ROLES } from '../data/pageBanners'
 import { JOIN_SECTION_NAV_GROUP } from '../data/homepageJoinSection'
+import { ABOUT_INTRO_NAV } from '../data/aboutIntro'
+import { HOMEPAGE_SERVICES_NAV } from '../data/homepageServices'
 
 export const navItems = [
   { key: 'dashboard', label: 'Dashboard',     icon: LayoutDashboard, roles: ['super_admin','admin','operator','guest'] },
@@ -55,6 +57,13 @@ export const navItems = [
         ],
       },
       JOIN_SECTION_NAV_GROUP,
+      {
+        key: 'homeServicesGroup',
+        label: HOMEPAGE_SERVICES_NAV.group,
+        items: [
+          { key: HOMEPAGE_SERVICES_NAV.key, label: HOMEPAGE_SERVICES_NAV.label },
+        ],
+      },
     ],
   },
   { 
@@ -63,6 +72,13 @@ export const navItems = [
     icon: Info,             
     roles: ['super_admin','admin'],
     subGroups: [
+      {
+        key: 'aboutIntroGroup',
+        label: ABOUT_INTRO_NAV.group,
+        items: [
+          { key: ABOUT_INTRO_NAV.key, label: ABOUT_INTRO_NAV.label },
+        ],
+      },
       {
         key: 'aboutSettingsGroup',
         label: 'Tim Kami',

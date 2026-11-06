@@ -5,6 +5,8 @@ import PublicPartnerSection from '../components/PublicPartnerSection'
 import HomepageJoinImages from '../components/HomepageJoinImages'
 import HomepageJoinCard from '../components/HomepageJoinCard'
 import useHomepageJoinCards from '../hooks/useHomepageJoinCards'
+import HomepageServicesSection from '../components/HomepageServicesSection'
+import useHomepageServices from '../hooks/useHomepageServices'
 import {
   getPublicNewsApi,
   getPublicEventsApi,
@@ -20,10 +22,6 @@ import {
 import { getPublicTestimonialsApi } from '../api/testimonials'
 
 import {
-  MonitorCog,
-  Layers,
-  Settings2,
-  Code2,
   ChevronLeft,
   ChevronRight,
   Phone,
@@ -35,34 +33,6 @@ import {
 } from 'lucide-react'
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
-
-const partnershipBoxes = [
-  {
-    icon: MonitorCog,
-    title: 'IT CONSULTANT',
-    desc:
-      'Layanan konsultasi IT profesional untuk bisnis yang ingin memanfaatkan teknologi secara strategis demi pertumbuhan dan efisiensi operasional.',
-  },
-  {
-    icon: Layers,
-    title: 'SYSTEM INTEGRATION',
-    desc:
-      'Memastikan komponen perangkat lunak dan keras dalam ekosistem IT bisnis Anda bekerja secara harmonis dan terpadu.',
-  },
-  {
-    icon: Settings2,
-    title: 'RESOURCE MANAGEMENT',
-    desc:
-      'Layanan konsultasi dan implementasi strategis untuk mengalokasikan sumber daya secara efektif demi efisiensi biaya maksimal.',
-  },
-  {
-    icon: Code2,
-    title: 'SOFTWARE DEVELOPMENT',
-    desc:
-      'Pengembangan solusi perangkat lunak kustom yang disesuaikan dengan kebutuhan spesifik dan visi bisnis klien.',
-  },
-]
-
 
 const stats = [
   { value: '2021', label: 'TAHUN BERDIRI' },
@@ -153,6 +123,7 @@ function useCarousel(total, perView = 1) {
 
 export default function LandingPage({ onNavigate }) {
   const actionBoxes = useHomepageJoinCards()
+  const services = useHomepageServices()
   // Navbar transparency on scroll
   const [scrolled, setScrolled] = useState(false)
 
@@ -815,129 +786,7 @@ export default function LandingPage({ onNavigate }) {
 
       {/* ── 3. PARTNERSHIP ── */}
 
-      <section className="px-6 py-20 md:py-28 bg-white overflow-hidden">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-20 items-center">
-          <div className="order-2 lg:order-1 relative mx-auto w-full max-w-sm lg:max-w-none h-[420px] sm:h-[480px]">
-            <div
-              className="absolute inset-0 m-auto w-[340px] h-[340px] sm:w-[400px] sm:h-[400px] bg-gradient-to-br from-sky-300 via-violet-300 to-emerald-200 opacity-70 blur-2xl"
-              style={{
-                borderRadius:
-                  '60% 40% 30% 70% / 60% 30% 70% 40%',
-                animation:
-                  'blobMorph 14s ease-in-out infinite alternate',
-              }}
-            />
-
-            <div className="absolute top-2 left-0 sm:left-4 w-[72%] aspect-[4/5] rounded-[2rem] overflow-hidden shadow-xl ring-4 ring-white">
-              <img
-                src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=80"
-                alt="Tim berdiskusi"
-                className="w-full h-full object-cover"
-              />
-            </div>
-
-            <div
-              className="absolute bottom-2 right-0 sm:right-2 w-[58%] aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl ring-4 ring-white"
-              style={{
-                animation:
-                  'floatY 5s ease-in-out infinite',
-              }}
-            >
-              <img
-                src="https://images.unsplash.com/photo-1573497491208-6b1acb260507?w=600&q=80"
-                alt="Jabat tangan kemitraan bisnis"
-                className="w-full h-full object-cover"
-              />
-            </div>
-
-            <div
-              className="hidden sm:flex absolute -top-2 right-4 items-center gap-2 bg-white rounded-full shadow-lg pl-2 pr-4 py-2"
-              style={{
-                animation:
-                  'floatY 4.5s ease-in-out 1s infinite',
-              }}
-            >
-              <span className="w-8 h-8 rounded-full bg-sky-500 text-white text-xs font-extrabold flex items-center justify-center">
-                7+
-              </span>
-
-              <span className="text-gray-700 text-xs font-semibold">
-                Partnership Aktif
-              </span>
-            </div>
-          </div>
-
-          <div className="order-1 lg:order-2">
-            <p className="text-sky-500 text-sm font-bold tracking-[0.2em] uppercase mb-3">
-              Layanan Kami
-            </p>
-
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">
-              Partnership
-            </h2>
-
-            <p className="text-gray-400 text-base leading-relaxed mb-10 max-w-md">
-              Empat pilar layanan yang kami rancang untuk
-              mendampingi transformasi digital bisnis Anda,
-              dari strategi hingga eksekusi.
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div className="flex flex-col gap-5">
-                {partnershipBoxes
-                  .slice(0, 2)
-                  .map(({ icon: Icon, title, desc }) => (
-                    <div
-                      key={title}
-                      className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-lg hover:shadow-sky-100 hover:-translate-y-1 transition-all duration-300 flex flex-col items-center text-center"
-                    >
-                      <div className="mb-9 mt-2">
-                        <Icon
-                          size={70}
-                          className="text-sky-500"
-                        />
-                      </div>
-
-                      <h3 className="font-bold text-sm tracking-wide text-gray-800 mb-2 uppercase">
-                        {title}
-                      </h3>
-
-                      <p className="text-gray-400 text-sm leading-relaxed">
-                        {desc}
-                      </p>
-                    </div>
-                  ))}
-              </div>
-
-              <div className="flex flex-col gap-5 sm:mt-10">
-                {partnershipBoxes
-                  .slice(2, 4)
-                  .map(({ icon: Icon, title, desc }) => (
-                    <div
-                      key={title}
-                      className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-lg hover:shadow-sky-100 hover:-translate-y-1 transition-all duration-300 flex flex-col items-center text-center"
-                    >
-                      <div className="mb-9 mt-2">
-                        <Icon
-                          size={70}
-                          className="text-sky-500"
-                        />
-                      </div>
-
-                      <h3 className="font-bold text-sm tracking-wide text-gray-800 mb-2 uppercase">
-                        {title}
-                      </h3>
-
-                      <p className="text-gray-400 text-sm leading-relaxed">
-                        {desc}
-                      </p>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <HomepageServicesSection services={services} />
 
       {/* ── 4. EVENT UPDATE ── */}
 
