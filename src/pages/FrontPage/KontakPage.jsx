@@ -167,7 +167,7 @@ export default function KontakPage({ onNavigate }) {
       {/* Kartu: peta (kiri) + info kontak (kanan) */}
       <section className="relative z-10 max-w-7xl mx-auto px-6 mt-6">
         <div className="rounded-2xl overflow-hidden shadow-xl shadow-[#0c4a6e]/10 border border-sky-100 bg-white grid md:grid-cols-2">
-          <div className="min-h-[280px] md:min-h-[440px]">
+          <div className="min-h-[280px] md:min-h-[360px]">
             <iframe
               title="Peta lokasi INOTAL Partner — Bandung"
               src={MAP_EMBED_URL}
@@ -175,9 +175,9 @@ export default function KontakPage({ onNavigate }) {
               loading="lazy"
             />
           </div>
-          <div className="p-8 md:p-12 flex flex-col justify-center gap-8">
+          <div className="p-6 md:p-8 lg:p-10 flex flex-col justify-center gap-6">
             {contactInfo.map(({ icon: Icon, title, lines }) => (
-              <div key={title} className="flex items-start gap-5">
+              <div key={title} className="flex items-start gap-4">
                 <span className="inline-flex w-11 h-11 rounded-xl bg-sky-50 text-sky-500 items-center justify-center shrink-0">
                   <Icon size={21} />
                 </span>
@@ -194,20 +194,20 @@ export default function KontakPage({ onNavigate }) {
       </section>
 
       {/* Form — "Drop Us a Line" versi INOTAL */}
-      <section className="max-w-7xl mx-auto px-6 py-20 md:py-28">
+      <section className="max-w-7xl mx-auto px-6 py-12 md:py-16">
         <div className="max-w-3xl mx-auto">
           <Reveal>
             <h2 className="text-3xl md:text-[42px] font-extrabold tracking-tight text-center mb-3">
               Tinggalkan Pesan
             </h2>
-            <p className="text-[15px] text-gray-500 text-center mb-12">
+            <p className="text-[15px] text-gray-500 text-center mb-8">
               Isi formulir di bawah dan tim kami akan segera menghubungi kamu kembali.
             </p>
           </Reveal>
 
           <Reveal delay={120}>
             {status === 'success' ? (
-              <div className="rounded-2xl border border-green-100 bg-green-50/50 p-10 md:p-14 text-center">
+              <div className="rounded-2xl border border-green-100 bg-green-50/50 p-8 md:p-10 text-center">
                 <span className="inline-flex w-16 h-16 rounded-full bg-green-50 text-green-500 items-center justify-center mb-5">
                   <CheckCircle2 size={32} />
                 </span>
@@ -225,7 +225,7 @@ export default function KontakPage({ onNavigate }) {
                 </button>
               </div>
             ) : (
-              <div className="rounded-2xl border border-sky-100 bg-[#F8FAFC] p-8 md:p-10 shadow-sm">
+              <div className="rounded-2xl border border-sky-100 bg-[#F8FAFC] p-6 md:p-8 shadow-sm">
                 {status === 'error' && (
                   <div className="flex items-start gap-3 rounded-xl bg-red-50 border border-red-100 px-4 py-3.5 mb-6 text-[13.5px] text-red-600">
                     <AlertCircle size={16} className="mt-0.5 shrink-0" />
@@ -343,7 +343,7 @@ export default function KontakPage({ onNavigate }) {
 
       {/* Stats strip */}
       <section className="border-y border-sky-100 bg-[#F8FAFC]">
-        <div className="max-w-7xl mx-auto px-6 py-14 md:py-16 text-center">
+        <div className="max-w-7xl mx-auto px-6 py-12 md:py-16 text-center">
           <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight mb-10">
             Sudah dipercaya 120+ mitra.{' '}
             <span className="text-[#0284c7]">Bergabunglah dan kembangkan bisnismu.</span>

@@ -100,7 +100,7 @@ export default function PublicNavbar({ onNavigate, activePage, scrolled }) {
 
       {/* Mobile menu — always solid white */}
       {menuOpen && (
-        <div className="xl:hidden bg-white border-t border-sky-100 px-6 py-4 flex flex-col gap-3 text-sm text-gray-600">
+        <div className="xl:hidden max-h-[calc(100dvh-4rem)] overflow-y-auto bg-white border-t border-sky-100 px-6 py-4 flex flex-col gap-3 text-sm text-gray-600">
           {navLinks.map(({ label, page }) => (
             <button
               key={page}

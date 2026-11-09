@@ -196,7 +196,7 @@ function VideoProfile({ video, loading }) {
 
   if (loading) {
     return (
-      <div className="relative rounded-2xl overflow-hidden bg-[#0c4a6e]/90 aspect-[16/10] w-full flex items-center justify-center">
+      <div className="relative rounded-2xl overflow-hidden bg-[#0c4a6e]/90 min-h-[220px] sm:min-h-[260px] w-full flex items-center justify-center">
         <div className="text-center text-white/80 space-y-3">
           <div className="w-8 h-8 border-2 border-sky-400 border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-xs font-medium tracking-wide">Memuat video profil...</p>
@@ -207,7 +207,7 @@ function VideoProfile({ video, loading }) {
 
   if (!video) {
     return (
-      <div className="relative rounded-2xl overflow-hidden bg-[#0c4a6e] aspect-[16/10] w-full flex items-center justify-center p-8 border border-white/10">
+      <div className="relative rounded-2xl overflow-hidden bg-[#0c4a6e] min-h-[220px] sm:min-h-[260px] w-full flex items-center justify-center p-6 md:p-8 border border-white/10">
         <div className="text-center text-white/70 max-w-sm space-y-2">
           <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mx-auto text-sky-400">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -348,7 +348,7 @@ function StatCard({ icon, value, decimals, suffix, label, note, index }) {
   return (
     <div
       ref={ref}
-      className="group relative h-full bg-white border border-gray-200/80 rounded-xl px-7 py-8 overflow-hidden hover:border-[#0284c7]/50 transition-colors duration-300"
+      className="group relative h-full bg-white border border-gray-200/80 rounded-xl p-6 overflow-hidden hover:border-[#0284c7]/50 transition-colors duration-300"
     >
       <span className="absolute left-0 top-0 h-full w-1 bg-sky-500 origin-top scale-y-0 transition-transform duration-500 group-hover:scale-y-100" />
       <div className="flex items-start justify-between gap-4 mb-6">
@@ -537,8 +537,8 @@ export default function TentangPage({ onNavigate }) {
         <PublicNavbar onNavigate={onNavigate} activePage="tentang" scrolled={scrolled} />
       </div>
       <PublicPageBanner pageKey="tentang" breadcrumb="Tentang Kami" onNavigate={onNavigate} />
-      <section className="max-w-7xl mx-auto px-6 py-20 md:py-28">
-        <div className="mb-14">
+      <section className="max-w-7xl mx-auto px-6 py-12 md:py-16">
+        <div className="mb-8 md:mb-10">
           <Reveal>
             <SubTitle>Pilih yang Terbaik</SubTitle>
             <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight leading-[1.15] max-w-2xl">
@@ -550,13 +550,13 @@ export default function TentangPage({ onNavigate }) {
 
         <PublicAboutCards onNavigate={onNavigate} />
       </section>
-      <section className="max-w-7xl mx-auto px-6 pb-20 md:pb-28">
-        <div className="grid lg:grid-cols-[1.35fr_1fr] gap-10 lg:gap-14 items-center">
+      <section className="max-w-7xl mx-auto px-6 pb-12 md:pb-16">
+        <div className="grid lg:grid-cols-[1.35fr_1fr] gap-8 lg:gap-10 items-center">
           <Reveal>
             <VideoProfile video={profileVideo} loading={videoLoading} />
           </Reveal>
 
-          <div className="pt-6 lg:pt-0">
+          <div>
             <Reveal>
               <SubTitle>{videoSetting.section_label || 'Video Profil'}</SubTitle>
               <h2 className="text-3xl md:text-[42px] font-extrabold tracking-tight leading-[1.18] mb-6">
@@ -570,7 +570,7 @@ export default function TentangPage({ onNavigate }) {
             </Reveal>
 
             {videoHighlightsList.length > 0 ? (
-              <div className="mt-9 space-y-5">
+              <div className="mt-8 space-y-5">
                 {videoHighlightsList.map((item, i) => (
                   <Reveal key={item.id || item.title || i} delay={i * 120}>
                     <div className="flex items-start gap-4">
@@ -589,16 +589,16 @@ export default function TentangPage({ onNavigate }) {
           </div>
         </div>
       </section>
-      <section className="max-w-7xl mx-auto px-6 pb-20 md:pb-28">
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <section className="max-w-7xl mx-auto px-6 pb-12 md:pb-16">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {impactStats.map((stat, i) => (
             <StatCard key={stat.label} {...stat} index={i} />
           ))}
         </div>
       </section>
       <AboutIntroSection intro={intro} onNavigate={onNavigate} />
-      <section className="max-w-7xl mx-auto px-6 py-20 md:py-28">
-        <Reveal className="text-center max-w-xl mx-auto mb-14">
+      <section className="max-w-7xl mx-auto px-6 py-12 md:py-16">
+        <Reveal className="text-center max-w-xl mx-auto mb-8 md:mb-10">
           <SubTitle>Tim Kami</SubTitle>
           <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight leading-[1.15]">
             {renderTeamHeading(teamSectionTitle)}
@@ -649,8 +649,8 @@ export default function TentangPage({ onNavigate }) {
           })}
         </div>
       </section>
-      <section className="bg-[#F0F4F8] py-20 md:py-28">
-        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-[0.85fr_1.4fr] gap-12 lg:gap-16 items-start">
+      <section className="bg-[#F0F4F8] py-12 md:py-16">
+        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-[0.85fr_1.4fr] gap-8 lg:gap-10 items-start">
 
           <Reveal>
             <SubTitle>Pertanyaan Umum</SubTitle>
@@ -693,7 +693,7 @@ export default function TentangPage({ onNavigate }) {
                       <button
                         onClick={() => setOpenFaq(open ? -1 : i)}
                         aria-expanded={open}
-                        className="w-full flex items-center justify-between gap-4 px-7 py-5 text-left cursor-pointer"
+                        className="w-full flex items-center justify-between gap-4 px-5 sm:px-7 py-5 text-left cursor-pointer"
                       >
                         <span className={`font-semibold text-[15px] leading-relaxed transition-colors ${
                           open ? 'text-[#0284c7]' : 'text-[#0c4a6e]'
@@ -710,7 +710,7 @@ export default function TentangPage({ onNavigate }) {
                         open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
                       }`}>
                         <div className="overflow-hidden">
-                          <p className="px-7 pb-6 text-[14px] leading-relaxed text-[#364e52] whitespace-pre-wrap">{f.answer}</p>
+                          <p className="px-5 sm:px-7 pb-6 text-[14px] leading-relaxed text-[#364e52] whitespace-pre-wrap">{f.answer}</p>
                         </div>
                       </div>
                     </div>
@@ -724,7 +724,7 @@ export default function TentangPage({ onNavigate }) {
       <section className="bg-[#0284c7] text-white relative overflow-hidden">
         <div className="absolute -top-40 -right-40 w-[480px] h-[480px] rounded-full border-[40px] border-white/10" />
         <div className="absolute -bottom-52 -left-32 w-[420px] h-[420px] rounded-full border-[32px] border-[#0c4a6e]/20" />
-        <div className="relative max-w-7xl mx-auto px-6 py-20 md:py-28 text-center">
+        <div className="relative max-w-7xl mx-auto px-6 py-12 md:py-16 text-center">
           <p className="text-[12px] font-bold tracking-[0.2em] uppercase text-sky-400 mb-5">
             Kesempatan Terbuka
           </p>

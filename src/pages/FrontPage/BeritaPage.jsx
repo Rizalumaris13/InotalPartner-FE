@@ -507,9 +507,9 @@ export default function BeritaPage({ onNavigate }) {
 
       {/* CONTENT */}
 
-      <section className="max-w-7xl mx-auto px-6 py-16 md:py-20">
+      <section className="max-w-7xl mx-auto px-6 py-12 md:py-16">
 
-        <div className="grid lg:grid-cols-[1fr_320px] gap-10 lg:gap-12">
+        <div className="grid xl:grid-cols-[minmax(0,1fr)_320px] gap-8 xl:gap-10">
 
 
           {/* KOLOM KIRI */}
@@ -521,7 +521,7 @@ export default function BeritaPage({ onNavigate }) {
 
             {/* SEARCH + SORT */}
 
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
 
               {/* SEARCH */}
 
@@ -553,7 +553,7 @@ export default function BeritaPage({ onNavigate }) {
 
               <div className="relative shrink-0">
 
-                <div className="relative w-[190px]">
+                <div className="relative w-full sm:w-[190px]">
                   <button
                     type="button"
                     onClick={() => setSortOpen((prev) => !prev)}
@@ -606,7 +606,7 @@ export default function BeritaPage({ onNavigate }) {
 
             {/* CATEGORY PILLS */}
 
-            <div className="flex flex-wrap gap-2 mb-10">
+            <div className="flex flex-wrap gap-2 mb-6 md:mb-8">
 
               {categories.map((c) => (
 
@@ -647,7 +647,7 @@ export default function BeritaPage({ onNavigate }) {
 
             {/*SECTION HEADER */}
 
-            <div className="flex items-baseline justify-between mb-8">
+            <div className="flex flex-wrap items-baseline justify-between gap-2 mb-6">
 
               <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">
 
@@ -672,7 +672,7 @@ export default function BeritaPage({ onNavigate }) {
 
             {newsLoading ? (
 
-              <div className="py-20 text-center">
+              <div className="px-6 py-10 text-center">
 
                 <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-[#0284c7]" />
 
@@ -686,7 +686,7 @@ export default function BeritaPage({ onNavigate }) {
 
               /* ERROR */
 
-              <div className="py-20 text-center border border-dashed border-red-200 rounded-2xl">
+              <div className="px-6 py-10 text-center border border-dashed border-red-200 rounded-2xl">
 
                 <p className="text-red-500 font-bold text-lg mb-2">
                   Gagal memuat berita
@@ -711,7 +711,7 @@ export default function BeritaPage({ onNavigate }) {
 
               /* EMPTY */
 
-              <div className="text-center py-20 border border-dashed border-gray-200 rounded-2xl">
+              <div className="text-center px-6 py-10 border border-dashed border-gray-200 rounded-2xl">
 
                 <p className="text-[#0c4a6e] font-bold text-lg mb-2">
                   Nggak ada hasilnya
@@ -739,7 +739,7 @@ export default function BeritaPage({ onNavigate }) {
 
               /*  NEWS GRID */
 
-              <div className="grid sm:grid-cols-2 gap-6 items-stretch">
+              <div className={`grid gap-6 items-stretch ${visible.length > 1 ? 'sm:grid-cols-2' : ''}`}>
 
                 {visible.map((p, i) => (
 
@@ -750,7 +750,7 @@ export default function BeritaPage({ onNavigate }) {
                   >
 
                     <article
-                      className="group h-full bg-white border border-gray-200/80 rounded-xl overflow-hidden hover:border-[#0284c7]/50 transition-colors flex flex-col cursor-pointer"
+                      className={`group h-full min-w-0 bg-white border border-gray-200/80 rounded-xl overflow-hidden hover:border-[#0284c7]/50 transition-colors flex flex-col cursor-pointer ${visible.length === 1 ? 'md:flex-row' : ''}`}
                       onClick={() => {
                         /**
                          * Nanti arahkan ke:
@@ -772,20 +772,20 @@ export default function BeritaPage({ onNavigate }) {
 
                       {/* IMAGE */}
 
-                      <div className="relative overflow-hidden">
+                      <div className={`relative aspect-[16/10] overflow-hidden ${visible.length === 1 ? 'md:w-2/5 md:shrink-0 md:aspect-auto' : ''}`}>
 
                         {p.image ? (
 
                           <img
                             src={p.image}
                             alt={p.title}
-                            className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-105"
+                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                             loading="lazy"
                           />
 
                         ) : (
 
-                          <div className="w-full h-64 bg-[#F0F4F8] flex items-center justify-center">
+                          <div className="absolute inset-0 w-full h-full bg-[#F0F4F8] flex items-center justify-center">
 
                             <span className="text-sm text-gray-400">
                               Tidak ada gambar
@@ -797,7 +797,7 @@ export default function BeritaPage({ onNavigate }) {
 
 
                         {/* CATEGORY */}
-                          <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
+                          <div className="absolute left-3 right-3 top-3 flex flex-wrap gap-1.5">
                             {p.categories.map((name) => (
                               <span
                                 key={name}
@@ -812,7 +812,7 @@ export default function BeritaPage({ onNavigate }) {
 
                       {/* CONTENT */}
 
-                      <div className="pl-6 pr-6 py-4 pt-4 flex flex-col flex-1">
+                      <div className="p-5 flex flex-col flex-1 min-w-0">
 
                         
                         {/* DATE + TIME */}
@@ -889,7 +889,7 @@ export default function BeritaPage({ onNavigate }) {
               !newsError &&
               totalPages > 1 && (
 
-                <div className="mt-14 flex items-center justify-center gap-2">
+                <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
 
                   <button
                     onClick={() =>
@@ -966,7 +966,7 @@ export default function BeritaPage({ onNavigate }) {
 
           {/* SIDEBAR KANAN */}
 
-          <aside className="space-y-8 lg:sticky lg:top-24 lg:self-start">
+          <aside className="min-w-0 space-y-6 xl:sticky xl:top-24 xl:self-start">
 
 
             {/* PALING POPULER */}

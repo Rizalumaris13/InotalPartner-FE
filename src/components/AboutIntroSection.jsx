@@ -93,9 +93,9 @@ const cards = [
 // dengan halaman pada lebar tetap 1280px, berapa pun lebar panelnya.
 export default function AboutIntroSection({ intro = DEFAULT_ABOUT_INTRO, onNavigate, animate = true, preview = false }) {
   return (
-    <section className={`bg-[#F0F4F8] ${preview ? 'py-28' : 'py-20 md:py-28'}`}>
-      <div className={`max-w-7xl mx-auto px-6 grid items-center ${preview ? 'grid-cols-2 gap-20' : 'gap-14 lg:grid-cols-2 lg:gap-20'}`}>
-        <Reveal className="relative" animate={animate}>
+    <section className={`bg-[#F0F4F8] ${preview ? 'py-16' : 'py-12 md:py-16'}`}>
+      <div className={`max-w-7xl mx-auto px-6 grid items-center ${preview ? 'grid-cols-2 gap-10' : 'gap-8 lg:grid-cols-[0.85fr_1.15fr] xl:grid-cols-2 xl:gap-10'}`}>
+        <Reveal className={preview ? 'relative' : 'relative mb-8 lg:mb-0'} animate={animate}>
           <div className="rounded-2xl overflow-hidden">
             <img
               src={resolveImageUrl(intro.photo_url)}
@@ -109,21 +109,21 @@ export default function AboutIntroSection({ intro = DEFAULT_ABOUT_INTRO, onNavig
             <ProgressBars rows={intro.progress} animate={animate} />
           </div>
         </Reveal>
-        <div className={preview ? '' : 'pt-10 lg:pt-0'}>
+        <div className="min-w-0">
           <Reveal animate={animate}>
             <SubTitle>{intro.eyebrow}</SubTitle>
-            <h2 className={`${preview ? 'text-[42px]' : 'text-3xl md:text-[42px]'} font-extrabold tracking-tight leading-[1.18] mb-10`}>
+            <h2 className={`${preview ? 'text-[42px]' : 'text-3xl md:text-[42px]'} font-extrabold tracking-tight leading-[1.18] mb-8`}>
               {intro.headline}{' '}
               <span className="text-[#0284c7]">{intro.headline_accent}</span>
             </h2>
           </Reveal>
 
-          <div className={`grid ${preview ? 'grid-cols-2' : 'sm:grid-cols-2'} gap-5 mb-10`}>
+          <div className={`grid ${preview ? 'grid-cols-2' : 'sm:grid-cols-2'} gap-6 mb-8`}>
             {cards.map(({ key, dot }, index) => {
               const card = intro[key]
               return (
                 <Reveal key={key} delay={index * 120} animate={animate}>
-                  <div className="bg-white rounded-xl border border-gray-200/80 p-7 h-full hover:border-[#0284c7]/50 transition-colors">
+                  <div className="bg-white rounded-xl border border-gray-200/80 p-6 h-full hover:border-[#0284c7]/50 transition-colors">
                     <h3 className="text-lg font-bold mb-2.5 flex items-center gap-2">
                       <span className={`w-2 h-2 rounded-full ${dot}`} />
                       {card.title}

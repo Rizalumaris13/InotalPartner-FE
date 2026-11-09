@@ -131,14 +131,14 @@ export default function EventPage({ onNavigate }) {
 
       {/* ============ NEXT EVENT BANNER ============ */}
       {bannerEvent && (
-        <section className="max-w-7xl mx-auto px-6 pt-14 md:pt-16">
+        <section className="max-w-7xl mx-auto px-6 pt-12 md:pt-16">
           <Reveal>
             <div className="bg-[#0284c7] text-white rounded-2xl overflow-hidden relative">
               <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent" />
               {/* dekor lingkaran */}
               <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full border border-white/10" />
               <div className="absolute -right-8 -bottom-24 w-56 h-56 rounded-full border border-white/10" />
-              <div className="relative grid md:grid-cols-[auto_1fr_auto] gap-8 items-center p-7 md:p-9">
+              <div className="relative grid sm:grid-cols-[auto_minmax(0,1fr)] xl:grid-cols-[auto_minmax(0,1fr)_auto] gap-5 xl:gap-8 items-center p-6 md:p-8">
                 <div className="flex items-center gap-4">
                   {/* tanggal besar */}
                   <div className="text-center shrink-0">
@@ -182,7 +182,7 @@ export default function EventPage({ onNavigate }) {
                 </div>
                 <button
                   onClick={() => toggleRegister(bannerEvent.id)}
-                  className={`shrink-0 inline-flex items-center justify-center gap-2 font-bold text-[13.5px] px-6 py-3.5 rounded-xl transition-all ${
+                  className={`sm:col-start-2 xl:col-start-auto sm:justify-self-start shrink-0 inline-flex items-center justify-center gap-2 font-bold text-[13.5px] px-6 py-3.5 rounded-xl transition-all ${
                     registered.has(bannerEvent.id)
                       ? 'bg-white/15 text-white border border-white/30'
                       : 'bg-white text-[#0284c7] hover:shadow-lg hover:shadow-sky-900/20'
@@ -198,8 +198,8 @@ export default function EventPage({ onNavigate }) {
       )}
 
       {/* ============ CONTENT: LIST KIRI + SIDEBAR KANAN ============ */}
-      <section className="max-w-7xl mx-auto px-6 py-16 md:py-20">
-        <div className="grid lg:grid-cols-[1fr_320px] gap-10 lg:gap-12">
+      <section className="max-w-7xl mx-auto px-6 py-12 md:py-16">
+        <div className="grid xl:grid-cols-[minmax(0,1fr)_320px] gap-8 xl:gap-10">
           <div id="daftar-event" className="scroll-mt-24 min-w-0">
 
             {/* filter tipe — horizontal pills ala tag-archive, plus toggle event lewat */}
@@ -234,7 +234,7 @@ export default function EventPage({ onNavigate }) {
             </div>
 
             {pool.length === 0 ? (
-              <div className="text-center py-20 border border-dashed border-gray-200 rounded-2xl">
+              <div className="text-center px-6 py-10 md:py-12 border border-dashed border-gray-200 rounded-2xl">
                 <p className="text-[#0c4a6e] font-bold text-lg mb-2">Belum ada event di kategori ini</p>
                 <p className="text-[14px] text-[#364e52] mb-6">Coba lihat kategori lain atau cek lagi nanti.</p>
                 <button
@@ -252,8 +252,8 @@ export default function EventPage({ onNavigate }) {
                     <article className="group bg-white border border-gray-200/80 rounded-2xl overflow-hidden hover:border-[#0284c7]/50 transition-colors">
                       <div className="grid md:grid-cols-2">
                         {/* teks kiri */}
-                        <div className="p-7 md:p-9 flex flex-col justify-center order-2 md:order-1">
-                          <div className="flex items-center gap-2 mb-4">
+                        <div className="p-6 md:p-8 flex flex-col justify-center order-2 md:order-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 mb-4">
                             <span className="bg-[#0284c7] text-white text-[11px] font-bold uppercase tracking-[0.1em] px-2.5 py-1 rounded">
                               {featured.type}
                             </span>
@@ -416,7 +416,7 @@ export default function EventPage({ onNavigate }) {
 
                 {/* ---------- PAGINATION ---------- */}
                 {totalPages > 1 && (
-                  <div className="mt-12 flex items-center justify-center gap-2">
+                  <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
                     <button
                       onClick={() => setPage(Math.max(1, currentPage - 1))}
                       disabled={currentPage === 1}
@@ -453,7 +453,7 @@ export default function EventPage({ onNavigate }) {
           </div>
 
           {/* ---------- SIDEBAR KANAN ---------- */}
-          <aside className="space-y-8 lg:sticky lg:top-24 lg:self-start">
+          <aside className="grid sm:grid-cols-2 xl:block gap-6 xl:space-y-6 xl:sticky xl:top-24 xl:self-start items-start">
 
             {/* Mendatang */}
             <div className="bg-white border border-gray-200/80 rounded-xl overflow-hidden">
@@ -541,7 +541,7 @@ export default function EventPage({ onNavigate }) {
             </div>
 
             {/* CTA sidebar */}
-            <div className="bg-[#0284c7] text-white rounded-xl overflow-hidden relative">
+            <div className="sm:col-span-2 bg-[#0284c7] text-white rounded-xl overflow-hidden relative">
               <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
               <div className="relative p-6">
                 <Ticket size={22} className="mb-3 text-sky-200" />

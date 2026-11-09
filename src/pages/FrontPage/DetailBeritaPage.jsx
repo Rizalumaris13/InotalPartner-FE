@@ -432,7 +432,7 @@ export default function DetailBeritaPage({
           />
         </div>
 
-        <div className="max-w-7xl mx-auto px-6 py-24 text-center">
+        <div className="max-w-7xl mx-auto px-6 py-12 md:py-16 text-center">
           <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-[#0284c7]" />
 
           <p className="text-sm text-gray-400">
@@ -465,7 +465,7 @@ export default function DetailBeritaPage({
           />
         </div>
 
-        <div className="max-w-4xl mx-auto px-6 py-24 text-center">
+        <div className="max-w-4xl mx-auto px-6 py-12 md:py-16 text-center">
           <h1 className="text-3xl font-extrabold mb-4">
             Berita Tidak Ditemukan
           </h1>
@@ -540,10 +540,10 @@ export default function DetailBeritaPage({
         {/* ARTICLE */}
 
         <main className="max-w-7xl mx-auto px-6 py-8 md:py-12">
-        <div className="grid lg:grid-cols-[minmax(0,1fr)_320px] gap-12 lg:gap-16">
+        <div className="grid xl:grid-cols-[minmax(0,1fr)_320px] gap-8 xl:gap-10">
 
             {/* CONTENT */}
-            <article className="min-w-0">
+            <article className="min-w-0 w-full max-w-3xl mx-auto xl:max-w-none">
 
             {/* BACK BUTTON */}
             <button
@@ -693,7 +693,7 @@ export default function DetailBeritaPage({
             </article>
 
             {/* SIDEBAR */}
-            <aside className="lg:sticky lg:top-24 lg:self-start">
+            <aside className="min-w-0 w-full max-w-3xl mx-auto xl:max-w-none xl:sticky xl:top-24 xl:self-start">
             <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white">
 
                 <div className="bg-[#0c4a6e] px-5 py-4">

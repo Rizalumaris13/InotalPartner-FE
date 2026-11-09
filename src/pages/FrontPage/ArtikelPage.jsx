@@ -124,14 +124,14 @@ export default function ArtikelPage({ onNavigate }) {
       <PublicPageBanner pageKey="artikel" breadcrumb="Artikel" onNavigate={onNavigate} />
 
       {/* ============ CONTENT ============ */}
-      <section className="max-w-7xl mx-auto px-6 py-16 md:py-20">
-        <div className="grid lg:grid-cols-[1fr_320px] gap-10 lg:gap-12">
+      <section className="max-w-7xl mx-auto px-6 py-12 md:py-16">
+        <div className="grid xl:grid-cols-[minmax(0,1fr)_320px] gap-8 xl:gap-10">
 
           {/* ---------- KOLOM KIRI ---------- */}
           <div id="daftar-artikel" className="scroll-mt-24 min-w-0">
 
             {/* search + sort */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
               <div className="relative flex-1">
                 <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                 <input
@@ -152,7 +152,7 @@ export default function ArtikelPage({ onNavigate }) {
             </div>
 
             {/* kategoriler — horizontal pills */}
-            <div className="flex flex-wrap gap-2 mb-10">
+            <div className="flex flex-wrap gap-2 mb-6 md:mb-8">
               {articleCategories.map(c => (
                 <button
                   key={c.name}
@@ -172,7 +172,7 @@ export default function ArtikelPage({ onNavigate }) {
             </div>
 
             {/* section header */}
-            <div className="flex items-baseline justify-between mb-8">
+            <div className="flex flex-wrap items-baseline justify-between gap-2 mb-6">
               <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">
                 {category === 'Semua' ? 'Artikel Terbaru' : category}
               </h2>
@@ -180,7 +180,7 @@ export default function ArtikelPage({ onNavigate }) {
             </div>
 
             {visible.length === 0 ? (
-              <div className="text-center py-20 border border-dashed border-gray-200 rounded-2xl">
+              <div className="text-center px-6 py-10 border border-dashed border-gray-200 rounded-2xl">
                 <p className="text-[#0c4a6e] font-bold text-lg mb-2">Nggak ada hasilnya</p>
                 <p className="text-[14px] text-[#364e52] mb-6">
                   Coba kata kunci lain atau ganti kategorinya.
@@ -198,11 +198,11 @@ export default function ArtikelPage({ onNavigate }) {
                   <Reveal key={a.id} delay={(i % 2) * 80} className="h-full">
                     <article className="group h-full bg-white border border-gray-200/80 rounded-xl overflow-hidden hover:border-[#0284c7]/50 transition-colors flex flex-col md:flex-row">
                       {/* thumbnail */}
-                      <div className="relative md:w-[300px] md:shrink-0 overflow-hidden">
+                      <div className="relative aspect-[16/10] md:aspect-auto md:w-[240px] xl:w-[280px] md:shrink-0 overflow-hidden">
                         <img
                           src={a.image}
                           alt={a.title}
-                          className="w-full h-[200px] md:h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                           loading="lazy"
                         />
                         <span className="absolute left-3 top-3 bg-white/95 backdrop-blur rounded-md px-2.5 py-1 text-[11px] font-bold text-[#0284c7]">
@@ -210,7 +210,7 @@ export default function ArtikelPage({ onNavigate }) {
                         </span>
                       </div>
                       {/* isi */}
-                      <div className="p-6 md:p-7 flex flex-col flex-1 min-w-0">
+                      <div className="p-5 md:p-6 flex flex-col flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-gray-400 mb-3">
                           <span>{formatDate(a.date)}</span>
                           <span className="w-1 h-1 rounded-full bg-gray-300" />
@@ -235,7 +235,7 @@ export default function ArtikelPage({ onNavigate }) {
                             </span>
                           ))}
                         </div>
-                        <div className="mt-auto flex items-center justify-between">
+                        <div className="mt-auto flex flex-wrap items-center justify-between gap-2">
                           <span className="text-[12.5px] font-semibold text-gray-400">{a.author}</span>
                           <span className="inline-flex items-center gap-1.5 text-[12.5px] font-bold text-[#0284c7]">
                             Baca
@@ -251,7 +251,7 @@ export default function ArtikelPage({ onNavigate }) {
 
             {/* pagination */}
             {totalPages > 1 && (
-              <div className="mt-14 flex items-center justify-center gap-2">
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
                 <button
                   onClick={() => go(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
@@ -283,7 +283,7 @@ export default function ArtikelPage({ onNavigate }) {
           </div>
 
           {/* ---------- SIDEBAR KANAN ---------- */}
-          <aside className="space-y-8 lg:sticky lg:top-24 lg:self-start">
+          <aside className="min-w-0 space-y-6 xl:sticky xl:top-24 xl:self-start">
 
             {/* Trending */}
             <div className="bg-white border border-gray-200/80 rounded-xl overflow-hidden">

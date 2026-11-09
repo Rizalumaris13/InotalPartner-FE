@@ -37,7 +37,7 @@ export default function AboutCard({ card, onNavigate, preview = false }) {
                 : {}),
             }
           : {})}
-        className="group relative block h-full overflow-hidden rounded-xl border border-gray-200/80 bg-white p-8 transition-colors hover:border-[#0284c7]/60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-500"
+        className="group relative block h-full overflow-hidden rounded-xl border border-gray-200/80 bg-white p-6 transition-colors hover:border-[#0284c7]/60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-500"
       >
         <span
           aria-hidden="true"
@@ -45,7 +45,7 @@ export default function AboutCard({ card, onNavigate, preview = false }) {
         >
           {formatAboutCardPosition(card.sort_order)}
         </span>
-        <span className="relative mb-16 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-[#F0F4F8] transition-colors duration-500 group-hover:bg-[#0284c7]">
+        <span className="relative mb-6 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-[#F0F4F8] transition-colors duration-500 group-hover:bg-[#0284c7]">
           <AboutCardIcon
             name={card.icon}
             className="text-[#0284c7] transition-colors duration-500 group-hover:text-white"
