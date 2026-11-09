@@ -20,7 +20,7 @@ test('judul ringkas merapatkan label dan breadcrumb tanpa mengubah ukuran font',
   container.innerHTML = renderToStaticMarkup(
     <>
       <PublicNavbar activePage="tentang" />
-      <PublicPageBanner pageKey="tentang" breadcrumb="Tentang Kami" compactTitle />
+      <PublicPageBanner pageKey="tentang" breadcrumb="Tentang Kami" />
     </>,
   )
   const logo = container.querySelector('nav button > span')
@@ -69,7 +69,7 @@ test.each([
 })
 
 test.each(Object.keys(DEFAULT_PAGE_BANNERS))(
-  'banner %s memakai judul 70 persen dari skala sebelumnya',
+  'banner %s memakai judul 2xl dan jarak teks rapat yang sama',
   (pageKey) => {
     const container = document.createElement('div')
     container.innerHTML = renderToStaticMarkup(
@@ -82,10 +82,12 @@ test.each(Object.keys(DEFAULT_PAGE_BANNERS))(
     expect(content.classList.contains('py-6')).toBe(true)
     expect(content.classList.contains('py-16')).toBe(false)
     expect(content.classList.contains('md:py-24')).toBe(false)
-    expect(title.classList.contains('text-[length:calc(var(--text-4xl)*0.7)]')).toBe(true)
-    expect(title.classList.contains('md:text-[length:calc(var(--text-6xl)*0.7)]')).toBe(true)
-    expect(title.classList.contains('lg:text-[length:calc(var(--text-7xl)*0.7)]')).toBe(true)
-    expect(title.classList.contains('leading-[1.5]')).toBe(true)
+    expect(title.classList.contains('text-2xl')).toBe(true)
+    expect(title.classList.contains('leading-tight')).toBe(true)
+    expect(title.classList.contains('mb-3')).toBe(true)
+    expect(title.className).not.toMatch(/(?:md|lg):(?:text-|mb-)/)
+    expect(title.previousElementSibling.classList.contains('mb-2')).toBe(true)
+    expect(title.previousElementSibling.classList.contains('md:mb-4')).toBe(false)
     expect(title.textContent).toBe(DEFAULT_PAGE_BANNERS[pageKey].title)
     expect(banner.textContent).toContain(DEFAULT_PAGE_BANNERS[pageKey].description)
     expect(banner.classList.contains('mx-3')).toBe(true)

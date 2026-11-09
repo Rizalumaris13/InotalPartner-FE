@@ -536,7 +536,7 @@ export default function TentangPage({ onNavigate }) {
       <div className="h-[68px]">
         <PublicNavbar onNavigate={onNavigate} activePage="tentang" scrolled={scrolled} />
       </div>
-      <PublicPageBanner pageKey="tentang" breadcrumb="Tentang Kami" onNavigate={onNavigate} compactTitle />
+      <PublicPageBanner pageKey="tentang" breadcrumb="Tentang Kami" onNavigate={onNavigate} />
       <section className="max-w-7xl mx-auto px-6 py-12 md:py-16">
         <div className="mb-8 md:mb-10">
           <Reveal>
