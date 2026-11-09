@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { http, HttpResponse } from 'msw'
 import PublicPageBanner from '../src/components/PublicPageBanner'
+import PublicNavbar from '../src/components/PublicNavbar'
 import { DEFAULT_PAGE_BANNERS } from '../src/data/pageBanners'
 import { server } from './setup'
 
@@ -13,6 +14,27 @@ const remote = {
   description: 'Deskripsi banner yang diatur admin lewat dashboard.',
   image_url: '/uploads/tentang-baru.webp',
 }
+
+test('opsi judul ringkas memakai skala logo navbar tanpa mengecilkan tinggi baris', () => {
+  const container = document.createElement('div')
+  container.innerHTML = renderToStaticMarkup(
+    <>
+      <PublicNavbar activePage="tentang" />
+      <PublicPageBanner pageKey="tentang" breadcrumb="Tentang Kami" compactTitle />
+    </>,
+  )
+  const logo = container.querySelector('nav button > span')
+  const title = container.querySelector('h1')
+  const logoSize = [...logo.classList].find((name) => /^text-(xs|sm|base|lg|xl|\d+xl)$/.test(name))
+
+  expect(logoSize).toBeTruthy()
+  expect(title.classList.contains(logoSize)).toBe(true)
+  expect(title.className).not.toContain('text-[length:calc(')
+  expect(title.classList.contains('leading-[calc(var(--text-4xl)*1.05)]')).toBe(true)
+  expect(title.classList.contains('md:leading-[calc(var(--text-6xl)*1.05)]')).toBe(true)
+  expect(title.classList.contains('lg:leading-[calc(var(--text-7xl)*1.05)]')).toBe(true)
+  expect(title.textContent).toBe(DEFAULT_PAGE_BANNERS.tentang.title)
+})
 
 test('banner publik menampilkan konfigurasi backend bila tersedia', async () => {
   server.use(http.get('*/api/public/page-banners/tentang', () => HttpResponse.json({ success: true, data: remote })))

@@ -11,7 +11,7 @@ import { resolveImageUrl } from '../api/posts'
  * Ukuran ringkas berlaku konsisten untuk semua banner halaman publik.
  * Judul 70% dari skala tema; tinggi baris dijaga agar banner tidak ikut menyusut.
  */
-export default function PublicPageBanner({ pageKey, breadcrumb, onNavigate }) {
+export default function PublicPageBanner({ pageKey, breadcrumb, onNavigate, compactTitle = false }) {
   const fallback = DEFAULT_PAGE_BANNERS[pageKey]
   const [config, setConfig] = useState(fallback)
 
@@ -28,6 +28,10 @@ export default function PublicPageBanner({ pageKey, breadcrumb, onNavigate }) {
   }, [pageKey, fallback])
 
   const bgImageUrl = resolveImageUrl(config.image_url)
+  // Mode ringkas menyamai logo navbar tanpa mengubah tinggi baris/banner.
+  const titleTypography = compactTitle
+    ? 'text-lg leading-[calc(var(--text-4xl)*1.05)] md:leading-[calc(var(--text-6xl)*1.05)] lg:leading-[calc(var(--text-7xl)*1.05)]'
+    : 'text-[length:calc(var(--text-4xl)*0.7)] md:text-[length:calc(var(--text-6xl)*0.7)] lg:text-[length:calc(var(--text-7xl)*0.7)] leading-[1.5]'
 
   return (
     <section className="mx-3 md:mx-4 mt-3 rounded-2xl bg-[#0c4a6e] relative overflow-hidden">
@@ -42,7 +46,7 @@ export default function PublicPageBanner({ pageKey, breadcrumb, onNavigate }) {
             <p className="text-[12px] font-bold tracking-[0.2em] uppercase text-sky-400 mb-2 md:mb-4 break-words">
               {config.label}
             </p>
-            <h1 className="text-[length:calc(var(--text-4xl)*0.7)] md:text-[length:calc(var(--text-6xl)*0.7)] lg:text-[length:calc(var(--text-7xl)*0.7)] mb-3 md:mb-5 lg:mb-6 font-extrabold text-white tracking-tight leading-[1.5] break-words">
+            <h1 className={`${titleTypography} mb-3 md:mb-5 lg:mb-6 font-extrabold text-white tracking-tight break-words`}>
               {config.title}
             </h1>
             <div className="inline-flex items-center gap-2 text-[13px] font-medium">
