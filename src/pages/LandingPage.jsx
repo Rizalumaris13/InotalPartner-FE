@@ -96,13 +96,34 @@ function FloatingStat({
 
 // ─── CAROUSEL HOOK ───────────────────────────────────────────────────────────
 
+const CAROUSEL_BREAKPOINTS = ['(min-width: 40rem)', '(min-width: 64rem)']
+
+function readCarouselColumns() {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return 1
+  return window.matchMedia(CAROUSEL_BREAKPOINTS[1]).matches ? 3
+    : window.matchMedia(CAROUSEL_BREAKPOINTS[0]).matches ? 2 : 1
+}
+
+function useCarouselColumns() {
+  const [columns, setColumns] = useState(readCarouselColumns)
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return undefined
+    const media = CAROUSEL_BREAKPOINTS.map((query) => window.matchMedia(query))
+    const update = () => setColumns(readCarouselColumns())
+    media.forEach((query) => query.addEventListener('change', update))
+    return () => media.forEach((query) => query.removeEventListener('change', update))
+  }, [])
+  return columns
+}
+
 function useCarousel(total, perView = 1) {
-  const [idx, setIdx] = useState(0)
+  const [position, setIdx] = useState(0)
 
   const maxIdx = Math.max(0, total - perView)
+  const idx = Math.min(position, maxIdx)
 
   const prev = () => {
-    setIdx((i) => Math.max(0, i - 1))
+    setIdx((i) => Math.max(0, Math.min(i, maxIdx) - 1))
   }
 
   const next = () => {
@@ -122,6 +143,7 @@ function useCarousel(total, perView = 1) {
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 
 export default function LandingPage({ onNavigate }) {
+  const carouselColumns = useCarouselColumns()
   const actionBoxes = useHomepageJoinCards()
   const services = useHomepageServices()
   // Navbar transparency on scroll
@@ -452,11 +474,13 @@ export default function LandingPage({ onNavigate }) {
 
   // ─── EVENT CAROUSEL ────────────────────────────────────────────────────────
 
-  const eventC = useCarousel(eventItems.length, 3)
+  const eventPerView = Math.min(eventItems.length || 1, carouselColumns)
+  const eventC = useCarousel(eventItems.length, eventPerView)
 
   // ─── ARTICLE CAROUSEL ───────────────────────────────────────────────────────
 
-  const articleC = useCarousel(articleItems.length, 3)
+  const articlePerView = Math.min(articleItems.length || 1, carouselColumns)
+  const articleC = useCarousel(articleItems.length, articlePerView)
 
   // ─── TESTIMONIAL DARI API PUBLIC ───────────────────────────────────────────
 
@@ -505,22 +529,18 @@ export default function LandingPage({ onNavigate }) {
   // ─── TESTIMONIAL CAROUSEL ──────────────────────────────────────────────────
 
   const testiTotal = testimonials.length
-  const testiMaxIdx = Math.max(0, testiTotal > 2 ? testiTotal - 1 : 0)
-  const [testiIdx, setTestiIdx] = useState(0)
+  const testiPerView = Math.min(testiTotal || 1, carouselColumns === 3 ? 2 : 1)
+  const testiMaxIdx = Math.max(0, testiTotal - testiPerView)
+  const [testiPosition, setTestiIdx] = useState(0)
+  const testiIdx = Math.min(testiPosition, testiMaxIdx)
   const [testiTouchStart, setTestiTouchStart] = useState(null)
   const [testiTouchEnd, setTestiTouchEnd] = useState(null)
 
-  // Pastikan indeks selalu valid jika data berubah
-  useEffect(() => {
-    if (testiIdx > testiMaxIdx) {
-      setTestiIdx(0)
-    }
-  }, [testiMaxIdx, testiIdx])
 
   // Navigasi manual melingkar (circular)
   const handleTestiPrev = () => {
     if (testiMaxIdx === 0) return
-    setTestiIdx((curr) => (curr <= 0 ? testiMaxIdx : curr - 1))
+    setTestiIdx((curr) => (Math.min(curr, testiMaxIdx) <= 0 ? testiMaxIdx : Math.min(curr, testiMaxIdx) - 1))
   }
 
   const handleTestiNext = () => {
@@ -557,7 +577,7 @@ export default function LandingPage({ onNavigate }) {
 
   // Auto-slide interval: berjalan normal dan timer di-restart setelah navigasi manual
   useEffect(() => {
-    if (testiTotal <= 2 || testiMaxIdx === 0) return
+    if (testiMaxIdx === 0) return
 
     const interval = setInterval(() => {
       setTestiIdx((curr) => (curr >= testiMaxIdx ? 0 : curr + 1))
@@ -790,9 +810,9 @@ export default function LandingPage({ onNavigate }) {
 
       {/* ── 4. EVENT UPDATE ── */}
 
-      <section className="px-6 py-20 bg-gray-50">
+      <section className="landing-section px-6 bg-gray-50">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between mb-10">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-8 md:mb-10">
             <h2 className="text-3xl font-extrabold text-gray-900">
               Event Update
             </h2>
@@ -817,19 +837,19 @@ export default function LandingPage({ onNavigate }) {
           </div>
 
           {eventsLoading && (
-            <div className="flex items-center justify-center py-20">
+            <div className="flex items-center justify-center py-6 md:py-8">
               <p className="text-gray-400">Memuat event...</p>
             </div>
           )}
 
           {!eventsLoading && eventsError && (
-            <div className="flex items-center justify-center py-20">
+            <div className="flex items-center justify-center py-6 md:py-8">
               <p className="text-red-500">{eventsError}</p>
             </div>
           )}
 
           {!eventsLoading && !eventsError && eventItems.length === 0 && (
-            <div className="flex items-center justify-center py-20">
+            <div className="flex items-center justify-center py-6 md:py-8">
               <p className="text-gray-400">Belum ada event yang dipublikasikan.</p>
             </div>
           )}
@@ -839,13 +859,15 @@ export default function LandingPage({ onNavigate }) {
               <div
                 className="flex gap-5 transition-transform duration-500 ease-in-out"
                 style={{
-                  transform: `translateX(calc(-${eventC.idx} * (100% / 3 + 6.67px)))`,
+                  '--carousel-items': eventPerView,
+                  '--carousel-gap': 'calc(var(--spacing) * 5)',
+                  transform: `translateX(calc(-${eventC.idx} * ((100% + var(--carousel-gap)) / var(--carousel-items))))`,
                 }}
               >
                 {eventItems.map((ev) => (
                   <div
                     key={ev.id}
-                    className="group relative flex-shrink-0 w-[calc(33.333%-14px)] h-[400px] sm:h-[440px] rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-shadow duration-300 cursor-pointer bg-gray-200"
+                    className="group relative landing-carousel-item h-[400px] sm:h-[440px] rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-shadow duration-300 cursor-pointer bg-gray-200"
                   >
                     {ev.img ? (
                       <img
@@ -865,7 +887,7 @@ export default function LandingPage({ onNavigate }) {
                       {ev.title}
                     </h3>
 
-                    <div className="absolute bottom-6 left-6 flex flex-col gap-2.5">
+                    <div className="absolute bottom-20 left-6 right-6 flex flex-col gap-2.5">
                       {ev.date && (
                         <div className="flex items-center gap-2 text-white/95 text-sm font-medium">
                           <Calendar size={16} className="text-white/80" />
@@ -897,9 +919,9 @@ export default function LandingPage({ onNavigate }) {
 
       {/* ── ARTICLE ── */}
 
-      <section className="px-6 py-20 bg-gray-50">
+      <section className="px-6 pb-12 md:pb-16 bg-gray-50">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between mb-10">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-8 md:mb-10">
             <h2 className="text-3xl font-extrabold text-gray-900">
               Article
             </h2>
@@ -924,19 +946,19 @@ export default function LandingPage({ onNavigate }) {
           </div>
 
           {articlesLoading && (
-            <div className="flex items-center justify-center py-20">
+            <div className="flex items-center justify-center py-6 md:py-8">
               <p className="text-gray-400">Memuat artikel...</p>
             </div>
           )}
 
           {!articlesLoading && articlesError && (
-            <div className="flex items-center justify-center py-20">
+            <div className="flex items-center justify-center py-6 md:py-8">
               <p className="text-red-500">{articlesError}</p>
             </div>
           )}
 
           {!articlesLoading && !articlesError && articleItems.length === 0 && (
-            <div className="flex items-center justify-center py-20">
+            <div className="flex items-center justify-center py-6 md:py-8">
               <p className="text-gray-400">Belum ada artikel yang dipublikasikan.</p>
             </div>
           )}
@@ -946,15 +968,17 @@ export default function LandingPage({ onNavigate }) {
               <div
                 className="flex gap-5 transition-transform duration-500 ease-in-out"
                 style={{
-                  transform: `translateX(calc(-${articleC.idx} * (100% / 3 + 6.67px)))`,
+                  '--carousel-items': articlePerView,
+                  '--carousel-gap': 'calc(var(--spacing) * 5)',
+                  transform: `translateX(calc(-${articleC.idx} * ((100% + var(--carousel-gap)) / var(--carousel-items))))`,
                 }}
               >
                 {articleItems.map((art) => (
                   <div
                     key={art.id}
-                    className="group flex-shrink-0 w-[calc(33.333%-14px)] rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col"
+                    className={`group landing-carousel-item rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col ${articleItems.length === 1 ? 'md:flex-row' : ''}`}
                   >
-                    <div className="aspect-[16/10] bg-gray-100 overflow-hidden">
+                    <div className={`aspect-[16/10] bg-gray-100 overflow-hidden ${articleItems.length === 1 ? 'md:w-2/5 md:shrink-0' : ''}`}>
                       {art.img ? (
                         <img
                           src={art.img}
@@ -993,9 +1017,9 @@ export default function LandingPage({ onNavigate }) {
 
       {/* ── 5. SOSOK INSPIRASI ── */}
 
-      <section className="px-6 py-24 bg-white">
+      <section className="landing-section px-6 bg-white">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
+          <div className="text-center mb-8 md:mb-10">
             <h2 className="text-3xl md:text-4xl lg:text-[40px] font-bold text-[#1a202c] leading-tight max-w-3xl mx-auto">
               Ratusan partner di seluruh Indonesia,
               <br />
@@ -1004,19 +1028,19 @@ export default function LandingPage({ onNavigate }) {
           </div>
 
           {testiLoading && (
-            <div className="flex items-center justify-center py-20">
+            <div className="flex items-center justify-center py-6 md:py-8">
               <p className="text-gray-400">Memuat testimoni...</p>
             </div>
           )}
 
           {!testiLoading && testiError && (
-            <div className="flex items-center justify-center py-20">
+            <div className="flex items-center justify-center py-6 md:py-8">
               <p className="text-red-500">{testiError}</p>
             </div>
           )}
 
           {!testiLoading && !testiError && testimonials.length === 0 && (
-            <div className="flex items-center justify-center py-20">
+            <div className="flex items-center justify-center py-6 md:py-8">
               <p className="text-gray-400">Belum ada testimoni yang ditampilkan.</p>
             </div>
           )}
@@ -1032,7 +1056,9 @@ export default function LandingPage({ onNavigate }) {
                 <div
                   className="flex gap-8 transition-transform duration-700 ease-in-out"
                   style={{
-                    transform: `translateX(calc(-${testiIdx} * (50% + 16px)))`,
+                    '--carousel-items': testiPerView,
+                    '--carousel-gap': 'calc(var(--spacing) * 8)',
+                    transform: `translateX(calc(-${testiIdx} * ((100% + var(--carousel-gap)) / var(--carousel-items))))`,
                   }}
                 >
                   {testimonials.map((t) => {
@@ -1042,7 +1068,7 @@ export default function LandingPage({ onNavigate }) {
                     return (
                       <div
                         key={t.id}
-                        className="flex-shrink-0 w-[calc(50%-16px)] flex flex-col sm:flex-row items-center sm:items-start gap-5 sm:gap-6"
+                        className="landing-carousel-item flex flex-col sm:flex-row items-center sm:items-start gap-5 sm:gap-6"
                       >
                         <div className="w-24 h-24 sm:w-[110px] sm:h-[110px] flex-shrink-0 rounded-[1.25rem] overflow-hidden shadow-sm bg-gray-100 flex items-center justify-center">
                           {photoSrc ? (
@@ -1089,7 +1115,7 @@ export default function LandingPage({ onNavigate }) {
               </div>
 
               {testiMaxIdx > 0 && (
-                <div className="flex items-center justify-center gap-4 mt-12 sm:mt-16">
+                <div className="flex items-center justify-center gap-4 mt-8">
                   <button
                     type="button"
                     onClick={handleTestiPrev}
@@ -1136,7 +1162,7 @@ export default function LandingPage({ onNavigate }) {
 
       {/* ── 7. SAATNYA BERSAMA BERAKSI ── */}
 
-      <section className="relative px-6 py-24 bg-white overflow-hidden">
+      <section className="relative px-6 pb-12 md:pb-16 bg-white overflow-hidden">
         <div
           className="absolute -top-24 -left-32 w-[480px] h-[480px] bg-gradient-to-br from-sky-200 to-sky-100 opacity-60 blur-3xl pointer-events-none"
           style={{
@@ -1162,7 +1188,7 @@ export default function LandingPage({ onNavigate }) {
         />
 
         <div className="relative z-10 max-w-7xl mx-auto">
-          <div className="text-center mb-20">
+          <div className="text-center mb-8 md:mb-10">
             <p className="text-sky-500 text-sm font-bold tracking-[0.2em] uppercase mb-4">
               Mengapa Bergabung
             </p>
@@ -1183,7 +1209,7 @@ export default function LandingPage({ onNavigate }) {
               ))}
             </div>
 
-            <div className="w-full sm:w-2/3 lg:w-[36%] flex items-center justify-center relative min-h-[380px] lg:min-h-[450px] my-10 lg:my-0">
+            <div className="w-full sm:w-2/3 lg:w-[36%] flex items-center justify-center relative min-h-[380px] lg:min-h-[450px]">
               <div className="absolute inset-0 m-auto w-3/4 h-3/4 bg-gradient-to-tr from-sky-200 to-violet-200 rounded-full blur-3xl opacity-50 pointer-events-none" />
 
               <HomepageJoinImages />
@@ -1200,7 +1226,7 @@ export default function LandingPage({ onNavigate }) {
 
       {/* ── 8. INFORMASI / BERITA ── */}
 
-      <section className="px-6 py-20 bg-gray-50">
+      <section className="landing-section px-6 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 pb-4 border-b border-gray-200 gap-4">
             <div>
@@ -1220,7 +1246,7 @@ export default function LandingPage({ onNavigate }) {
 
           {/* Loading */}
           {newsLoading && (
-            <div className="flex items-center justify-center py-20">
+            <div className="flex items-center justify-center py-6 md:py-8">
               <p className="text-gray-400">
                 Memuat berita...
               </p>
@@ -1229,7 +1255,7 @@ export default function LandingPage({ onNavigate }) {
 
           {/* Error */}
           {!newsLoading && newsError && (
-            <div className="flex items-center justify-center py-20">
+            <div className="flex items-center justify-center py-6 md:py-8">
               <p className="text-red-500">
                 {newsError}
               </p>
@@ -1240,7 +1266,7 @@ export default function LandingPage({ onNavigate }) {
           {!newsLoading &&
             !newsError &&
             newsItems.length === 0 && (
-              <div className="flex items-center justify-center py-20">
+              <div className="flex items-center justify-center py-6 md:py-8">
                 <p className="text-gray-400">
                   Belum ada berita yang dipublikasikan.
                 </p>
@@ -1253,16 +1279,16 @@ export default function LandingPage({ onNavigate }) {
             newsItems.length > 0 && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                 {/* Berita Utama */}
-                <div className="lg:col-span-7 group cursor-pointer">
+                <div className={`${newsItems.length > 1 ? 'lg:col-span-7' : 'lg:col-span-12'} group cursor-pointer`}>
                   <div className="overflow-hidden rounded-xl mb-5 bg-gray-100">
                     {newsItems[0].img ? (
                       <img
                         src={newsItems[0].img}
                         alt={newsItems[0].title}
-                        className="w-full aspect-[4/3] md:aspect-[16/9] lg:aspect-[4/3] object-cover group-hover:scale-105 transition-transform duration-500"
+                        className={`w-full aspect-[4/3] md:aspect-[16/9] ${newsItems.length > 1 ? 'lg:aspect-[4/3]' : ''} object-cover group-hover:scale-105 transition-transform duration-500`}
                       />
                     ) : (
-                      <div className="w-full aspect-[4/3] md:aspect-[16/9] lg:aspect-[4/3] flex items-center justify-center bg-gray-200 text-gray-400">
+                      <div className={`w-full aspect-[4/3] md:aspect-[16/9] ${newsItems.length > 1 ? 'lg:aspect-[4/3]' : ''} flex items-center justify-center bg-gray-200 text-gray-400`}>
                         Tidak ada gambar
                       </div>
                     )}
@@ -1286,7 +1312,7 @@ export default function LandingPage({ onNavigate }) {
                 </div>
 
                 {/* List berita lainnya */}
-                <div className="lg:col-span-5 flex flex-col gap-6">
+                {newsItems.length > 1 && <div className="lg:col-span-5 flex flex-col gap-6">
                   {newsItems.slice(1).map((news) => (
                     <div
                       key={news.id}
@@ -1321,7 +1347,7 @@ export default function LandingPage({ onNavigate }) {
                       </div>
                     </div>
                   ))}
-                </div>
+                </div>}
               </div>
             )}
         </div>
@@ -1329,7 +1355,7 @@ export default function LandingPage({ onNavigate }) {
 
       {/* ── 9. CTA KONSULTASI ── */}
 
-      <section className="relative px-6 py-24 bg-gray-50 overflow-hidden">
+      <section className="relative px-6 pb-12 md:pb-16 bg-gray-50 overflow-hidden">
         <div
           className="absolute inset-0 opacity-50 pointer-events-none"
           style={{
@@ -1339,7 +1365,7 @@ export default function LandingPage({ onNavigate }) {
           }}
         />
 
-        <div className="relative z-10 max-w-6xl mx-auto bg-white rounded-[2rem] shadow-2xl border border-gray-100 flex flex-col md:flex-row items-center justify-between p-10 md:p-16 lg:p-20 gap-10">
+        <div className="relative z-10 max-w-6xl mx-auto bg-white rounded-[2rem] shadow-2xl border border-gray-100 flex flex-col md:flex-row items-center justify-between p-6 md:p-10 lg:p-12 gap-8">
           <div className="w-full md:w-3/5 flex flex-col items-center md:items-start text-center md:text-left">
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#0f172a] leading-tight mb-5">
               SIAP Menjadi Bagian INOTAL Partner?

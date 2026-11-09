@@ -5,7 +5,7 @@ import { ServiceIcon } from '../data/partnershipServiceIcons'
 function ServiceCard({ service }) {
   return (
     <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-lg hover:shadow-sky-100 hover:-translate-y-1 transition-all duration-300 flex flex-col items-center text-center">
-      <div className="mb-9 mt-2">
+      <div className="mb-5 mt-1">
         <ServiceIcon name={service.icon} size={70} className="text-sky-500" />
       </div>
       <h3 className="font-bold text-sm tracking-wide text-gray-800 mb-2 uppercase">{service.title}</h3>
@@ -18,8 +18,8 @@ function ServiceCard({ service }) {
 export default function HomepageServicesSection({ services = DEFAULT_HOMEPAGE_SERVICES, preview = false }) {
   const [first, second, third, fourth] = services.services
   return (
-    <section aria-label="Layanan Kami" className={`px-6 bg-white overflow-hidden ${preview ? 'py-28' : 'py-20 md:py-28'}`}>
-      <div className={`max-w-6xl mx-auto grid items-center ${preview ? 'grid-cols-2 gap-20' : 'grid-cols-1 gap-16 lg:grid-cols-2 lg:gap-20'}`}>
+    <section aria-label="Layanan Kami" className={`px-6 bg-white overflow-hidden ${preview ? 'py-16' : 'landing-section'}`}>
+      <div className={`max-w-6xl mx-auto grid items-center ${preview ? 'grid-cols-2 gap-12' : 'grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-12'}`}>
         <div className={`relative mx-auto w-full h-[420px] sm:h-[480px] ${preview ? 'order-1 max-w-none' : 'order-2 lg:order-1 max-w-sm lg:max-w-none'}`}>
           <div
             className="absolute inset-0 m-auto w-[340px] h-[340px] sm:w-[400px] sm:h-[400px] bg-gradient-to-br from-sky-300 via-violet-300 to-emerald-200 opacity-70 blur-2xl"
@@ -46,7 +46,7 @@ export default function HomepageServicesSection({ services = DEFAULT_HOMEPAGE_SE
         <div className={preview ? 'order-2' : 'order-1 lg:order-2'}>
           <p className="text-sky-500 text-sm font-bold tracking-[0.2em] uppercase mb-3">{services.eyebrow}</p>
           <h2 className={`${preview ? 'text-4xl' : 'text-3xl md:text-4xl'} font-extrabold text-gray-900 mb-4`}>{services.title}</h2>
-          <p className="text-gray-400 text-base leading-relaxed mb-10 max-w-md">{services.description}</p>
+          <p className="text-gray-400 text-base leading-relaxed mb-8 max-w-md">{services.description}</p>
 
           <div className={`grid gap-5 ${preview ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2'}`}>
             <div className="flex flex-col gap-5">

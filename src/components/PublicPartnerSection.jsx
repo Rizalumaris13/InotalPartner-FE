@@ -47,9 +47,9 @@ export default function PublicPartnerSection() {
   return (
     <section
       aria-labelledby="homepage-partners-title"
-      className="py-24 bg-white overflow-hidden"
+      className="pb-12 md:pb-16 bg-white overflow-hidden"
     >
-      <div className="max-w-6xl mx-auto px-6 mb-14 text-center">
+      <div className="max-w-6xl mx-auto px-6 mb-8 md:mb-10 text-center">
         <h2
           id="homepage-partners-title"
           className="text-3xl md:text-5xl font-bold text-[#1a202c]"
@@ -59,13 +59,13 @@ export default function PublicPartnerSection() {
       </div>
       <div className="max-w-5xl mx-auto px-4">
         {state.status === 'loading' ? (
-          <p role="status" className="py-10 text-center text-sm text-gray-500">
+          <p role="status" className="py-6 text-center text-sm text-gray-500">
             Memuat daftar mitra...
           </p>
         ) : state.status === 'error' ? (
           <div
             role="status"
-            className="py-10 text-center text-sm text-gray-500"
+            className="py-6 text-center text-sm text-gray-500"
           >
             <p>Daftar mitra belum dapat dimuat.</p>
             <button
@@ -77,7 +77,7 @@ export default function PublicPartnerSection() {
             </button>
           </div>
         ) : state.partners.length === 0 ? (
-          <p role="status" className="py-10 text-center text-sm text-gray-500">
+          <p role="status" className="py-6 text-center text-sm text-gray-500">
             Belum ada mitra yang ditampilkan.
           </p>
         ) : (

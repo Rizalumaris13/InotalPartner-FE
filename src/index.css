@@ -1,5 +1,18 @@
 @import "tailwindcss";
 
+@utility landing-section {
+  padding-block: --spacing(12);
+  @variant md {
+    padding-block: --spacing(16);
+  }
+}
+
+@utility landing-carousel-item {
+  width: calc((100% - (var(--carousel-items) - 1) * var(--carousel-gap)) / var(--carousel-items));
+  flex-shrink: 0;
+  min-width: 0;
+}
+
 /* Keep the preview beside long editor forms, not above an empty column.
    The dashboard header and content padding need room on short screens. */
 @utility editor-preview {
