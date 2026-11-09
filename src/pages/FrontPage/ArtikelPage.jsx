@@ -196,7 +196,7 @@ export default function ArtikelPage({ onNavigate }) {
               <div className="space-y-6">
                 {visible.map((a, i) => (
                   <Reveal key={a.id} delay={(i % 2) * 80} className="h-full">
-                    <article className="group h-full bg-white border border-gray-200/80 rounded-xl overflow-hidden hover:border-[#0284c7]/50 transition-colors flex md:flex-row">
+                    <article className="group h-full bg-white border border-gray-200/80 rounded-xl overflow-hidden hover:border-[#0284c7]/50 transition-colors flex flex-col md:flex-row">
                       {/* thumbnail */}
                       <div className="relative md:w-[300px] md:shrink-0 overflow-hidden">
                         <img
@@ -211,7 +211,7 @@ export default function ArtikelPage({ onNavigate }) {
                       </div>
                       {/* isi */}
                       <div className="p-6 md:p-7 flex flex-col flex-1 min-w-0">
-                        <div className="flex items-center gap-3 text-[12px] text-gray-400 mb-3">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-gray-400 mb-3">
                           <span>{formatDate(a.date)}</span>
                           <span className="w-1 h-1 rounded-full bg-gray-300" />
                           <span className="inline-flex items-center gap-1">

@@ -550,7 +550,7 @@ export default function TentangPage({ onNavigate }) {
 
         <PublicAboutCards onNavigate={onNavigate} />
       </section>
-      <section className="max-w-7xl mx-auto px-6 pt-20 md:pt-28 pb-20 md:pb-28">
+      <section className="max-w-7xl mx-auto px-6 pb-20 md:pb-28">
         <div className="grid lg:grid-cols-[1.35fr_1fr] gap-10 lg:gap-14 items-center">
           <Reveal>
             <VideoProfile video={profileVideo} loading={videoLoading} />

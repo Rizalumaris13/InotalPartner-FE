@@ -172,7 +172,7 @@ export default function HomepageJoinCardsPage({ role }) {
                 <Save size={16} aria-hidden="true" />{busy ? 'Menyimpan...' : 'Simpan Kartu'}
               </button>
             </fieldset>
-            <section aria-label="Pratinjau kartu Mengapa Bergabung" className="min-w-0 space-y-4 rounded-2xl border border-sky-100 bg-white p-5 shadow-sm">
+            <section aria-label="Pratinjau kartu Mengapa Bergabung" className="editor-preview min-w-0 space-y-4 rounded-2xl border border-sky-100 bg-white p-5 shadow-sm">
               <div>
                 <h2 className="mb-2 flex items-center gap-2 text-sm font-bold text-gray-800"><LayoutList size={16} aria-hidden="true" className="text-sky-500" />Pratinjau kartu</h2>
                 <p className="text-xs leading-relaxed text-gray-500">Di Beranda desktop, kartu 01–03 berada di kiri foto dan 04–06 di kanan. Pratinjau mengikuti isian sebelum disimpan.</p>

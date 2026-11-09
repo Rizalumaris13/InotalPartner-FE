@@ -224,7 +224,7 @@ export default function CreatePost({ editingPost = null, onFinishEdit }) {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="bg-slate-50 text-slate-900">
       <FeedbackUI />
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">

@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+/* Keep the preview beside long editor forms, not above an empty column.
+   The dashboard header and content padding need room on short screens. */
+@utility editor-preview {
+  @variant xl {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    max-height: calc(100dvh - 8rem);
+    overflow-y: auto;
+  }
+}

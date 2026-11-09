@@ -361,7 +361,7 @@ export default function AboutIntroPage({ role }) {
               </button>
             </fieldset>
 
-            <section aria-label="Pratinjau intro Tentang" className="min-w-0 overflow-hidden rounded-2xl border border-sky-100 bg-white shadow-sm">
+            <section aria-label="Pratinjau intro Tentang" className="editor-preview min-w-0 overflow-x-hidden rounded-2xl border border-sky-100 bg-white shadow-sm">
               <div className="flex items-center gap-2 border-b border-sky-50 px-5 py-4">
                 <Eye size={16} aria-hidden="true" className="text-sky-500" />
                 <h2 className="text-sm font-bold text-gray-800">Pratinjau bagian</h2>

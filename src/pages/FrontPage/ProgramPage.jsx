@@ -2,9 +2,9 @@ import PublicNavbar from "../../components/PublicNavbar"
 
 export default function ProgramPage({ onNavigate }) {
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen bg-white pt-[68px] font-sans">
         <PublicNavbar onNavigate={onNavigate} activePage="program" />
-        <div className="flex flex-col items-center justify-center min-h-screen text-center px-6">
+        <div className="mx-3 mt-6 flex flex-col items-center rounded-2xl border border-sky-100 bg-sky-50/40 px-6 py-12 text-center md:mx-4">
             <p className="text-sky-500 text-xs font-bold tracking-[0.2em] uppercase mb-3">
                 Halaman
             </p>

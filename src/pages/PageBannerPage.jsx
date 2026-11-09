@@ -301,7 +301,7 @@ export default function PageBannerPage({ pageKey, role }) {
             aria-label={`Banner ${pageName}`}
             onSubmit={save}
             noValidate
-            className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)]"
+            className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)]"
           >
             <section className="rounded-2xl border border-sky-100 bg-white p-5 shadow-sm sm:p-6">
               <fieldset disabled={editingDisabled} className="space-y-5">
@@ -444,7 +444,7 @@ export default function PageBannerPage({ pageKey, role }) {
               </div>
             </section>
 
-            <section className="space-y-3">
+            <section className="editor-preview min-w-0 space-y-3">
               <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
                 <ImagePlus size={16} aria-hidden="true" className="text-sky-500" />
                 Pratinjau

@@ -50,7 +50,7 @@ export default function PublicNavbar({ onNavigate, activePage, scrolled }) {
         </button>
 
         {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-6 text-sm font-medium">
+        <div className="hidden xl:flex items-center gap-6 text-sm font-medium">
           {navLinks.map(({ label, page }) => (
             <button
               key={page}
@@ -69,7 +69,7 @@ export default function PublicNavbar({ onNavigate, activePage, scrolled }) {
         </div>
 
         {/* CTA */}
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden xl:flex items-center gap-3">
           <button
             onClick={() => handleNav('login')}
             className={`text-sm font-medium px-4 py-2 rounded-lg border transition-all ${
@@ -90,7 +90,7 @@ export default function PublicNavbar({ onNavigate, activePage, scrolled }) {
 
         {/* Mobile toggle */}
         <button
-          className={`md:hidden transition-colors ${transparent ? 'text-white' : 'text-gray-500'}`}
+          className={`xl:hidden transition-colors ${transparent ? 'text-white' : 'text-gray-500'}`}
           onClick={() => setMenuOpen(!menuOpen)}
           aria-label="Toggle menu"
         >
@@ -100,7 +100,7 @@ export default function PublicNavbar({ onNavigate, activePage, scrolled }) {
 
       {/* Mobile menu — always solid white */}
       {menuOpen && (
-        <div className="md:hidden bg-white border-t border-sky-100 px-6 py-4 flex flex-col gap-3 text-sm text-gray-600">
+        <div className="xl:hidden bg-white border-t border-sky-100 px-6 py-4 flex flex-col gap-3 text-sm text-gray-600">
           {navLinks.map(({ label, page }) => (
             <button
               key={page}
