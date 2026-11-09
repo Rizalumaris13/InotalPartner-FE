@@ -9,7 +9,7 @@ import { resolveImageUrl } from '../api/posts'
  * konfigurasi belum ada atau endpoint publik belum tersedia, supaya halaman
  * tidak pernah kehilangan judul/breadcrumb-nya.
  * Ukuran ringkas berlaku konsisten untuk semua banner halaman publik.
- * Judul 70% dari skala tema; tinggi baris dijaga agar banner tidak ikut menyusut.
+ * Judul default 70% dari skala tema; mode compactTitle memakai susunan teks rapat.
  */
 export default function PublicPageBanner({ pageKey, breadcrumb, onNavigate, compactTitle = false }) {
   const fallback = DEFAULT_PAGE_BANNERS[pageKey]
@@ -28,10 +28,11 @@ export default function PublicPageBanner({ pageKey, breadcrumb, onNavigate, comp
   }, [pageKey, fallback])
 
   const bgImageUrl = resolveImageUrl(config.image_url)
-  // Judul ringkas tetap terbaca tanpa mengubah tinggi baris/banner.
+  // Mode ringkas merapatkan label, judul, dan breadcrumb tanpa mengecilkan font.
   const titleTypography = compactTitle
-    ? 'text-2xl leading-[calc(var(--text-4xl)*1.05)] md:leading-[calc(var(--text-6xl)*1.05)] lg:leading-[calc(var(--text-7xl)*1.05)]'
-    : 'text-[length:calc(var(--text-4xl)*0.7)] md:text-[length:calc(var(--text-6xl)*0.7)] lg:text-[length:calc(var(--text-7xl)*0.7)] leading-[1.5]'
+    ? 'text-2xl leading-tight mb-3'
+    : 'text-[length:calc(var(--text-4xl)*0.7)] md:text-[length:calc(var(--text-6xl)*0.7)] lg:text-[length:calc(var(--text-7xl)*0.7)] leading-[1.5] mb-3 md:mb-5 lg:mb-6'
+  const labelSpacing = compactTitle ? 'mb-2' : 'mb-2 md:mb-4'
 
   return (
     <section className="mx-3 md:mx-4 mt-3 rounded-2xl bg-[#0c4a6e] relative overflow-hidden">
@@ -43,10 +44,10 @@ export default function PublicPageBanner({ pageKey, breadcrumb, onNavigate, comp
       <div className="relative max-w-7xl mx-auto px-6 py-6">
         <div className="grid lg:grid-cols-[1.25fr_1fr] gap-4 md:gap-2 lg:gap-8 lg:items-end">
           <div>
-            <p className="text-[12px] font-bold tracking-[0.2em] uppercase text-sky-400 mb-2 md:mb-4 break-words">
+            <p className={`${labelSpacing} text-[12px] font-bold tracking-[0.2em] uppercase text-sky-400 break-words`}>
               {config.label}
             </p>
-            <h1 className={`${titleTypography} mb-3 md:mb-5 lg:mb-6 font-extrabold text-white tracking-tight break-words`}>
+            <h1 className={`${titleTypography} font-extrabold text-white tracking-tight break-words`}>
               {config.title}
             </h1>
             <div className="inline-flex items-center gap-2 text-[13px] font-medium">

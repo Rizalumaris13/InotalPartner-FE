@@ -63,7 +63,7 @@ test('banner Tentang memakai tinggi ringkas tanpa mengubah lebar banner', () => 
   expect(content.classList.contains('py-6')).toBe(true)
   expect(content.classList.contains('md:py-24')).toBe(false)
   expect(title.classList.contains('text-2xl')).toBe(true)
-  expect(title.classList.contains('lg:leading-[calc(var(--text-7xl)*1.05)]')).toBe(true)
+  expect(title.classList.contains('leading-tight')).toBe(true)
   expect(banner.classList.contains('mx-3')).toBe(true)
   expect(banner.classList.contains('md:mx-4')).toBe(true)
   expect(banner.classList.contains('w-3/5')).toBe(false)

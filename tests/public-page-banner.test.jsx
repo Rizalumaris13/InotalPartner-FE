@@ -15,7 +15,7 @@ const remote = {
   image_url: '/uploads/tentang-baru.webp',
 }
 
-test('judul ringkas memakai skala 2xl tanpa mengubah logo navbar dan tinggi baris', () => {
+test('judul ringkas merapatkan label dan breadcrumb tanpa mengubah ukuran font', () => {
   const container = document.createElement('div')
   container.innerHTML = renderToStaticMarkup(
     <>
@@ -28,9 +28,12 @@ test('judul ringkas memakai skala 2xl tanpa mengubah logo navbar dan tinggi bari
   expect(logo.classList.contains('text-lg')).toBe(true)
   expect(title.classList.contains('text-2xl')).toBe(true)
   expect(title.className).not.toContain('text-[length:calc(')
-  expect(title.classList.contains('leading-[calc(var(--text-4xl)*1.05)]')).toBe(true)
-  expect(title.classList.contains('md:leading-[calc(var(--text-6xl)*1.05)]')).toBe(true)
-  expect(title.classList.contains('lg:leading-[calc(var(--text-7xl)*1.05)]')).toBe(true)
+  expect(title.classList.contains('leading-tight')).toBe(true)
+  expect(title.classList.contains('mb-3')).toBe(true)
+  expect(title.className).not.toContain('leading-[calc(')
+  expect(title.className).not.toMatch(/(?:md|lg):mb-/)
+  expect(title.previousElementSibling.classList.contains('mb-2')).toBe(true)
+  expect(title.previousElementSibling.classList.contains('md:mb-4')).toBe(false)
   expect(title.textContent).toBe(DEFAULT_PAGE_BANNERS.tentang.title)
 })
 
