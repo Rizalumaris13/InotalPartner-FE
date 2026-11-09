@@ -15,7 +15,7 @@ const remote = {
   image_url: '/uploads/tentang-baru.webp',
 }
 
-test('opsi judul ringkas memakai skala logo navbar tanpa mengecilkan tinggi baris', () => {
+test('judul ringkas memakai skala 2xl tanpa mengubah logo navbar dan tinggi baris', () => {
   const container = document.createElement('div')
   container.innerHTML = renderToStaticMarkup(
     <>
@@ -25,10 +25,8 @@ test('opsi judul ringkas memakai skala logo navbar tanpa mengecilkan tinggi bari
   )
   const logo = container.querySelector('nav button > span')
   const title = container.querySelector('h1')
-  const logoSize = [...logo.classList].find((name) => /^text-(xs|sm|base|lg|xl|\d+xl)$/.test(name))
-
-  expect(logoSize).toBeTruthy()
-  expect(title.classList.contains(logoSize)).toBe(true)
+  expect(logo.classList.contains('text-lg')).toBe(true)
+  expect(title.classList.contains('text-2xl')).toBe(true)
   expect(title.className).not.toContain('text-[length:calc(')
   expect(title.classList.contains('leading-[calc(var(--text-4xl)*1.05)]')).toBe(true)
   expect(title.classList.contains('md:leading-[calc(var(--text-6xl)*1.05)]')).toBe(true)

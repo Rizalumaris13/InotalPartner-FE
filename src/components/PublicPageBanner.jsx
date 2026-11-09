@@ -28,9 +28,9 @@ export default function PublicPageBanner({ pageKey, breadcrumb, onNavigate, comp
   }, [pageKey, fallback])
 
   const bgImageUrl = resolveImageUrl(config.image_url)
-  // Mode ringkas menyamai logo navbar tanpa mengubah tinggi baris/banner.
+  // Judul ringkas tetap terbaca tanpa mengubah tinggi baris/banner.
   const titleTypography = compactTitle
-    ? 'text-lg leading-[calc(var(--text-4xl)*1.05)] md:leading-[calc(var(--text-6xl)*1.05)] lg:leading-[calc(var(--text-7xl)*1.05)]'
+    ? 'text-2xl leading-[calc(var(--text-4xl)*1.05)] md:leading-[calc(var(--text-6xl)*1.05)] lg:leading-[calc(var(--text-7xl)*1.05)]'
     : 'text-[length:calc(var(--text-4xl)*0.7)] md:text-[length:calc(var(--text-6xl)*0.7)] lg:text-[length:calc(var(--text-7xl)*0.7)] leading-[1.5]'
 
   return (
