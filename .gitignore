@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local audit tools and implementation snapshots stay off shared branches
+/scripts/about-contact-layout.py
+/scripts/check-landing-layout.py
+/scripts/check-layout.py
+/scripts/check-public-layout.py
+/scripts/editorial-layout.py
+/tests/local-audit/
