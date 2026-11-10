@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Eye, RefreshCw, Save, Upload, X } from 'lucide-react'
 import ScaledPreview from '../components/ScaledPreview'
+import EditorTextField from '../components/EditorTextField'
 import { getAboutIntroApi, saveAboutIntroApi, ABOUT_INTRO_PATH } from '../api/aboutIntro'
 import { uploadImageApi } from '../api/posts'
 import AboutIntroSection from '../components/AboutIntroSection'
@@ -11,23 +12,6 @@ import { isSafeImageUrl, normalizeImageUrl, validateImageFile } from '../utils/i
 import {
   getAboutIntroErrorMessage, isAboutIntroRecord, toAboutIntroPayload, validateAboutIntro,
 } from '../utils/aboutIntro'
-
-const field = (id, label, value, onChange, { maxLength, textarea, type = 'text', error, help } = {}) => {
-  const shared = {
-    id, value, onChange: (event) => onChange(event.target.value), maxLength, type,
-    'aria-invalid': Boolean(error),
-    'aria-describedby': `${id}-help${error ? ` ${id}-error` : ''}`,
-    className: 'mt-2 w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-800 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100',
-  }
-  return (
-    <div key={id}>
-      <label htmlFor={id} className="text-xs font-semibold text-gray-600">{label}</label>
-      {textarea ? <textarea {...shared} rows={3} /> : <input {...shared} />}
-      {help && <p id={`${id}-help`} className="mt-1 text-xs text-gray-400">{help}</p>}
-      {error && <p id={`${id}-error`} role="alert" className="mt-1 text-xs text-red-600">{error}</p>}
-    </div>
-  )
-}
 
 export default function AboutIntroPage({ role }) {
   const currentRole = typeof role === 'object' ? role?.name : role
@@ -43,9 +27,8 @@ export default function AboutIntroPage({ role }) {
   const [busy, setBusy] = useState(false)
   const [pending, setPending] = useState(null)
   const [uploadProgress, setUploadProgress] = useState('')
-  const [blobUrl, setBlobUrl] = useState('')
   const alive = useRef(false)
-  const blobUrlRef = useRef('')
+  const previewRef = useRef('')
   const locked = busy || Boolean(pending)
 
   useEffect(() => {
@@ -54,9 +37,9 @@ export default function AboutIntroPage({ role }) {
   }, [])
 
   // Blob pratinjau dibersihkan saat komponen ditutup (pergantian ditangani clearFile).
-  useEffect(() => { blobUrlRef.current = blobUrl }, [blobUrl])
+  useEffect(() => { previewRef.current = preview }, [preview])
   useEffect(() => () => {
-    if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current)
+    if (previewRef.current) URL.revokeObjectURL(previewRef.current)
   }, [])
 
   useEffect(() => {
@@ -79,8 +62,7 @@ export default function AboutIntroPage({ role }) {
   }, [canManage, refresh])
 
   const clearFile = () => {
-    if (blobUrl) URL.revokeObjectURL(blobUrl)
-    setBlobUrl('')
+    if (preview) URL.revokeObjectURL(preview)
     setFile(null)
     setPreview('')
   }
@@ -94,7 +76,6 @@ export default function AboutIntroPage({ role }) {
     try {
       const url = URL.createObjectURL(chosen)
       clearFile()
-      setBlobUrl(url)
       setFile(chosen)
       setPreview(url)
       setErrors((current) => ({ ...current, photo_url: '' }))
@@ -267,17 +248,36 @@ export default function AboutIntroPage({ role }) {
 
               <div className="space-y-4 rounded-2xl border border-sky-100 bg-white p-5 shadow-sm">
                 <h2 className="text-sm font-bold text-gray-800">Label dan judul</h2>
-                {field('intro-eyebrow', 'Label kecil', form.eyebrow, (value) => setField('eyebrow', value), {
-                  maxLength: ABOUT_INTRO_LIMITS.eyebrow, error: errors.eyebrow,
-                  help: `${form.eyebrow.length}/${ABOUT_INTRO_LIMITS.eyebrow} karakter`,
-                })}
-                {field('intro-headline', 'Judul utama', form.headline, (value) => setField('headline', value), {
-                  maxLength: ABOUT_INTRO_LIMITS.headline, error: errors.headline, textarea: true,
-                  help: `${form.headline.length}/${ABOUT_INTRO_LIMITS.headline} karakter`,
-                })}
-                {field('intro-headline_accent', 'Judul aksen (warna biru)', form.headline_accent, (value) => setField('headline_accent', value), {
-                  maxLength: ABOUT_INTRO_LIMITS.headline_accent, error: errors.headline_accent,
-                })}
+                <EditorTextField
+                  key="intro-eyebrow"
+                  id="intro-eyebrow"
+                  label="Label kecil"
+                  value={form.eyebrow}
+                  onChange={(value) => setField('eyebrow', value)}
+                  maxLength={ABOUT_INTRO_LIMITS.eyebrow}
+                  error={errors.eyebrow}
+                  help={`${form.eyebrow.length}/${ABOUT_INTRO_LIMITS.eyebrow} karakter`}
+                />
+                <EditorTextField
+                  key="intro-headline"
+                  id="intro-headline"
+                  label="Judul utama"
+                  value={form.headline}
+                  onChange={(value) => setField('headline', value)}
+                  maxLength={ABOUT_INTRO_LIMITS.headline}
+                  error={errors.headline}
+                  textarea
+                  help={`${form.headline.length}/${ABOUT_INTRO_LIMITS.headline} karakter`}
+                />
+                <EditorTextField
+                  key="intro-headline_accent"
+                  id="intro-headline_accent"
+                  label="Judul aksen (warna biru)"
+                  value={form.headline_accent}
+                  onChange={(value) => setField('headline_accent', value)}
+                  maxLength={ABOUT_INTRO_LIMITS.headline_accent}
+                  error={errors.headline_accent}
+                />
               </div>
 
               <div className="space-y-3 rounded-2xl border border-sky-100 bg-white p-5 shadow-sm">
@@ -295,29 +295,58 @@ export default function AboutIntroPage({ role }) {
                 )}
                 <p className="text-xs leading-relaxed text-gray-500">JPG, PNG, atau WEBP; maksimal 5 MB. Foto dipratinjau sekarang dan diunggah saat Simpan.</p>
                 {file && <p className="break-all text-xs font-medium text-sky-700">{file.name} — belum diunggah</p>}
-                {field('intro-photo_url', 'URL foto intro', form.photo_url, setPhotoUrl, {
-                  maxLength: 2048, error: errors.photo_url, help: 'https://... atau /uploads/...',
-                })}
-                {field('intro-photo_alt', 'Teks alternatif foto', form.photo_alt, (value) => setField('photo_alt', value), {
-                  maxLength: ABOUT_INTRO_LIMITS.photo_alt, error: errors.photo_alt,
-                })}
+                <EditorTextField
+                  key="intro-photo_url"
+                  id="intro-photo_url"
+                  label="URL foto intro"
+                  value={form.photo_url}
+                  onChange={setPhotoUrl}
+                  maxLength={2048}
+                  error={errors.photo_url}
+                  help="https://... atau /uploads/..."
+                />
+                <EditorTextField
+                  key="intro-photo_alt"
+                  id="intro-photo_alt"
+                  label="Teks alternatif foto"
+                  value={form.photo_alt}
+                  onChange={(value) => setField('photo_alt', value)}
+                  maxLength={ABOUT_INTRO_LIMITS.photo_alt}
+                  error={errors.photo_alt}
+                />
               </div>
 
               <div className="space-y-4 rounded-2xl border border-sky-100 bg-white p-5 shadow-sm">
                 <h2 className="text-sm font-bold text-gray-800">Kartu progres</h2>
-                {field('intro-progress_title', 'Judul kartu progres', form.progress_title, (value) => setField('progress_title', value), {
-                  maxLength: ABOUT_INTRO_LIMITS.progress_title, error: errors.progress_title,
-                })}
+                <EditorTextField
+                  key="intro-progress_title"
+                  id="intro-progress_title"
+                  label="Judul kartu progres"
+                  value={form.progress_title}
+                  onChange={(value) => setField('progress_title', value)}
+                  maxLength={ABOUT_INTRO_LIMITS.progress_title}
+                  error={errors.progress_title}
+                />
                 {Array.from({ length: PROGRESS_ROWS }, (_, index) => (
                   <div key={`progress-${index}`} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_110px]">
-                    {field(`intro-progress-${index}-label`, `Label progres ${index + 1}`, form.progress[index]?.label ?? '',
-                      (value) => setProgress(index, 'label', value), {
-                        maxLength: ABOUT_INTRO_LIMITS.progress_label, error: errors[`progress-${index}-label`],
-                      })}
-                    {field(`intro-progress-${index}-percent`, `Persentase progres ${index + 1}`, String(form.progress[index]?.percent ?? ''),
-                      (value) => setProgress(index, 'percent', value), {
-                        maxLength: 3, error: errors[`progress-${index}-percent`],
-                      })}
+                    <EditorTextField
+                      key={`intro-progress-${index}-label`}
+                      id={`intro-progress-${index}-label`}
+                      label={`Label progres ${index + 1}`}
+                      value={form.progress[index]?.label ?? ''}
+                      onChange={(value) => setProgress(index, 'label', value)}
+                      maxLength={ABOUT_INTRO_LIMITS.progress_label}
+                      error={errors[`progress-${index}-label`]}
+                    />
+                    <EditorTextField
+                      key={`intro-progress-${index}-percent`}
+                      id={`intro-progress-${index}-percent`}
+                      label={`Persentase progres ${index + 1}`}
+                      value={String(form.progress[index]?.percent ?? '')}
+                      onChange={(value) => setProgress(index, 'percent', value)}
+                      maxLength={3}
+                      error={errors[`progress-${index}-percent`]}
+                    />
                   </div>
                 ))}
               </div>
@@ -325,25 +354,48 @@ export default function AboutIntroPage({ role }) {
               {[['mission', 'Misi'], ['vision', 'Visi']].map(([cardKey, name]) => (
                 <div key={cardKey} className="space-y-4 rounded-2xl border border-sky-100 bg-white p-5 shadow-sm">
                   <h2 className="text-sm font-bold text-gray-800">Kartu {name}</h2>
-                  {field(`intro-${cardKey}-title`, `Judul ${name.toLowerCase()}`, form[cardKey].title, (value) => setCard(cardKey, 'title', value), {
-                    maxLength: ABOUT_INTRO_LIMITS.card_title, error: errors[`${cardKey}-title`],
-                  })}
-                  {field(`intro-${cardKey}-description`, `Deskripsi ${name.toLowerCase()}`, form[cardKey].description, (value) => setCard(cardKey, 'description', value), {
-                    maxLength: ABOUT_INTRO_LIMITS.card_description, error: errors[`${cardKey}-description`], textarea: true,
-                  })}
-                  {Array.from({ length: CARD_ITEMS }, (_, index) => field(
-                    `intro-${cardKey}-item-${index}`, `Poin ${name.toLowerCase()} ${index + 1}`, form[cardKey].items[index] ?? '',
-                    (value) => setItem(cardKey, index, value),
-                    { maxLength: ABOUT_INTRO_LIMITS.item, error: errors[`${cardKey}-item-${index}`] },
-                  ))}
+                  <EditorTextField
+                    key={`intro-${cardKey}-title`}
+                    id={`intro-${cardKey}-title`}
+                    label={`Judul ${name.toLowerCase()}`}
+                    value={form[cardKey].title}
+                    onChange={(value) => setCard(cardKey, 'title', value)}
+                    maxLength={ABOUT_INTRO_LIMITS.card_title}
+                    error={errors[`${cardKey}-title`]}
+                  />
+                  <EditorTextField
+                    key={`intro-${cardKey}-description`}
+                    id={`intro-${cardKey}-description`}
+                    label={`Deskripsi ${name.toLowerCase()}`}
+                    value={form[cardKey].description}
+                    onChange={(value) => setCard(cardKey, 'description', value)}
+                    maxLength={ABOUT_INTRO_LIMITS.card_description}
+                    error={errors[`${cardKey}-description`]}
+                    textarea
+                  />
+                  {Array.from({ length: CARD_ITEMS }, (_, index) => <EditorTextField
+                    key={`intro-${cardKey}-item-${index}`}
+                    id={`intro-${cardKey}-item-${index}`}
+                    label={`Poin ${name.toLowerCase()} ${index + 1}`}
+                    value={form[cardKey].items[index] ?? ''}
+                    onChange={(value) => setItem(cardKey, index, value)}
+                    maxLength={ABOUT_INTRO_LIMITS.item}
+                    error={errors[`${cardKey}-item-${index}`]}
+                  />)}
                 </div>
               ))}
 
               <div className="space-y-4 rounded-2xl border border-sky-100 bg-white p-5 shadow-sm">
                 <h2 className="text-sm font-bold text-gray-800">Tombol</h2>
-                {field('intro-cta_label', 'Label tombol', form.cta_label, (value) => setField('cta_label', value), {
-                  maxLength: ABOUT_INTRO_LIMITS.cta_label, error: errors.cta_label,
-                })}
+                <EditorTextField
+                  key="intro-cta_label"
+                  id="intro-cta_label"
+                  label="Label tombol"
+                  value={form.cta_label}
+                  onChange={(value) => setField('cta_label', value)}
+                  maxLength={ABOUT_INTRO_LIMITS.cta_label}
+                  error={errors.cta_label}
+                />
                 <div>
                   <label htmlFor="intro-cta_target" className="text-xs font-semibold text-gray-600">Halaman tujuan tombol</label>
                   <select id="intro-cta_target" value={form.cta_target} onChange={(event) => setField('cta_target', event.target.value)}

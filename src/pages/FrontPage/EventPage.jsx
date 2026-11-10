@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
+import Reveal from '../../components/Reveal'
 import PublicNavbar from '../../components/PublicNavbar'
 import PublicPageBanner from '../../components/PublicPageBanner'
 import {
@@ -7,39 +8,6 @@ import {
 } from 'lucide-react'
 import { events, eventTypeCounts, upcomingEvents, nextEvent } from '../../data/events'
 import PublicFooter from '../../components/PublicFooter'
-
-function useInView({ threshold = 0.1, fallbackMs = 700 } = {}) {
-  const ref = useRef(null)
-  const [seen, setSeen] = useState(false)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const io = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { setSeen(true); io.disconnect() } },
-      { threshold },
-    )
-    io.observe(el)
-    // kalau observer nggak kepicu, munculkan juga — lebih baik telat daripada nggak sama sekali
-    const t = setTimeout(() => setSeen(true), fallbackMs)
-    return () => { io.disconnect(); clearTimeout(t) }
-  }, [threshold, fallbackMs])
-
-  return [ref, seen]
-}
-
-function Reveal({ children, delay = 0, className = '' }) {
-  const [ref, seen] = useInView()
-  return (
-    <div
-      ref={ref}
-      className={`transition-all duration-700 ease-out ${seen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'} ${className}`}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
-      {children}
-    </div>
-  )
-}
 
 const MONTHS = [
   'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -62,19 +30,10 @@ function isoParts(iso) {
 const STATUS_LABEL = { open: 'Pendaftaran dibuka', full: 'Kuota penuh', past: 'Sudah lewat' }
 
 export default function EventPage({ onNavigate }) {
-  const [scrolled, setScrolled] = useState(false)
   const [type, setType] = useState('Semua')
   const [showPast, setShowPast] = useState(false)
   const [page, setPage] = useState(1)
   const [registered, setRegistered] = useState(() => new Set())
-  // filter yang sedang aktif, buat judul banner biar konteks nggak hilang
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24)
-    onScroll()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
 
   // upcoming dulu (yang nearest), event lewat disisihkan — kecuali user minta lihat
   const pool = useMemo(() => {
@@ -123,24 +82,20 @@ export default function EventPage({ onNavigate }) {
     <div className="min-h-screen bg-white text-[#0c4a6e]" style={{ fontFamily: "'Mona Sans', system-ui, sans-serif" }}>
 
       <div className="h-[68px]">
-        <PublicNavbar onNavigate={onNavigate} activePage="event" scrolled={scrolled} />
+        <PublicNavbar onNavigate={onNavigate} activePage="event" />
       </div>
 
-      {/* ============ PAGE HEADER ============ */}
       <PublicPageBanner pageKey="event" breadcrumb="Event" onNavigate={onNavigate} />
 
-      {/* ============ NEXT EVENT BANNER ============ */}
       {bannerEvent && (
         <section className="max-w-7xl mx-auto px-6 pt-12 md:pt-16">
           <Reveal>
             <div className="bg-[#0284c7] text-white rounded-2xl overflow-hidden relative">
               <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent" />
-              {/* dekor lingkaran */}
               <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full border border-white/10" />
               <div className="absolute -right-8 -bottom-24 w-56 h-56 rounded-full border border-white/10" />
               <div className="relative grid sm:grid-cols-[auto_minmax(0,1fr)] xl:grid-cols-[auto_minmax(0,1fr)_auto] gap-5 xl:gap-8 items-center p-6 md:p-8">
                 <div className="flex items-center gap-4">
-                  {/* tanggal besar */}
                   <div className="text-center shrink-0">
                     <div className="bg-white text-[#0284c7] rounded-xl px-4 py-3 shadow-sm">
                       <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-sky-500">
@@ -197,12 +152,10 @@ export default function EventPage({ onNavigate }) {
         </section>
       )}
 
-      {/* ============ CONTENT: LIST KIRI + SIDEBAR KANAN ============ */}
       <section className="max-w-7xl mx-auto px-6 py-12 md:py-16">
         <div className="grid xl:grid-cols-[minmax(0,1fr)_320px] gap-8 xl:gap-10">
           <div id="daftar-event" className="scroll-mt-24 min-w-0">
 
-            {/* filter tipe — horizontal pills ala tag-archive, plus toggle event lewat */}
             <div className="flex flex-wrap items-center gap-2 mb-8">
               {eventTypeCounts.map(c => (
                 <button
@@ -246,12 +199,10 @@ export default function EventPage({ onNavigate }) {
               </div>
             ) : (
               <>
-                {/* ---------- FEATURED (kartu pertama, layout split ala tag-archive) ---------- */}
                 {currentPage === 1 && featured && (
                   <Reveal className="mb-8">
                     <article className="group bg-white border border-gray-200/80 rounded-2xl overflow-hidden hover:border-[#0284c7]/50 transition-colors">
                       <div className="grid md:grid-cols-2">
-                        {/* teks kiri */}
                         <div className="p-6 md:p-8 flex flex-col justify-center order-2 md:order-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-2 mb-4">
                             <span className="bg-[#0284c7] text-white text-[11px] font-bold uppercase tracking-[0.1em] px-2.5 py-1 rounded">
@@ -310,7 +261,6 @@ export default function EventPage({ onNavigate }) {
                             </span>
                           </div>
                         </div>
-                        {/* gambar kanan */}
                         <div className="relative order-1 md:order-2 min-h-[240px] md:min-h-0">
                           <img
                             src={featured.image}
@@ -324,13 +274,11 @@ export default function EventPage({ onNavigate }) {
                   </Reveal>
                 )}
 
-                {/* ---------- LIST (baris horizontal: gambar kanan ala Newspaper) ---------- */}
                 {rest.length > 0 && (
                   <div className="divide-y divide-gray-200/80 border-t border-gray-200/80">
                     {rest.map((e, i) => (
                       <Reveal key={e.id} delay={(i % 3) * 70}>
                         <article className="group py-7 flex flex-col sm:flex-row gap-5 sm:gap-7">
-                          {/* teks */}
                           <div className="flex-1 min-w-0 sm:order-1">
                             <div className="flex flex-wrap items-center gap-2 mb-3">
                               <span className="bg-[#0284c7] text-white text-[11px] font-bold uppercase tracking-[0.1em] px-2.5 py-1 rounded">
@@ -394,7 +342,6 @@ export default function EventPage({ onNavigate }) {
                               )}
                             </div>
                           </div>
-                          {/* gambar kanan */}
                           <div className="relative sm:order-2 w-full sm:w-[260px] shrink-0 rounded-xl overflow-hidden self-start">
                             <img
                               src={e.image}
@@ -414,7 +361,6 @@ export default function EventPage({ onNavigate }) {
                   </div>
                 )}
 
-                {/* ---------- PAGINATION ---------- */}
                 {totalPages > 1 && (
                   <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
                     <button
@@ -452,10 +398,8 @@ export default function EventPage({ onNavigate }) {
             )}
           </div>
 
-          {/* ---------- SIDEBAR KANAN ---------- */}
           <aside className="grid sm:grid-cols-2 xl:block gap-6 xl:space-y-6 xl:sticky xl:top-24 xl:self-start items-start">
 
-            {/* Mendatang */}
             <div className="bg-white border border-gray-200/80 rounded-xl overflow-hidden">
               <div className="bg-[#0c4a6e] px-5 py-3.5 flex items-center gap-2">
                 <CalendarDays size={16} className="text-sky-400" />
@@ -498,7 +442,6 @@ export default function EventPage({ onNavigate }) {
               </div>
             </div>
 
-            {/* Kuota terisi */}
             <div className="bg-white border border-gray-200/80 rounded-xl overflow-hidden">
               <div className="bg-[#0c4a6e] px-5 py-3.5 flex items-center gap-2">
                 <Users size={16} className="text-sky-400" />
@@ -540,7 +483,6 @@ export default function EventPage({ onNavigate }) {
               </div>
             </div>
 
-            {/* CTA sidebar */}
             <div className="sm:col-span-2 bg-[#0284c7] text-white rounded-xl overflow-hidden relative">
               <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
               <div className="relative p-6">
@@ -563,7 +505,6 @@ export default function EventPage({ onNavigate }) {
         </div>
       </section>
 
-      {/* ============ FOOTER ============ */}
       <PublicFooter onNavigate={onNavigate} />
 
     </div>

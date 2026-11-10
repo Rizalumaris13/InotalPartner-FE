@@ -75,9 +75,4 @@ export const validateHomepageServices = (record) => {
   return errors
 }
 
-export const getHomepageServicesErrorMessage = (error, fallback) => {
-  const message = error?.response?.data?.message
-  if (typeof message === 'string' && message.trim()) return message
-  if (!error?.isAxiosError && typeof error?.message === 'string' && error.message.trim()) return error.message
-  return fallback
-}
+export { getApiErrorMessage as getHomepageServicesErrorMessage } from './apiErrors'

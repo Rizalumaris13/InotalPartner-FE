@@ -13,7 +13,7 @@ export const getBannersApi = async () => {
     const response = await api.get(`${API_BASE_URL}/homepage/banners`);
     return response.data;
   } catch (error) {
-    throw new Error(getErrorMessage(error, 'Gagal mengambil data slider.'));
+    throw new Error(getErrorMessage(error, 'Gagal mengambil data slider.'), { cause: error });
   }
 };
 
@@ -26,7 +26,8 @@ export const getPublicBannersApi = async () => {
     return response.data;
   } catch (error) {
     throw new Error(
-      getErrorMessage(error, 'Gagal mengambil slider Landing Page.')
+      getErrorMessage(error, 'Gagal mengambil slider Landing Page.'),
+      { cause: error }
     );
   }
 };
@@ -65,7 +66,7 @@ export const uploadBannerImageApi = async (file) => {
       ''
     );
   } catch (error) {
-    throw new Error(getErrorMessage(error, 'Gagal mengupload gambar.'));
+    throw new Error(getErrorMessage(error, 'Gagal mengupload gambar.'), { cause: error });
   }
 };
 
@@ -79,7 +80,7 @@ export const createBannerApi = async (payload) => {
 
     return response.data;
   } catch (error) {
-    throw new Error(getErrorMessage(error, 'Gagal membuat slider.'));
+    throw new Error(getErrorMessage(error, 'Gagal membuat slider.'), { cause: error });
   }
 };
 
@@ -93,7 +94,7 @@ export const updateBannerApi = async (id, payload) => {
 
     return response.data;
   } catch (error) {
-    throw new Error(getErrorMessage(error, 'Gagal mengubah slider.'));
+    throw new Error(getErrorMessage(error, 'Gagal mengubah slider.'), { cause: error });
   }
 };
 
@@ -106,7 +107,7 @@ export const deleteBannerApi = async (id) => {
 
     return response.data;
   } catch (error) {
-    throw new Error(getErrorMessage(error, 'Gagal menurunkan slider.'));
+    throw new Error(getErrorMessage(error, 'Gagal menurunkan slider.'), { cause: error });
   }
 };
 

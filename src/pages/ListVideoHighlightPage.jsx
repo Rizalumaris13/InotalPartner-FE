@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Search,
   Plus,
@@ -9,21 +9,16 @@ import {
   Sparkles,
   CheckCircle2,
   X,
-  Layers,
 } from 'lucide-react'
 import {
   getAboutVideoHighlightsApi,
   deleteAboutVideoHighlightApi,
   updateAboutVideoHighlightApi,
 } from '../api/about'
-import { DynamicHighlightIcon } from '../components/HighlightIconHelper'
+import { DynamicHighlightIcon } from '../components/HighlightIcon'
 import { useAuth } from '../hooks/useAuth'
 
-const STATUS_FILTERS = [
-  { key: 'all', label: 'Semua' },
-  { key: 'active', label: 'Aktif' },
-  { key: 'inactive', label: 'Tidak Aktif' },
-]
+import { STATUS_FILTERS } from '../data/statusFilters'
 
 export default function ListVideoHighlightPage({ onAddNew, onEdit }) {
   const { role, user } = useAuth()
@@ -83,14 +78,15 @@ export default function ListVideoHighlightPage({ onAddNew, onEdit }) {
 
   // Filter highlights berdasarkan pencarian & status
   const filteredHighlights = useMemo(() => {
+    const hasSearch = Boolean(search.trim())
+    const query = search.toLowerCase()
     return highlights.filter((item) => {
       // Filter status
       if (statusFilter === 'active' && !item.is_active) return false
       if (statusFilter === 'inactive' && item.is_active) return false
 
       // Search
-      if (search.trim()) {
-        const query = search.toLowerCase()
+      if (hasSearch) {
         const titleMatch = (item.title || '').toLowerCase().includes(query)
         const descMatch = (item.description || '').toLowerCase().includes(query)
         const iconMatch = (item.icon || '').toLowerCase().includes(query)

@@ -121,17 +121,7 @@ export const validateAboutCardForm = (form, maxPosition) => {
   return errors
 }
 
-export const getAboutCardErrorMessage = (error, fallback) => {
-  const message = error?.response?.data?.message
-  if (typeof message === 'string' && message.trim()) return message
-  if (
-    !error?.isAxiosError &&
-    typeof error?.message === 'string' &&
-    error.message.trim()
-  )
-    return error.message
-  return fallback
-}
+export { getApiErrorMessage as getAboutCardErrorMessage } from './apiErrors'
 
 export const formatAboutCardPosition = (position) =>
   String(position).padStart(2, '0')

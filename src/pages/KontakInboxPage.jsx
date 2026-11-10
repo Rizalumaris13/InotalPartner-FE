@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Search, Trash2, RefreshCw, Inbox, AlertCircle, X,
   Phone, Calendar, MessageSquare, CheckCheck,
@@ -95,7 +95,17 @@ export default function KontakInboxPage() {
     return () => { isMounted = false }
   }, [refreshKey])
 
-  useEffect(() => { setPage(1) }, [filter, search])
+  function changeFilter(value) {
+    if (value === filter) return
+    setFilter(value)
+    setPage(1)
+  }
+
+  function changeSearch(value) {
+    if (value === search) return
+    setSearch(value)
+    setPage(1)
+  }
 
   const counts = useMemo(() => ({
     total: contacts.length,
@@ -212,7 +222,7 @@ export default function KontakInboxPage() {
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => changeSearch(e.target.value)}
               placeholder="Cari nama, email, subjek, atau isi pesan..."
               className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition-colors"
             />
@@ -221,7 +231,7 @@ export default function KontakInboxPage() {
             {FILTERS.map((f) => (
               <button
                 key={f.key}
-                onClick={() => setFilter(f.key)}
+                onClick={() => changeFilter(f.key)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
                   filter === f.key
                     ? 'bg-sky-50 text-sky-600 border-sky-200'

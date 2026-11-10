@@ -1,17 +1,7 @@
 export const PARTNER_NAME_MIN_LENGTH = 2
 export const PARTNER_NAME_MAX_LENGTH = 150
 
-export const getPartnerErrorMessage = (error, fallback) => {
-  const message = error?.response?.data?.message
-  if (typeof message === 'string' && message.trim()) return message
-  if (
-    !error?.isAxiosError &&
-    typeof error?.message === 'string' &&
-    error.message.trim()
-  )
-    return error.message
-  return fallback
-}
+export { getApiErrorMessage as getPartnerErrorMessage } from './apiErrors'
 
 export const sortPartners = (partners) =>
   [...partners].sort(

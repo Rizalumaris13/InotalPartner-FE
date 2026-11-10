@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   Save,
   List,
@@ -8,7 +8,6 @@ import {
   Upload,
   Trash2,
   X,
-  Edit3,
 } from 'lucide-react'
 import {
   getAboutSettingApi,
@@ -18,145 +17,111 @@ import {
   createTeamMemberApi,
   updateTeamMemberApi,
   uploadImageApi,
-  resolveImageUrl,
 } from '../api/about'
 import { useAuth } from '../hooks/useAuth'
+import { availableMemberOrders, toMemberDraft } from '../utils/editorDrafts'
 
 export default function CreateAboutPage({
   editingMember = null,
   onFinishEdit,
   onCancelEdit,
-  onAddNew,
-  onEdit,
   onOpenList,
 }) {
   const { role, user } = useAuth()
   const currentRole = (typeof user?.role === 'object' ? user?.role?.name : user?.role) || role || 'guest'
   const isAdmin = currentRole === 'admin' || currentRole === 'super_admin'
 
-  // ─── State Pengaturan Judul Tim Kami ───────────────────────────────────────
-  const [teamTitle, setTeamTitle] = useState('')
-  const [isActive, setIsActive] = useState(true)
+  const [titleDraft, setTitleDraft] = useState({ teamTitle: '', isActive: true })
+  const { teamTitle, isActive } = titleDraft
   const [loadingTitle, setLoadingTitle] = useState(true)
   const [savingTitle, setSavingTitle] = useState(false)
   const [titleSuccess, setTitleSuccess] = useState('')
   const [titleError, setTitleError] = useState('')
 
-  // ─── State Form Input Satu Anggota Tim ──────────────────────────────────────
-  const [currentEditingMember, setCurrentEditingMember] = useState(editingMember)
+  const [memberEditor, setMemberEditor] = useState(() => ({
+    source: editingMember,
+    record: editingMember,
+    draft: toMemberDraft(editingMember, 1),
+  }))
+  const currentEditingMember = memberEditor.record
   const isEditing = !!currentEditingMember
+  const {
+    name: memberName,
+    position: memberPosition,
+    displayOrder: memberOrder,
+    isActive: memberIsActive,
+    photoUrl: memberPhotoUrl,
+    imageFile: memberImageFile,
+    imagePreview: memberImagePreview,
+  } = memberEditor.draft
   const memberSectionRef = useRef(null)
-
-  const [memberName, setMemberName] = useState('')
-  const [memberPosition, setMemberPosition] = useState('')
-  const [memberOrder, setMemberOrder] = useState(1)
-  const [memberIsActive, setMemberIsActive] = useState(true)
-  const [memberPhotoUrl, setMemberPhotoUrl] = useState('')
-  const [memberImageFile, setMemberImageFile] = useState(null)
-  const [memberImagePreview, setMemberImagePreview] = useState('')
   const fileInputRef = useRef(null)
-
   const [existingMembers, setExistingMembers] = useState([])
   const [savingMember, setSavingMember] = useState(false)
   const [uploadingMember, setUploadingMember] = useState(false)
   const [memberSuccess, setMemberSuccess] = useState('')
   const [memberError, setMemberError] = useState('')
 
-  // Helper: Ambil nomor urut pertama yang belum terpakai oleh anggota AKTIF di database
-  const getNextAvailableOrder = (membersList) => {
-    const usedOrders = new Set(
-      (membersList || [])
-        .filter((m) => m.is_active)
-        .map((m) => m.display_order)
-    )
-    let candidate = 1
-    while (usedOrders.has(candidate)) {
-      candidate++
-    }
-    return candidate
+  if (memberEditor.source !== editingMember) {
+    setMemberEditor({
+      source: editingMember,
+      record: editingMember,
+      // Clearing the prop only leaves edit mode; cancel/save own the full reset.
+      draft: editingMember ? toMemberDraft(editingMember, 1) : memberEditor.draft,
+    })
+    if (editingMember) setMemberError('')
   }
 
-  // Sinkronisasi data ketika prop editingMember berubah (misal tombol Edit di List About ditekan)
+  const updateTitleDraft = (changes) => setTitleDraft((previous) => ({ ...previous, ...changes }))
+  const updateMemberDraft = (changes) => setMemberEditor((previous) => ({
+    ...previous,
+    draft: { ...previous.draft, ...changes },
+  }))
+
   useEffect(() => {
-    let isMounted = true
+    if (!editingMember || !isEditing) return
+    let cancelled = false
+    const scrollTimeout = setTimeout(() => {
+      memberSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 100)
 
-    if (editingMember) {
-      setCurrentEditingMember(editingMember)
-      setMemberName(editingMember.name || '')
-      setMemberPosition(editingMember.position || '')
-      setMemberOrder(
-        typeof editingMember.display_order === 'number'
-          ? editingMember.display_order
-          : 1
-      )
-      setMemberIsActive(
-        editingMember.is_active !== undefined ? editingMember.is_active : true
-      )
-      setMemberPhotoUrl(editingMember.photo_url || '')
-      setMemberImagePreview(
-        editingMember.photo_url ? resolveImageUrl(editingMember.photo_url) : ''
-      )
-      setMemberImageFile(null)
-      setMemberError('')
-
-      // Scroll halus ke form anggota tim agar user langsung fokus
-      setTimeout(() => {
-        memberSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }, 100)
-
-      // Ambil data anggota terbaru dari server jika id tersedia
-      if (editingMember.id) {
-        getTeamMemberByIdApi(editingMember.id)
-          .then((fresh) => {
-            if (isMounted && fresh) {
-              setCurrentEditingMember(fresh)
-              setMemberName(fresh.name || '')
-              setMemberPosition(fresh.position || '')
-              setMemberOrder(
-                typeof fresh.display_order === 'number'
-                  ? fresh.display_order
-                  : 1
-              )
-              setMemberIsActive(
-                fresh.is_active !== undefined ? fresh.is_active : true
-              )
-              setMemberPhotoUrl(fresh.photo_url || '')
-              setMemberImagePreview(
-                fresh.photo_url ? resolveImageUrl(fresh.photo_url) : ''
-              )
-            }
-          })
-          .catch((err) => {
-            console.warn('Gagal fetch data anggota terbaru:', err)
-          })
-      }
-    } else {
-      setCurrentEditingMember(null)
+    if (editingMember.id) {
+      getTeamMemberByIdApi(editingMember.id)
+        .then((fresh) => {
+          if (!cancelled && fresh) {
+            setMemberEditor((previous) => ({
+              ...previous,
+              record: fresh,
+              // A pending detail response replaces fields, not a selected upload.
+              draft: { ...toMemberDraft(fresh, 1), imageFile: previous.draft.imageFile },
+            }))
+          }
+        })
+        .catch((err) => {
+          console.warn('Gagal fetch data anggota terbaru:', err)
+        })
     }
-
     return () => {
-      isMounted = false
+      cancelled = true
+      clearTimeout(scrollTimeout)
     }
-  }, [editingMember])
+  }, [editingMember, isEditing])
 
-  // Load awal: Ambil data konfigurasi judul & data anggota tersimpan (untuk urutan unik)
+  // Member selection never reloads the independent title draft.
   useEffect(() => {
-    let isMounted = true
-
-    const loadInitialData = async () => {
-      // 1. Ambil setting judul
-      setLoadingTitle(true)
-      setTitleError('')
+    let cancelled = false
+    const loadTitle = async () => {
       try {
         const setting = await getAboutSettingApi()
-        if (isMounted && setting) {
-          setTeamTitle(setting.team_title || '')
-          setIsActive(setting.is_active !== undefined ? setting.is_active : true)
+        if (!cancelled && setting) {
+          setTitleDraft({
+            teamTitle: setting.team_title || '',
+            isActive: setting.is_active !== undefined ? setting.is_active : true,
+          })
         }
-        // Jika setting === null, artinya belum ada konfigurasi di database.
-        // Form dimulai kosong — admin bisa langsung mengisi dan menyimpan judul baru.
+        // Null means no configuration: leave the empty title ready to create.
       } catch (err) {
-        if (isMounted) {
+        if (!cancelled) {
           const status = err.response?.status
           if (status === 401) {
             setTitleError('Sesi login telah habis. Silakan login ulang untuk mengelola judul About.')
@@ -167,30 +132,36 @@ export default function CreateAboutPage({
           }
         }
       } finally {
-        if (isMounted) setLoadingTitle(false)
-      }
-
-      // 2. Ambil data anggota tim untuk mendeteksi nomor urut yang sudah terpakai
-      try {
-        const members = await getTeamMembersApi()
-        if (isMounted) {
-          const list = Array.isArray(members) ? members : []
-          setExistingMembers(list)
-          if (!editingMember) {
-            setMemberOrder(getNextAvailableOrder(list))
-          }
-        }
-      } catch (err) {
-        console.warn('Gagal mengambil daftar anggota tim:', err)
+        if (!cancelled) setLoadingTitle(false)
       }
     }
-
-    loadInitialData()
-
+    loadTitle()
     return () => {
-      isMounted = false
+      cancelled = true
     }
   }, [])
+
+  useEffect(() => {
+    if (loadingTitle) return
+    let cancelled = false
+    getTeamMembersApi()
+      .then((members) => {
+        if (cancelled) return
+        const list = Array.isArray(members) ? members : []
+        setExistingMembers(list)
+        // Check the current editor, not the edit prop captured at mount.
+        setMemberEditor((previous) => previous.record ? previous : {
+          ...previous,
+          draft: { ...previous.draft, displayOrder: availableMemberOrders(list, 1)[0] },
+        })
+      })
+      .catch((err) => {
+        console.warn('Gagal mengambil daftar anggota tim:', err)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [loadingTitle])
 
   // Cleanup blob preview saat unmount
   useEffect(() => {
@@ -201,7 +172,6 @@ export default function CreateAboutPage({
     }
   }, [memberImagePreview])
 
-  // Guard Akses
   if (!isAdmin) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
@@ -216,7 +186,6 @@ export default function CreateAboutPage({
     )
   }
 
-  // ─── Handler Bagian 1: Simpan Pengaturan Judul Tim Kami ─────────────────────
   const handleSaveTitle = async (e) => {
     e.preventDefault()
     setTitleError('')
@@ -231,10 +200,12 @@ export default function CreateAboutPage({
       }
       const updated = await saveAboutSettingApi(payload)
       if (updated) {
-        setTeamTitle(updated.team_title !== undefined ? updated.team_title : trimmedTeam)
-        setIsActive(updated.is_active !== undefined ? updated.is_active : true)
+        setTitleDraft({
+          teamTitle: updated.team_title !== undefined ? updated.team_title : trimmedTeam,
+          isActive: updated.is_active !== undefined ? updated.is_active : true,
+        })
       } else {
-        setTeamTitle(trimmedTeam)
+        setTitleDraft((previous) => ({ ...previous, teamTitle: trimmedTeam }))
       }
       setTitleSuccess('Pengaturan judul Tim Kami berhasil disimpan!')
       setTimeout(() => setTitleSuccess(''), 4000)
@@ -253,8 +224,6 @@ export default function CreateAboutPage({
     }
   }
 
-
-  // ─── Handler Upload & Preview Foto Anggota ──────────────────────────────────
   const handleImageChange = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -275,18 +244,14 @@ export default function CreateAboutPage({
       URL.revokeObjectURL(memberImagePreview)
     }
 
-    setMemberImageFile(file)
-    setMemberImagePreview(URL.createObjectURL(file))
-    setMemberPhotoUrl('')
+    updateMemberDraft({ imageFile: file, imagePreview: URL.createObjectURL(file), photoUrl: '' })
   }
 
   const handleRemoveImage = () => {
     if (memberImagePreview && memberImagePreview.startsWith('blob:')) {
       URL.revokeObjectURL(memberImagePreview)
     }
-    setMemberImageFile(null)
-    setMemberImagePreview('')
-    setMemberPhotoUrl('')
+    updateMemberDraft({ imageFile: null, imagePreview: '', photoUrl: '' })
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
@@ -307,19 +272,22 @@ export default function CreateAboutPage({
       return m.display_order === orderNumber
     })
 
-  // Batalkan mode edit dan kembalikan form ke mode tambah
+  const resetMember = (displayOrder) => {
+    if (memberImagePreview?.startsWith('blob:')) URL.revokeObjectURL(memberImagePreview)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+    setMemberEditor((previous) => ({
+      ...previous,
+      record: null,
+      draft: toMemberDraft(null, displayOrder ?? previous.draft.displayOrder),
+    }))
+  }
+
   const handleCancelEdit = () => {
-    setCurrentEditingMember(null)
-    setMemberName('')
-    setMemberPosition('')
-    setMemberIsActive(true)
-    handleRemoveImage()
+    resetMember(availableMemberOrders(existingMembers, 1)[0])
     setMemberError('')
-    setMemberOrder(getNextAvailableOrder(existingMembers))
     onCancelEdit?.()
   }
 
-  // ─── Handler Bagian 2: Simpan Satu Anggota Tim (Tambah / Edit) ──────────────
   const handleSaveMember = async (e) => {
     e.preventDefault()
     setMemberError('')
@@ -353,6 +321,7 @@ export default function CreateAboutPage({
       setUploadingMember(true)
       try {
         const uploadRes = await uploadImageApi(memberImageFile)
+        // The API does not enforce URL type; retain legacy object compatibility.
         let uploadedUrl = ''
         if (typeof uploadRes === 'string') {
           uploadedUrl = uploadRes.trim()
@@ -395,13 +364,11 @@ export default function CreateAboutPage({
       }
 
       if (currentEditingMember && currentEditingMember.id) {
-        // Mode Edit: Update data yang ada
         await updateTeamMemberApi(currentEditingMember.id, payload)
         setMemberSuccess(
           `Perubahan data anggota tim "${trimmedName}" berhasil disimpan!`
         )
       } else {
-        // Mode Tambah: Buat data baru
         await createTeamMemberApi(payload)
         setMemberSuccess(
           `Anggota tim "${trimmedName}" berhasil ditambahkan dengan status ${
@@ -412,20 +379,20 @@ export default function CreateAboutPage({
       setTimeout(() => setMemberSuccess(''), 5000)
 
       // Kosongkan form agar siap untuk input anggota berikutnya
-      setCurrentEditingMember(null)
-      setMemberName('')
-      setMemberPosition('')
-      setMemberIsActive(true)
-      handleRemoveImage()
+      resetMember()
 
       // Refresh data anggota tersimpan untuk alokasi nomor urut baru yang otomatis unik
       try {
         const updatedMembers = await getTeamMembersApi()
         const list = Array.isArray(updatedMembers) ? updatedMembers : []
         setExistingMembers(list)
-        setMemberOrder(getNextAvailableOrder(list))
-      } catch {
-        setMemberOrder((prev) => (parseInt(prev, 10) || 1) + 1)
+        updateMemberDraft({ displayOrder: availableMemberOrders(list, 1)[0] })
+      } catch (err) {
+        console.warn('Gagal memperbarui daftar anggota; urutan berikutnya memakai urutan sebelumnya:', err)
+        setMemberEditor((previous) => ({
+          ...previous,
+          draft: { ...previous.draft, displayOrder: (parseInt(previous.draft.displayOrder, 10) || 1) + 1 },
+        }))
       }
 
       if (currentEditingMember) {
@@ -444,7 +411,6 @@ export default function CreateAboutPage({
 
   return (
     <div className="flex flex-col pb-12">
-      {/* ── HEADER HALAMAN ─────────────────────────────────────────────────── */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-extrabold tracking-tight text-gray-900">
@@ -467,7 +433,6 @@ export default function CreateAboutPage({
         )}
       </div>
 
-      {/* ── BAGIAN 1: PENGATURAN JUDUL ABOUT ──────────────────────────────── */}
       <section className="mb-8 rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
         <div className="mb-5">
           <h2 className="text-base font-bold text-gray-900">
@@ -497,7 +462,7 @@ export default function CreateAboutPage({
             <input
               type="text"
               value={teamTitle}
-              onChange={(e) => setTeamTitle(e.target.value)}
+              onChange={(e) => updateTitleDraft({ teamTitle: e.target.value })}
               placeholder="Orang-orang di Balik Ekosistem Ini."
               disabled={loadingTitle}
               className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 disabled:bg-gray-50"
@@ -509,7 +474,7 @@ export default function CreateAboutPage({
               <input
                 type="checkbox"
                 checked={isActive}
-                onChange={(e) => setIsActive(e.target.checked)}
+                onChange={(e) => updateTitleDraft({ isActive: e.target.checked })}
                 className="w-4 h-4 rounded border-gray-300 text-sky-500 focus:ring-sky-400"
               />
               <span className="text-sm font-medium text-gray-700">
@@ -538,7 +503,6 @@ export default function CreateAboutPage({
         </form>
       </section>
 
-      {/* ── BAGIAN 2: FORM ANGGOTA TIM (TAMBAH / EDIT DI HALAMAN YANG SAMA) ── */}
       <section
         ref={memberSectionRef}
         className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm"
@@ -550,11 +514,6 @@ export default function CreateAboutPage({
                 {isEditing ? 'Edit Anggota Tim' : 'Tambah Anggota Tim'}
               </h2>
             </div>
-            {/* <p className="mt-1 text-xs text-gray-500">
-              {isEditing
-                ? `Mengubah data untuk "${currentEditingMember?.name || 'anggota tim'}". Klik "Simpan Perubahan" untuk menyimpan atau "Batal" untuk membatalkan.`
-                : 'Form input satu anggota tim di bawah ini langsung siap digunakan. Setelah data berhasil disimpan, form akan otomatis dikosongkan agar Anda dapat menginput anggota berikutnya.'}
-            </p> */}
           </div>
 
           {isEditing && (
@@ -588,7 +547,6 @@ export default function CreateAboutPage({
 
         <form onSubmit={handleSaveMember}>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Kolom Kiri: Nama, Jabatan, dan Status Keaktifan (7 cols) */}
             <div className="lg:col-span-7 space-y-5">
               <div>
                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
@@ -597,7 +555,7 @@ export default function CreateAboutPage({
                 <input
                   type="text"
                   value={memberName}
-                  onChange={(e) => setMemberName(e.target.value)}
+                  onChange={(e) => updateMemberDraft({ name: e.target.value })}
                   placeholder="Contoh: Dr. Budi Santoso"
                   className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
                   required
@@ -611,13 +569,12 @@ export default function CreateAboutPage({
                 <input
                   type="text"
                   value={memberPosition}
-                  onChange={(e) => setMemberPosition(e.target.value)}
+                  onChange={(e) => updateMemberDraft({ position: e.target.value })}
                   placeholder="Contoh: Chief Executive Officer / Founder"
                   className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
                 />
               </div>
 
-              {/* Status Anggota: Dropdown */}
               <div className="pt-2">
                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
                   Status Anggota
@@ -625,7 +582,7 @@ export default function CreateAboutPage({
                 <select
                   id="status-anggota"
                   value={memberIsActive ? 'active' : 'inactive'}
-                  onChange={(e) => setMemberIsActive(e.target.value === 'active')}
+                  onChange={(e) => updateMemberDraft({ isActive: e.target.value === 'active' })}
                   className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 cursor-pointer"
                 >
                   <option value="active">Aktif</option>
@@ -639,7 +596,6 @@ export default function CreateAboutPage({
               </div>
             </div>
 
-            {/* Kolom Kanan: Foto dan Urutan Tampil (5 cols) */}
             <div className="lg:col-span-5 space-y-5">
               <div>
                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
@@ -704,7 +660,7 @@ export default function CreateAboutPage({
                   min="0"
                   step="1"
                   value={memberOrder}
-                  onChange={(e) => setMemberOrder(e.target.value)}
+                  onChange={(e) => updateMemberDraft({ displayOrder: e.target.value })}
                   className={`w-full rounded-lg border px-4 py-2.5 text-sm outline-none transition ${
                     duplicateOrderMember
                       ? 'border-red-300 bg-red-50/30 text-red-900 focus:border-red-500 focus:ring-2 focus:ring-red-100'
@@ -727,7 +683,6 @@ export default function CreateAboutPage({
             </div>
           </div>
 
-          {/* ── BAGIAN 3: TOMBOL SIMPAN & BATAL ─────────────────────────────── */}
           <div className="mt-6 flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
             {isEditing && (
               <button

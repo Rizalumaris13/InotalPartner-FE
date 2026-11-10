@@ -1,4 +1,4 @@
-import { useFeedback } from "../components/FeedbackUI";
+import { useFeedback } from "../hooks/useFeedback";
 import { useState, useRef, useEffect } from "react";
 import { getCategoriesApi, getTagsApi, createCategoryApi, createTagApi } from "../api/taxonomy";
 import { createPostApi, updatePostApi, uploadImageApi, resolveImageUrl } from "../api/posts";
@@ -12,7 +12,7 @@ const toLabel = (t) => (t ? t.charAt(0).toUpperCase() + t.slice(1) : "Event");
 
 // editingPost: { postType: 'news' | 'event' | 'article', post } — diisi saat klik Edit di daftar post
 export default function CreatePost({ editingPost = null, onFinishEdit }) {
-  const { notify, confirmAction, FeedbackUI } = useFeedback();
+  const { notify, feedback } = useFeedback();
   const isEditing = !!editingPost;
   const editPost = editingPost?.post;
 
@@ -116,9 +116,6 @@ export default function CreatePost({ editingPost = null, onFinishEdit }) {
 
   const removeTag = (tagToRemove) => setTags(tags.filter((tag) => tag !== tagToRemove));
 
-  // -----------------------------
-  // API SUBMIT LOGIC
-  // -----------------------------
   const resolveTagIds = async () => {
     const tagIds = [];
     for (const tagName of tags) {
@@ -225,7 +222,7 @@ export default function CreatePost({ editingPost = null, onFinishEdit }) {
 
   return (
     <div className="bg-slate-50 text-slate-900">
-      <FeedbackUI />
+      {feedback}
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <h1 className="text-lg font-bold tracking-tight">{isEditing ? "Edit Post" : "Create Post"}</h1>

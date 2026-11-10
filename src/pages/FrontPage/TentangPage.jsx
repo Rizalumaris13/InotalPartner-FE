@@ -1,17 +1,27 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
+import Reveal from '../../components/Reveal'
+import useInView from '../../hooks/useInView'
 import PublicNavbar from '../../components/PublicNavbar'
 import PublicPageBanner from '../../components/PublicPageBanner'
 import PublicAboutCards from '../../components/PublicAboutCards'
 import AboutIntroSection from '../../components/AboutIntroSection'
 import useAboutIntro from '../../hooks/useAboutIntro'
-import {
-  ChevronRight, Home, Lightbulb, Award, Headset, ArrowRight,
-  Phone, Mail, MapPin, Plus, User,
-} from 'lucide-react'
+import { ArrowRight, Plus, Minus, User } from 'lucide-react'
 import PublicFooter from '../../components/PublicFooter'
 import { getPublicAboutSettingApi, getPublicTeamMembersApi, getPublicAboutFAQsApi, getPublicAboutVideosApi, getPublicAboutVideoSettingApi, getPublicAboutVideoHighlightsApi, resolveImageUrl } from '../../api/about'
-import { DynamicHighlightIcon } from '../../components/HighlightIconHelper'
+import { DynamicHighlightIcon } from '../../components/HighlightIcon'
 
+const DEFAULT_VIDEO_SETTING = {
+  section_label: 'Video Profil',
+  section_title: 'Lihat sendiri bagaimana kolaborasi bekerja.',
+  section_description:
+    'Keripitannya kami tampilkan apa adanya: obrolan panjang, request yang berubah, sampai proses panjang yang berakhir sesuai rencana. Video ini rekaman, bukan brosur.',
+}
+
+function unwrapAboutList(value) {
+  if (Array.isArray(value?.data)) return value.data
+  return Array.isArray(value) ? value : []
+}
 
 const team = [
   { name: 'Andini Prameswari', role: 'Chief Executive', img: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&q=80' },
@@ -19,43 +29,6 @@ const team = [
   { name: 'Citra Maharani', role: 'Partnership Lead', img: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600&q=80' },
   { name: 'Dimas Saputra', role: 'Tech Director', img: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600&q=80' },
 ]
-
-
-// satu tempat buat "element ini udah keliatan di layar" — Reveal, kartu stat,
-// sama progress bar semuanya butuh hal yang sama: observer + jaring pengaman
-function useInView({ threshold = 0.1, fallbackMs = 700 } = {}) {
-  const ref = useRef(null)
-  const [seen, setSeen] = useState(false)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const io = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { setSeen(true); io.disconnect() } },
-      { threshold },
-    )
-    io.observe(el)
-    // kalau observer-nya nggak kepicu, nomornya bisa nyangkut di 0 — muncul
-    // agak telat jauh lebih enak daripada gitu
-    const t = setTimeout(() => setSeen(true), fallbackMs)
-    return () => { io.disconnect(); clearTimeout(t) }
-  }, [threshold, fallbackMs])
-
-  return [ref, seen]
-}
-
-function Reveal({ children, delay = 0, className = '' }) {
-  const [ref, seen] = useInView()
-  return (
-    <div
-      ref={ref}
-      className={`transition-all duration-700 ease-out ${seen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'} ${className}`}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
-      {children}
-    </div>
-  )
-}
 
 function SubTitle({ children }) {
   return (
@@ -83,23 +56,6 @@ function PillButton({ children, onClick, dark = false }) {
   )
 }
 
-// Iframe YouTube cuma dimount setelah diklik, jadi halaman ini nggak
-// request ke YouTube cuma karena orang kebetulan scroll lewat.
-
-
-const videoHighlights = [
-  {
-    icon: 'film',
-    title: 'Rekaman sesi & acara',
-    desc: 'Rangkuman diskusi komunitas, demo program, dan berbagi expertise dari mitra yang programnya sudah berjalan.',
-  },
-  {
-    icon: 'quote',
-    title: 'Suara dari mitra',
-    desc: 'Pendapat langsung soal apa yang berubah setelah bergabung — dari proses kerja sampai hasil yang dirasa.',
-  },
-]
-
 const SVG_BASE = {
   viewBox: '0 0 24 24',
   fill: 'none',
@@ -110,20 +66,6 @@ const SVG_BASE = {
 }
 
 const ICON_PATHS = {
-  film: (
-    <>
-      <rect x="3" y="4.5" width="18" height="15" rx="2.5" />
-      <path d="M3 9h18M8 4.5v3M16 4.5v3" />
-      <path d="M10.2 13.1v3.6l3-1.8-3-1.8Z" fill="currentColor" stroke="none" />
-    </>
-  ),
-  quote: (
-    <path
-      d="M9.7 5.1C6.5 6.5 4.5 9.3 4.5 13v5.9h6.1V11H7.5c0-2.2 1-3.8 3.1-4.7l-.9-1.2Zm9.4 0c-3.2 1.4-5.2 4.2-5.2 7.9v5.9H20V11h-3.1c0-2.2 1-3.8 3.1-4.7l-.9-1.2Z"
-      fill="currentColor"
-      stroke="none"
-    />
-  ),
   layers: (
     <>
       <path d="M12 3.4 21 8l-9 4.6L3 8l9-4.6Z" />
@@ -162,7 +104,6 @@ function SvgIcon({ shape, className = '' }) {
   )
 }
 
-
 function extractYouTubeId(url) {
   if (!url) return ''
   try {
@@ -190,6 +131,9 @@ function extractYouTubeId(url) {
   }
   return ''
 }
+
+// Iframe YouTube cuma dimount setelah diklik, jadi halaman ini nggak
+// request ke YouTube cuma karena orang kebetulan scroll lewat.
 
 function VideoProfile({ video, loading }) {
   const [playing, setPlaying] = useState(false)
@@ -385,28 +329,19 @@ function renderTeamHeading(title) {
 }
 
 export default function TentangPage({ onNavigate }) {
-  const [scrolled, setScrolled] = useState(false)
   const [openFaq, setOpenFaq] = useState(0)
   const intro = useAboutIntro()
 
-  // ─── DATA DINAMIS DARI BACKEND ─────────────────────────────────────────────
   const [teamSectionTitle, setTeamSectionTitle] = useState('Orang-orang di Balik Ekosistem Ini.')
   const [teamMembers, setTeamMembers] = useState([])
-  const [teamLoading, setTeamLoading] = useState(true)
 
   const [faqList, setFaqList] = useState([])
   const [faqLoading, setFaqLoading] = useState(true)
   const [faqError, setFaqError] = useState('')
 
-  // Video Profil State
   const [profileVideo, setProfileVideo] = useState(null)
   const [videoLoading, setVideoLoading] = useState(true)
-  const [videoSetting, setVideoSetting] = useState({
-    section_label: 'Video Profil',
-    section_title: 'Lihat sendiri bagaimana kolaborasi bekerja.',
-    section_description:
-      'Keripitannya kami tampilkan apa adanya: obrolan panjang, request yang berubah, sampai proses panjang yang berakhir sesuai rencana. Video ini rekaman, bukan brosur.',
-  })
+  const [videoSetting, setVideoSetting] = useState(DEFAULT_VIDEO_SETTING)
   const [videoHighlightsList, setVideoHighlightsList] = useState([])
 
   useEffect(() => {
@@ -414,7 +349,6 @@ export default function TentangPage({ onNavigate }) {
 
     const loadAboutData = async () => {
       try {
-        setTeamLoading(true)
         setFaqLoading(true)
         setFaqError('')
         setVideoLoading(true)
@@ -427,79 +361,61 @@ export default function TentangPage({ onNavigate }) {
           getPublicAboutVideoHighlightsApi(),
         ])
 
-        if (isMounted) {
-          if (settingRes.status === 'fulfilled') {
-            const rawTeamTitle =
-              settingRes.value?.data?.team_title ||
-              (typeof settingRes.value?.team_title === 'string' ? settingRes.value.team_title : null)
-            if (rawTeamTitle && typeof rawTeamTitle === 'string' && rawTeamTitle.trim()) {
-              setTeamSectionTitle(rawTeamTitle.trim())
-            }
-          }
+        if (!isMounted) return
 
-          if (teamRes.status === 'fulfilled') {
-            const data = Array.isArray(teamRes.value?.data)
-              ? teamRes.value.data
-              : Array.isArray(teamRes.value)
-                ? teamRes.value
-                : []
-            // Filter hanya yang memiliki nama dan foto valid
-            const validMembers = data.filter(m => m?.name && m?.photo_url)
-            setTeamMembers(validMembers.length > 0 ? validMembers : team)
-          } else {
-            setTeamMembers(team)
+        if (settingRes.status === 'fulfilled') {
+          const rawTeamTitle =
+            settingRes.value?.data?.team_title ||
+            (typeof settingRes.value?.team_title === 'string' ? settingRes.value.team_title : null)
+          if (rawTeamTitle && typeof rawTeamTitle === 'string' && rawTeamTitle.trim()) {
+            setTeamSectionTitle(rawTeamTitle.trim())
           }
+        }
 
-          if (faqRes.status === 'fulfilled') {
-            const rawFaqs = Array.isArray(faqRes.value?.data)
-              ? faqRes.value.data
-              : Array.isArray(faqRes.value)
-                ? faqRes.value
-                : []
-            setFaqList(rawFaqs)
-          } else {
-            setFaqError(
-              faqRes.reason?.response?.data?.message ||
-              faqRes.reason?.message ||
-              'Gagal memuat pertanyaan FAQ saat ini.'
-            )
-          }
+        if (teamRes.status === 'fulfilled') {
+          const data = unwrapAboutList(teamRes.value)
+          const validMembers = data.filter(m => m?.name && m?.photo_url)
+          setTeamMembers(validMembers.length > 0 ? validMembers : team)
+        } else {
+          setTeamMembers(team)
+        }
 
-          if (videoRes.status === 'fulfilled') {
-            const rawVideos = Array.isArray(videoRes.value?.data)
-              ? videoRes.value.data
-              : Array.isArray(videoRes.value)
-                ? videoRes.value
-                : []
-            // Ambil video profil aktif terbaru (elemen pertama karena backend sudah urut ID DESC)
-            if (rawVideos.length > 0) {
-              setProfileVideo(rawVideos[0])
-            } else {
-              setProfileVideo(null)
-            }
+        if (faqRes.status === 'fulfilled') {
+          const rawFaqs = unwrapAboutList(faqRes.value)
+          setFaqList(rawFaqs)
+        } else {
+          setFaqError(
+            faqRes.reason?.response?.data?.message ||
+            faqRes.reason?.message ||
+            'Gagal memuat pertanyaan FAQ saat ini.'
+          )
+        }
+
+        if (videoRes.status === 'fulfilled') {
+          const rawVideos = unwrapAboutList(videoRes.value)
+          // Ambil video profil aktif terbaru (elemen pertama karena backend sudah urut ID DESC)
+          if (rawVideos.length > 0) {
+            setProfileVideo(rawVideos[0])
           } else {
             setProfileVideo(null)
           }
+        } else {
+          setProfileVideo(null)
+        }
 
-          if (videoSettingRes.status === 'fulfilled' && videoSettingRes.value?.data) {
-            const sData = videoSettingRes.value.data
-            setVideoSetting({
-              section_label: sData.section_label?.trim() || 'Video Profil',
-              section_title: sData.section_title?.trim() || 'Lihat sendiri bagaimana kolaborasi bekerja.',
-              section_description:
-                sData.section_description?.trim() ||
-                'Keripitannya kami tampilkan apa adanya: obrolan panjang, request yang berubah, sampai proses panjang yang berakhir sesuai rencana. Video ini rekaman, bukan brosur.',
-            })
-          }
+        if (videoSettingRes.status === 'fulfilled' && videoSettingRes.value?.data) {
+          const sData = videoSettingRes.value.data
+          setVideoSetting({
+            section_label: sData.section_label?.trim() || DEFAULT_VIDEO_SETTING.section_label,
+            section_title: sData.section_title?.trim() || DEFAULT_VIDEO_SETTING.section_title,
+            section_description:
+              sData.section_description?.trim() || DEFAULT_VIDEO_SETTING.section_description,
+          })
+        }
 
-          if (videoHighlightsRes.status === 'fulfilled') {
-            const rawHighlights = Array.isArray(videoHighlightsRes.value?.data)
-              ? videoHighlightsRes.value.data
-              : Array.isArray(videoHighlightsRes.value)
-                ? videoHighlightsRes.value
-                : []
-            setVideoHighlightsList(rawHighlights)
-          }
+        if (videoHighlightsRes.status === 'fulfilled') {
+          const rawHighlights = unwrapAboutList(videoHighlightsRes.value)
+          setVideoHighlightsList(rawHighlights)
         }
       } catch (err) {
         console.error('Gagal mengambil data Tentang Kami:', err)
@@ -509,7 +425,6 @@ export default function TentangPage({ onNavigate }) {
         }
       } finally {
         if (isMounted) {
-          setTeamLoading(false)
           setFaqLoading(false)
           setVideoLoading(false)
         }
@@ -523,18 +438,11 @@ export default function TentangPage({ onNavigate }) {
     }
   }, [])
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24)
-    onScroll()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
   return (
     <div className="min-h-screen bg-white text-[#0c4a6e]" style={{ fontFamily: "'Mona Sans', system-ui, sans-serif" }}>
 
       <div className="h-[68px]">
-        <PublicNavbar onNavigate={onNavigate} activePage="tentang" scrolled={scrolled} />
+        <PublicNavbar onNavigate={onNavigate} activePage="tentang" />
       </div>
       <PublicPageBanner pageKey="tentang" breadcrumb="Tentang Kami" onNavigate={onNavigate} />
       <section className="max-w-7xl mx-auto px-6 py-12 md:py-16">
@@ -683,6 +591,7 @@ export default function TentangPage({ onNavigate }) {
             ) : (
               faqList.map((f, i) => {
                 const open = openFaq === i
+                const ToggleIcon = open ? Minus : Plus
                 return (
                   <Reveal key={f.id || f.question || i} delay={i * 60}>
                     <div className={`rounded-xl border transition-all duration-300 ${
@@ -701,9 +610,9 @@ export default function TentangPage({ onNavigate }) {
                           {f.question}
                         </span>
                         <span className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 ${
-                          open ? 'bg-[#0284c7] rotate-45' : 'bg-[#F0F4F8]'
+                          open ? 'bg-[#0284c7]' : 'bg-[#F0F4F8]'
                         }`}>
-                          <Plus size={16} className={open ? 'text-white' : 'text-[#0c4a6e]'} strokeWidth={2.5} />
+                          <ToggleIcon size={16} className={open ? 'text-white' : 'text-[#0c4a6e]'} strokeWidth={2.5} />
                         </span>
                       </button>
                       <div className={`grid transition-all duration-300 ease-out ${
@@ -744,7 +653,6 @@ export default function TentangPage({ onNavigate }) {
         </div>
       </section>
 
-      {/* Footer */}
       <PublicFooter onNavigate={onNavigate} />
 
     </div>

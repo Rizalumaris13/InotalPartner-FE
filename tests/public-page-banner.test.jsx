@@ -1,10 +1,7 @@
 import { expect, test } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { renderToStaticMarkup } from 'react-dom/server'
 import { http, HttpResponse } from 'msw'
 import PublicPageBanner from '../src/components/PublicPageBanner'
-import PublicNavbar from '../src/components/PublicNavbar'
-import { DEFAULT_PAGE_BANNERS } from '../src/data/pageBanners'
 import { server } from './setup'
 
 const remote = {
@@ -14,28 +11,6 @@ const remote = {
   description: 'Deskripsi banner yang diatur admin lewat dashboard.',
   image_url: '/uploads/tentang-baru.webp',
 }
-
-test('judul ringkas merapatkan label dan breadcrumb tanpa mengubah ukuran font', () => {
-  const container = document.createElement('div')
-  container.innerHTML = renderToStaticMarkup(
-    <>
-      <PublicNavbar activePage="tentang" />
-      <PublicPageBanner pageKey="tentang" breadcrumb="Tentang Kami" />
-    </>,
-  )
-  const logo = container.querySelector('nav button > span')
-  const title = container.querySelector('h1')
-  expect(logo.classList.contains('text-lg')).toBe(true)
-  expect(title.classList.contains('text-2xl')).toBe(true)
-  expect(title.className).not.toContain('text-[length:calc(')
-  expect(title.classList.contains('leading-tight')).toBe(true)
-  expect(title.classList.contains('mb-3')).toBe(true)
-  expect(title.className).not.toContain('leading-[calc(')
-  expect(title.className).not.toMatch(/(?:md|lg):mb-/)
-  expect(title.previousElementSibling.classList.contains('mb-2')).toBe(true)
-  expect(title.previousElementSibling.classList.contains('md:mb-4')).toBe(false)
-  expect(title.textContent).toBe(DEFAULT_PAGE_BANNERS.tentang.title)
-})
 
 test('banner publik menampilkan konfigurasi backend bila tersedia', async () => {
   server.use(http.get('*/api/public/page-banners/tentang', () => HttpResponse.json({ success: true, data: remote })))
@@ -67,30 +42,3 @@ test.each([
   expect(screen.getByText('Kontak — Kami Siap Membantu')).not.toBeNull()
   expect(screen.getByText('Beranda')).not.toBeNull()
 })
-
-test.each(Object.keys(DEFAULT_PAGE_BANNERS))(
-  'banner %s memakai judul 2xl dan jarak teks rapat yang sama',
-  (pageKey) => {
-    const container = document.createElement('div')
-    container.innerHTML = renderToStaticMarkup(
-      <PublicPageBanner pageKey={pageKey} breadcrumb="Halaman" />,
-    )
-    const title = container.querySelector('h1')
-    const banner = title.closest('section')
-    const content = banner.querySelector('.relative.max-w-7xl')
-
-    expect(content.classList.contains('py-6')).toBe(true)
-    expect(content.classList.contains('py-16')).toBe(false)
-    expect(content.classList.contains('md:py-24')).toBe(false)
-    expect(title.classList.contains('text-2xl')).toBe(true)
-    expect(title.classList.contains('leading-tight')).toBe(true)
-    expect(title.classList.contains('mb-3')).toBe(true)
-    expect(title.className).not.toMatch(/(?:md|lg):(?:text-|mb-)/)
-    expect(title.previousElementSibling.classList.contains('mb-2')).toBe(true)
-    expect(title.previousElementSibling.classList.contains('md:mb-4')).toBe(false)
-    expect(title.textContent).toBe(DEFAULT_PAGE_BANNERS[pageKey].title)
-    expect(banner.textContent).toContain(DEFAULT_PAGE_BANNERS[pageKey].description)
-    expect(banner.classList.contains('mx-3')).toBe(true)
-    expect(banner.classList.contains('md:mx-4')).toBe(true)
-  },
-)

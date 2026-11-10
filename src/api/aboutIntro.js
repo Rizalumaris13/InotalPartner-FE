@@ -1,16 +1,12 @@
 import api from './axios'
+import { readNullableContent, requireContentAcknowledgement } from './contentResponse'
 import { isAboutIntroRecord, toAboutIntroPayload } from '../utils/aboutIntro'
 
 export const ABOUT_INTRO_PATH = '/about/intro'
 
 const readResponse = ({ data: body }) => {
-  if (body?.success === false && typeof body.message === 'string' && body.message.trim()) {
-    throw new Error(body.message)
-  }
-  if (body?.success !== true || (body.data !== null && !isAboutIntroRecord(body.data))) {
-    throw new Error('Format data intro Tentang tidak sesuai kontrak.')
-  }
-  return body.data === null ? null : toAboutIntroPayload(body.data)
+  const record = readNullableContent(body, isAboutIntroRecord, 'Format data intro Tentang tidak sesuai kontrak.')
+  return record === null ? null : toAboutIntroPayload(record)
 }
 
 export const getPublicAboutIntroApi = (options = {}) =>
@@ -22,11 +18,7 @@ export const getAboutIntroApi = (options = {}) =>
 export const saveAboutIntroApi = (record) => {
   const payload = toAboutIntroPayload(record)
   if (!isAboutIntroRecord(payload)) throw new Error('Isian intro Tentang belum valid.')
-  return api.put(ABOUT_INTRO_PATH, payload).then(({ data: body }) => {
-    if (body?.success !== true) {
-      throw new Error(typeof body?.message === 'string' && body.message.trim()
-        ? body.message : 'Backend belum mengonfirmasi penerimaan intro Tentang.')
-    }
-    // Bukti tersimpan adalah GET ulang oleh pemanggil, bukan respons PUT ini.
-  })
+  return api.put(ABOUT_INTRO_PATH, payload).then(({ data: body }) =>
+    requireContentAcknowledgement(body, 'Backend belum mengonfirmasi penerimaan intro Tentang.'),
+  )
 }

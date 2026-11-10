@@ -4,6 +4,7 @@ import { getHomepageServicesApi, saveHomepageServicesApi, HOMEPAGE_SERVICES_PATH
 import { uploadImageApi } from '../api/posts'
 import HomepageServicesSection from '../components/HomepageServicesSection'
 import ScaledPreview from '../components/ScaledPreview'
+import EditorTextField from '../components/EditorTextField'
 import { DEFAULT_HOMEPAGE_SERVICES, HOMEPAGE_SERVICES_LIMITS, SERVICE_COUNT } from '../data/homepageServices'
 import { SERVICE_ICONS } from '../data/partnershipServiceIcons'
 import { isSafeImageUrl, normalizeImageUrl, validateImageFile } from '../utils/imageUrl'
@@ -16,30 +17,12 @@ const PREVIEW_WIDTH = 1280
 
 const inputClass = 'mt-2 w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-800 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100'
 
-function Field({ id, label, value, onChange, maxLength, textarea, error, help }) {
-  const shared = {
-    id, value, onChange: (event) => onChange(event.target.value), maxLength,
-    'aria-invalid': Boolean(error),
-    'aria-describedby': `${id}-help${error ? ` ${id}-error` : ''}`,
-    className: inputClass,
-  }
-  return (
-    <div>
-      <label htmlFor={id} className="text-xs font-semibold text-gray-600">{label}</label>
-      {textarea ? <textarea {...shared} rows={3} /> : <input {...shared} type="text" />}
-      {help && <p id={`${id}-help`} className="mt-1 text-xs text-gray-400">{help}</p>}
-      {error && <p id={`${id}-error`} role="alert" className="mt-1 text-xs text-red-600">{error}</p>}
-    </div>
-  )
-}
-
 export default function HomepageServicesPage({ role }) {
   const currentRole = typeof role === 'object' ? role?.name : role
   const canManage = ['admin', 'super_admin'].includes(currentRole)
   const [form, setForm] = useState(DEFAULT_HOMEPAGE_SERVICES)
   const [photoFiles, setPhotoFiles] = useState({})
   const [photoPreviews, setPhotoPreviews] = useState({})
-  const [blobUrls, setBlobUrls] = useState({})
   const [load, setLoad] = useState({ status: 'loading', record: null, message: '' })
   const [refresh, setRefresh] = useState(0)
   const [errors, setErrors] = useState({})
@@ -49,7 +32,7 @@ export default function HomepageServicesPage({ role }) {
   const [pending, setPending] = useState(null)
   const [uploadProgress, setUploadProgress] = useState('')
   const alive = useRef(false)
-  const blobUrlsRef = useRef({})
+  const photoPreviewsRef = useRef({})
   const locked = busy || Boolean(pending)
 
   useEffect(() => {
@@ -59,9 +42,9 @@ export default function HomepageServicesPage({ role }) {
 
   // Simpan salinan terbaru tanpa mencabut blob saat daftar berubah: memilih foto
   // kedua tidak boleh mematikan pratinjau foto pertama yang masih dipakai.
-  useEffect(() => { blobUrlsRef.current = blobUrls }, [blobUrls])
+  useEffect(() => { photoPreviewsRef.current = photoPreviews }, [photoPreviews])
   useEffect(() => () => {
-    Object.values(blobUrlsRef.current).forEach((url) => URL.revokeObjectURL(url))
+    Object.values(photoPreviewsRef.current).forEach((url) => URL.revokeObjectURL(url))
   }, [])
 
   useEffect(() => {
@@ -84,8 +67,7 @@ export default function HomepageServicesPage({ role }) {
   }, [canManage, refresh])
 
   const clearPhoto = (key) => {
-    if (blobUrls[key]) URL.revokeObjectURL(blobUrls[key])
-    setBlobUrls((current) => { const next = { ...current }; delete next[key]; return next })
+    if (photoPreviews[key]) URL.revokeObjectURL(photoPreviews[key])
     setPhotoFiles((current) => { const next = { ...current }; delete next[key]; return next })
     setPhotoPreviews((current) => { const next = { ...current }; delete next[key]; return next })
   }
@@ -99,7 +81,6 @@ export default function HomepageServicesPage({ role }) {
     try {
       const url = URL.createObjectURL(chosen)
       clearPhoto(key)
-      setBlobUrls((current) => ({ ...current, [key]: url }))
       setPhotoFiles((current) => ({ ...current, [key]: chosen }))
       setPhotoPreviews((current) => ({ ...current, [key]: url }))
       setErrors((current) => ({ ...current, [`${key}_url`]: '' }))
@@ -241,12 +222,12 @@ export default function HomepageServicesPage({ role }) {
 
               <div className="space-y-4 rounded-2xl border border-sky-100 bg-white p-5 shadow-sm">
                 <h2 className="text-sm font-bold text-gray-800">Label dan judul</h2>
-                <Field id="svc-eyebrow" label="Label kecil" value={form.eyebrow} onChange={(value) => setField('eyebrow', value)}
+                <EditorTextField id="svc-eyebrow" label="Label kecil" value={form.eyebrow} onChange={(value) => setField('eyebrow', value)}
                   maxLength={HOMEPAGE_SERVICES_LIMITS.eyebrow} error={errors.eyebrow}
                   help={`${form.eyebrow.length}/${HOMEPAGE_SERVICES_LIMITS.eyebrow} karakter`} />
-                <Field id="svc-title" label="Judul bagian" value={form.title} onChange={(value) => setField('title', value)}
+                <EditorTextField id="svc-title" label="Judul bagian" value={form.title} onChange={(value) => setField('title', value)}
                   maxLength={HOMEPAGE_SERVICES_LIMITS.title} error={errors.title} />
-                <Field id="svc-description" label="Deskripsi bagian" value={form.description} onChange={(value) => setField('description', value)}
+                <EditorTextField id="svc-description" label="Deskripsi bagian" value={form.description} onChange={(value) => setField('description', value)}
                   maxLength={HOMEPAGE_SERVICES_LIMITS.description} error={errors.description} textarea
                   help={`${form.description.length}/${HOMEPAGE_SERVICES_LIMITS.description} karakter`} />
               </div>
@@ -254,9 +235,9 @@ export default function HomepageServicesPage({ role }) {
               <div className="space-y-4 rounded-2xl border border-sky-100 bg-white p-5 shadow-sm">
                 <h2 className="text-sm font-bold text-gray-800">Badge di atas foto</h2>
                 <div className="grid gap-4 sm:grid-cols-[120px_minmax(0,1fr)]">
-                  <Field id="svc-badge_value" label="Angka badge" value={form.badge_value} onChange={(value) => setField('badge_value', value)}
+                  <EditorTextField id="svc-badge_value" label="Angka badge" value={form.badge_value} onChange={(value) => setField('badge_value', value)}
                     maxLength={HOMEPAGE_SERVICES_LIMITS.badge_value} error={errors.badge_value} />
-                  <Field id="svc-badge_label" label="Label badge" value={form.badge_label} onChange={(value) => setField('badge_label', value)}
+                  <EditorTextField id="svc-badge_label" label="Label badge" value={form.badge_label} onChange={(value) => setField('badge_label', value)}
                     maxLength={HOMEPAGE_SERVICES_LIMITS.badge_label} error={errors.badge_label} />
                 </div>
               </div>
@@ -278,10 +259,10 @@ export default function HomepageServicesPage({ role }) {
                   )}
                   <p className="text-xs leading-relaxed text-gray-500">JPG, PNG, atau WEBP; maksimal 5 MB. Foto dipratinjau sekarang dan diunggah saat Simpan.</p>
                   {photoFiles[key] && <p className="break-all text-xs font-medium text-sky-700">{photoFiles[key].name} — belum diunggah</p>}
-                  <Field id={`svc-${key}_url`} label={`URL ${index === 0 ? 'foto utama' : 'foto kedua'}`} value={form[`${key}_url`]}
+                  <EditorTextField id={`svc-${key}_url`} label={`URL ${index === 0 ? 'foto utama' : 'foto kedua'}`} value={form[`${key}_url`]}
                     onChange={(value) => { clearPhoto(key); setField(`${key}_url`, value) }} maxLength={2048}
                     error={errors[`${key}_url`]} help="https://... atau /uploads/..." />
-                  <Field id={`svc-${key}_alt`} label={`Teks alternatif ${index === 0 ? 'foto utama' : 'foto kedua'}`} value={form[`${key}_alt`]}
+                  <EditorTextField id={`svc-${key}_alt`} label={`Teks alternatif ${index === 0 ? 'foto utama' : 'foto kedua'}`} value={form[`${key}_alt`]}
                     onChange={(value) => setField(`${key}_alt`, value)} maxLength={160} error={errors[`${key}_alt`]} />
                 </div>
               ))}
@@ -303,10 +284,10 @@ export default function HomepageServicesPage({ role }) {
                       </select>
                       {errors[`service-${index}-icon`] && <p id={`svc-service-${index}-icon-error`} role="alert" className="mt-1 text-xs text-red-600">{errors[`service-${index}-icon`]}</p>}
                     </div>
-                    <Field id={`svc-service-${index}-title`} label={`Judul kartu ${number}`} value={service.title}
+                    <EditorTextField id={`svc-service-${index}-title`} label={`Judul kartu ${number}`} value={service.title}
                       onChange={(value) => setService(index, 'title', value)} maxLength={HOMEPAGE_SERVICES_LIMITS.service_title}
                       error={errors[`service-${index}-title`]} />
-                    <Field id={`svc-service-${index}-description`} label={`Deskripsi kartu ${number}`} value={service.description}
+                    <EditorTextField id={`svc-service-${index}-description`} label={`Deskripsi kartu ${number}`} value={service.description}
                       onChange={(value) => setService(index, 'description', value)} maxLength={HOMEPAGE_SERVICES_LIMITS.service_description}
                       error={errors[`service-${index}-description`]} textarea />
                   </div>

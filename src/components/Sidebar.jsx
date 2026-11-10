@@ -1,145 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import {
-  LayoutDashboard,
-  Building2,
-  Users,
-  Settings,
-  LogOut,
-  Key,
-  Pin,
-  ChevronDown,
-  House,
-  MessageSquare,
-  Info,
-  Handshake,
-  LayoutList,
-  PanelsTopLeft,
-} from 'lucide-react'
-import { PAGE_BANNER_PAGES, PAGE_BANNER_ROLES } from '../data/pageBanners'
-import { JOIN_SECTION_NAV_GROUP } from '../data/homepageJoinSection'
-import { ABOUT_INTRO_NAV } from '../data/aboutIntro'
-import { HOMEPAGE_SERVICES_NAV } from '../data/homepageServices'
-
-export const navItems = [
-  { key: 'dashboard', label: 'Dashboard',     icon: LayoutDashboard, roles: ['super_admin','admin','operator','guest'] },
-  { key: 'company',   label: 'Input Company', icon: Building2,       roles: ['super_admin','admin','operator'] },
-  { 
-    key: 'post',      
-    label: 'Post',        
-    icon: Pin,             
-    roles: ['super_admin','admin','operator'],
-    subItems: [
-      { key: 'createPost', label: 'Create Post' },
-      { key: 'listPost',   label: 'List Post' },
-    ],
-  },
-  { key: 'contact',   label: 'Kontak',        icon: MessageSquare,   roles: ['super_admin','admin','operator'] },
-  { 
-    key: 'slider',      
-    label: 'Home Page',        
-    icon: House,             
-    roles: ['super_admin','admin'],
-    subGroups: [
-      {
-        key: 'homeSliderGroup',
-        label: 'Slider',
-        items: [
-          { key: 'createSlider', label: 'Create Slider' },
-          { key: 'listSlider',   label: 'List Slider' },
-        ],
-      },
-      {
-        key: 'homeTestimonialGroup',
-        label: 'Testimoni',
-        items: [
-          { key: 'createTestimonial', label: 'Create Testimoni' },
-          { key: 'listTestimonial',   label: 'List Testimoni' },
-        ],
-      },
-      JOIN_SECTION_NAV_GROUP,
-      {
-        key: 'homeServicesGroup',
-        label: HOMEPAGE_SERVICES_NAV.group,
-        items: [
-          { key: HOMEPAGE_SERVICES_NAV.key, label: HOMEPAGE_SERVICES_NAV.label },
-        ],
-      },
-    ],
-  },
-  { 
-    key: 'about',      
-    label: 'About',        
-    icon: Info,             
-    roles: ['super_admin','admin'],
-    subGroups: [
-      {
-        key: 'aboutIntroGroup',
-        label: ABOUT_INTRO_NAV.group,
-        items: [
-          { key: ABOUT_INTRO_NAV.key, label: ABOUT_INTRO_NAV.label },
-        ],
-      },
-      {
-        key: 'aboutSettingsGroup',
-        label: 'Tim Kami',
-        items: [
-          { key: 'createAbout', label: 'Tambah Tim Kami' },
-          { key: 'listAbout',   label: 'List Tim Kami' },
-        ],
-      },
-      {
-        key: 'aboutVideoGroup',
-        label: 'Video Profil',
-        items: [
-          { key: 'createVideo', label: 'Create Video' },
-          { key: 'listVideo',   label: 'List Video' },
-          { key: 'videoSetting', label: 'Deskripsi Video' },
-          {
-            key: 'aboutHighlightGroup',
-            label: 'Poin Video',
-            isSubGroup: true,
-            items: [
-              { key: 'createVideoHighlight', label: 'Tambah Poin Video' },
-              { key: 'listVideoHighlight',   label: 'Daftar Poin Video' },
-            ],
-          },
-        ],
-      },
-      {
-        key: 'aboutFAQGroup',
-        label: 'FAQ',
-        items: [
-          { key: 'createFAQ',   label: 'Create FAQ' },
-          { key: 'listFAQ',     label: 'List FAQ' },
-        ],
-      },
-    ],
-  },
-  {
-    key: 'partners',
-    label: 'Kemitraan',
-    icon: Handshake,
-    roles: ['super_admin', 'admin'],
-  },
-  {
-    key: 'aboutCards',
-    label: 'Kartu Tentang',
-    icon: LayoutList,
-    roles: ['super_admin', 'admin'],
-  },
-  { key: 'users',     label: 'Users',         icon: Users,           roles: ['super_admin','admin'] },
-  {
-    key: 'pageBanners',
-    label: 'Banner Halaman',
-    icon: PanelsTopLeft,
-    roles: PAGE_BANNER_ROLES,
-    subItems: PAGE_BANNER_PAGES.map((page) => ({
-      key: page.navKey,
-      label: page.name,
-    })),
-  },
-  { key: 'settings',  label: 'Settings',      icon: Settings,        roles: ['super_admin','admin','operator','guest'] },
-]
+import { LogOut, Key, ChevronDown } from 'lucide-react'
+import { navItems } from '../data/sidebarNavItems'
 
 export default function Sidebar({ user, activeNav, setActiveNav, sidebarOpen, setSidebarOpen, onNavigate }) {
   const [showUserMenu, setShowUserMenu] = useState(false)
@@ -236,7 +97,6 @@ export default function Sidebar({ user, activeNav, setActiveNav, sidebarOpen, se
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
       >
-        {/* Logo */}
         <div
           className="flex items-center gap-2.5 px-5 py-5 border-b border-sky-100 cursor-pointer shrink-0"
           onClick={() => onNavigate?.('landing')}
@@ -249,7 +109,6 @@ export default function Sidebar({ user, activeNav, setActiveNav, sidebarOpen, se
           </span>
         </div>
 
-        {/* Nav items */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {allowedNavItems.map((item) => {
             const hasSubItems = !!item.subItems
@@ -273,7 +132,6 @@ export default function Sidebar({ user, activeNav, setActiveNav, sidebarOpen, se
 
             return (
               <div key={item.key} className="flex flex-col space-y-1">
-                {/* Menu Utama (Level 1) */}
                 <button
                   type="button"
                   aria-expanded={hasSubItems ? Boolean(isOpen) : undefined}
@@ -345,7 +203,6 @@ export default function Sidebar({ user, activeNav, setActiveNav, sidebarOpen, se
 
                       return (
                         <div key={group.key} className="flex flex-col space-y-0.5">
-                          {/* Kategori Header (Level 2) */}
                           <button
                             onClick={() => toggleDropdown(group.key)}
                             className={`w-full flex items-center justify-between py-1.5 px-3 rounded-lg text-xs font-semibold tracking-wide transition-all text-left
@@ -360,7 +217,6 @@ export default function Sidebar({ user, activeNav, setActiveNav, sidebarOpen, se
                             />
                           </button>
 
-                          {/* Kategori Items (Level 3) */}
                           {isGroupOpen && (
                             <div className="flex flex-col space-y-0.5 pl-3 border-l border-gray-100 ml-2 py-0.5">
                               {group.items.map(subItem => {
@@ -441,7 +297,6 @@ export default function Sidebar({ user, activeNav, setActiveNav, sidebarOpen, se
           })}
         </nav>
 
-        {/* User pill + Logout */}
         <div className="px-3 py-4 border-t border-sky-100 shrink-0 space-y-2 relative" ref={menuRef}>
           {showUserMenu && (
             <div className="absolute bottom-[110px] left-3 w-52 bg-white border border-gray-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] rounded-xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-200">

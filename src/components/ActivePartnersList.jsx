@@ -1,4 +1,3 @@
-import React from 'react'
 
 const activePartners = [
   { id: 1, name: 'PT Maju Bersama', type: 'Enterprise', since: 'Jan 2026', status: 'active', projects: 3 },

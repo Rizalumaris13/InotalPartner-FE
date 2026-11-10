@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import Reveal from '../../components/Reveal'
 import PublicNavbar from '../../components/PublicNavbar'
 import PublicPageBanner from '../../components/PublicPageBanner'
 import {
@@ -8,38 +9,6 @@ import {
 import { articles, articleCategories, ARTICLES_PER_PAGE } from '../../data/articles'
 import PublicFooter from '../../components/PublicFooter'
 
-function useInView({ threshold = 0.1, fallbackMs = 700 } = {}) {
-  const ref = useRef(null)
-  const [seen, setSeen] = useState(false)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const io = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { setSeen(true); io.disconnect() } },
-      { threshold },
-    )
-    io.observe(el)
-    const t = setTimeout(() => setSeen(true), fallbackMs)
-    return () => { io.disconnect(); clearTimeout(t) }
-  }, [threshold, fallbackMs])
-
-  return [ref, seen]
-}
-
-function Reveal({ children, delay = 0, className = '' }) {
-  const [ref, seen] = useInView()
-  return (
-    <div
-      ref={ref}
-      className={`h-full transition-all duration-700 ease-out ${seen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'} ${className}`}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
-      {children}
-    </div>
-  )
-}
-
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('id-ID', {
     day: 'numeric', month: 'long', year: 'numeric',
@@ -47,18 +16,10 @@ function formatDate(iso) {
 }
 
 export default function ArtikelPage({ onNavigate }) {
-  const [scrolled, setScrolled] = useState(false)
   const [page, setPage] = useState(1)
   const [category, setCategory] = useState('Semua')
   const [query, setQuery] = useState('')
   const [sortNewest, setSortNewest] = useState(true)
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24)
-    onScroll()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -104,7 +65,6 @@ export default function ArtikelPage({ onNavigate }) {
     return [...pool].sort((a, b) => b.views - a.views).slice(0, 5)
   }, [category])
 
-  // tag populer dari seluruh artikel
   const popularTags = useMemo(() => {
     const counts = {}
     articles.forEach(a => a.tags.forEach(t => { counts[t] = (counts[t] || 0) + 1 }))
@@ -117,20 +77,16 @@ export default function ArtikelPage({ onNavigate }) {
     <div className="min-h-screen bg-white text-[#0c4a6e]" style={{ fontFamily: "'Mona Sans', system-ui, sans-serif" }}>
 
       <div className="h-[68px]">
-        <PublicNavbar onNavigate={onNavigate} activePage="artikel" scrolled={scrolled} />
+        <PublicNavbar onNavigate={onNavigate} activePage="artikel" />
       </div>
 
-      {/* ============ PAGE HEADER ============ */}
       <PublicPageBanner pageKey="artikel" breadcrumb="Artikel" onNavigate={onNavigate} />
 
-      {/* ============ CONTENT ============ */}
       <section className="max-w-7xl mx-auto px-6 py-12 md:py-16">
         <div className="grid xl:grid-cols-[minmax(0,1fr)_320px] gap-8 xl:gap-10">
 
-          {/* ---------- KOLOM KIRI ---------- */}
           <div id="daftar-artikel" className="scroll-mt-24 min-w-0">
 
-            {/* search + sort */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
               <div className="relative flex-1">
                 <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
@@ -151,7 +107,6 @@ export default function ArtikelPage({ onNavigate }) {
               </button>
             </div>
 
-            {/* kategoriler — horizontal pills */}
             <div className="flex flex-wrap gap-2 mb-6 md:mb-8">
               {articleCategories.map(c => (
                 <button
@@ -171,7 +126,6 @@ export default function ArtikelPage({ onNavigate }) {
               ))}
             </div>
 
-            {/* section header */}
             <div className="flex flex-wrap items-baseline justify-between gap-2 mb-6">
               <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">
                 {category === 'Semua' ? 'Artikel Terbaru' : category}
@@ -197,7 +151,6 @@ export default function ArtikelPage({ onNavigate }) {
                 {visible.map((a, i) => (
                   <Reveal key={a.id} delay={(i % 2) * 80} className="h-full">
                     <article className="group h-full bg-white border border-gray-200/80 rounded-xl overflow-hidden hover:border-[#0284c7]/50 transition-colors flex flex-col md:flex-row">
-                      {/* thumbnail */}
                       <div className="relative aspect-[16/10] md:aspect-auto md:w-[240px] xl:w-[280px] md:shrink-0 overflow-hidden">
                         <img
                           src={a.image}
@@ -209,7 +162,6 @@ export default function ArtikelPage({ onNavigate }) {
                           {a.category}
                         </span>
                       </div>
-                      {/* isi */}
                       <div className="p-5 md:p-6 flex flex-col flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-gray-400 mb-3">
                           <span>{formatDate(a.date)}</span>
@@ -249,7 +201,6 @@ export default function ArtikelPage({ onNavigate }) {
               </div>
             )}
 
-            {/* pagination */}
             {totalPages > 1 && (
               <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
                 <button
@@ -282,10 +233,8 @@ export default function ArtikelPage({ onNavigate }) {
             )}
           </div>
 
-          {/* ---------- SIDEBAR KANAN ---------- */}
           <aside className="min-w-0 space-y-6 xl:sticky xl:top-24 xl:self-start">
 
-            {/* Trending */}
             <div className="bg-white border border-gray-200/80 rounded-xl overflow-hidden">
               <div className="bg-[#0c4a6e] px-5 py-3.5 flex items-center gap-2">
                 <TrendingUp size={16} className="text-sky-400" />
@@ -317,7 +266,6 @@ export default function ArtikelPage({ onNavigate }) {
               </div>
             </div>
 
-            {/* Kategori */}
             <div className="bg-white border border-gray-200/80 rounded-xl overflow-hidden">
               <div className="bg-[#0c4a6e] px-5 py-3.5 flex items-center gap-2">
                 <span className="text-white font-extrabold text-[13px] tracking-[0.12em] uppercase">
@@ -338,7 +286,6 @@ export default function ArtikelPage({ onNavigate }) {
               </div>
             </div>
 
-            {/* Tag populer */}
             <div className="bg-white border border-gray-200/80 rounded-xl overflow-hidden">
               <div className="bg-[#0c4a6e] px-5 py-3.5 flex items-center gap-2">
                 <Tag size={16} className="text-sky-400" />
@@ -360,7 +307,6 @@ export default function ArtikelPage({ onNavigate }) {
               </div>
             </div>
 
-            {/* CTA sidebar */}
             <div className="bg-[#0284c7] text-white rounded-xl overflow-hidden relative">
               <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
               <div className="relative p-6">
@@ -382,7 +328,6 @@ export default function ArtikelPage({ onNavigate }) {
         </div>
       </section>
 
-      {/* ============ FOOTER ============ */}
       <PublicFooter onNavigate={onNavigate} />
 
     </div>

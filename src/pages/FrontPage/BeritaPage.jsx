@@ -1,4 +1,6 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { formatDate, formatTime, formatViewCount } from '../../utils/newsFormat'
+import Reveal from '../../components/Reveal'
 
 import PublicNavbar from '../../components/PublicNavbar'
 import PublicPageBanner from '../../components/PublicPageBanner'
@@ -21,134 +23,7 @@ import {
 } from 'lucide-react'
 import PublicFooter from '../../components/PublicFooter'
 
-
-function useInView({ threshold = 0.1, fallbackMs = 700 } = {}) {
-  const ref = useRef(null)
-  const [seen, setSeen] = useState(false)
-
-  useEffect(() => {
-    const el = ref.current
-
-    if (!el) return
-
-    const io = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) {
-          setSeen(true)
-          io.disconnect()
-        }
-      },
-      { threshold }
-    )
-
-    io.observe(el)
-
-    const t = setTimeout(() => setSeen(true), fallbackMs)
-
-    return () => {
-      io.disconnect()
-      clearTimeout(t)
-    }
-  }, [threshold, fallbackMs])
-
-  return [ref, seen]
-}
-
-
-function Reveal({
-  children,
-  delay = 0,
-  className = '',
-}) {
-  const [ref, seen] = useInView()
-
-  return (
-    <div
-      ref={ref}
-      className={`h-full transition-all duration-700 ease-out ${
-        seen
-          ? 'opacity-100 translate-y-0'
-          : 'opacity-0 translate-y-6'
-      } ${className}`}
-      style={{
-        transitionDelay: `${delay}ms`,
-      }}
-    >
-      {children}
-    </div>
-  )
-}
-
-
-/**
- * Format tanggal publikasi
- *
- * Contoh:
- * 2026-09-29T10:53:17+07:00
- * =>
- * 29 September 2026
- */
-function formatDate(iso) {
-  if (!iso) return '-'
-
-  try {
-    return new Date(iso).toLocaleDateString(
-      'id-ID',
-      {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-        timeZone: 'Asia/Jakarta',
-      }
-    )
-  } catch {
-    return '-'
-  }
-}
-
-
-/**
- * Format waktu publikasi
- *
- * Contoh:
- * 2026-09-29T20:00:17+07:00
- * =>
- * 20:00
- */
-function formatTime(dateString) {
-  if (!dateString) return '--:--'
-
-  try {
-    return new Date(dateString).toLocaleTimeString(
-      'id-ID',
-      {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-        timeZone: 'Asia/Jakarta',
-      }
-    )
-  } catch {
-    return '--:--'
-  }
-}
-
-
-/**
- * Format angka view
- *
- * Contoh:
- * 1200 => 1.200
- */
-function formatViewCount(value) {
-  const number = Number(value || 0)
-
-  return number.toLocaleString('id-ID')
-}
-
-
 export default function BeritaPage({ onNavigate }) {
-  const [scrolled, setScrolled] = useState(false)
 
   const [page, setPage] = useState(1)
 
@@ -157,40 +32,12 @@ export default function BeritaPage({ onNavigate }) {
   const [sortBy, setSortBy] = useState('terbaru')
   const [sortOpen, setSortOpen] = useState(false)
 
-  // Data berita
   const [newsItems, setNewsItems] = useState([])
   const [popularItems, setPopularItems] = useState([])
 
   const [newsLoading, setNewsLoading] = useState(true)
 
   const [newsError, setNewsError] = useState('')
-
-
-  /* NAVBAR SCROLL */
-
-  useEffect(() => {
-    const onScroll = () => {
-      setScrolled(window.scrollY > 24)
-    }
-
-    onScroll()
-
-    window.addEventListener(
-      'scroll',
-      onScroll,
-      { passive: true }
-    )
-
-    return () => {
-      window.removeEventListener(
-        'scroll',
-        onScroll
-      )
-    }
-  }, [])
-
-
-  /*  FETCH BERITA DARI BACKEND */
 
   useEffect(() => {
     let isMounted = true
@@ -201,11 +48,7 @@ export default function BeritaPage({ onNavigate }) {
 
         setNewsError('')
 
-        /**
-         * Ambil berita publik.
-         *
-         * Untuk sekarang mengambil maksimal 100 berita.
-         */
+        // Daftar dibatasi 100 berita; pagination berikutnya tetap di sisi klien.
         const [newsResult, popularResult] = await Promise.allSettled([
           getPublicNewsApi(1, 100),
           getPublicPopularNewsApi(50),
@@ -228,7 +71,6 @@ export default function BeritaPage({ onNavigate }) {
           return []
         }
 
-        /** Ubah struktur API ke struktur yang digunakan halaman. */
         const formatNews = (newsData) => newsData.map((news) => ({
           id: news.id,
           title: news.title || '',
@@ -282,18 +124,13 @@ export default function BeritaPage({ onNavigate }) {
       }
     }
 
-
     fetchNews()
-
 
     return () => {
       isMounted = false
     }
 
   }, [])
-
-
-  /* FILTER + SORT */
 
   const filtered = useMemo(() => {
     const q = query
@@ -304,25 +141,12 @@ export default function BeritaPage({ onNavigate }) {
       ? (popularItems.length ? popularItems : newsItems)
       : newsItems)]
 
-
-    /**
-     * FILTER KATEGORI
-     */
     if (category !== 'Semua') {
       list = list.filter(
         (news) => news.categories.includes(category)
       )
     }
 
-
-    /**
-     * SEARCH
-     *
-     * Mencari berdasarkan:
-     * - title
-     * - excerpt
-     * - category
-     */
     if (q) {
       list = list.filter((news) => {
         const title =
@@ -342,12 +166,7 @@ export default function BeritaPage({ onNavigate }) {
       })
     }
 
-
-    /**
-     * SORTING */
     return list.sort((a, b) => {
-
-      /* TERBARU */
 
       if (sortBy === 'terbaru') {
         return (
@@ -356,9 +175,6 @@ export default function BeritaPage({ onNavigate }) {
         )
       }
 
-
-      /* TERLAMA */
-
       if (sortBy === 'terlama') {
         return (
           new Date(a.publishedAt) -
@@ -366,16 +182,12 @@ export default function BeritaPage({ onNavigate }) {
         )
       }
 
-
-      /* TERPOPULER */
-
       if (sortBy === 'terpopuler') {
         return (
           b.viewCount -
           a.viewCount
         )
       }
-
 
       return 0
     })
@@ -387,9 +199,6 @@ export default function BeritaPage({ onNavigate }) {
     query,
     sortBy,
   ])
-
-
-  /* CATEGORY LIST */
 
   const categories = useMemo(() => {
     const counts = {}
@@ -416,9 +225,6 @@ export default function BeritaPage({ onNavigate }) {
     ]
   }, [newsItems])
 
-
-  /* PAGINATION */
-
   const POSTS_PER_PAGE = 10
 
   const totalPages = Math.max(
@@ -441,7 +247,6 @@ export default function BeritaPage({ onNavigate }) {
     currentPage *
       POSTS_PER_PAGE
   )
-
 
   useEffect(() => {
     if (page > totalPages) {
@@ -479,7 +284,6 @@ export default function BeritaPage({ onNavigate }) {
     })
   }
 
-
   return (
     <div
       className="min-h-screen bg-white text-[#0c4a6e]"
@@ -489,41 +293,25 @@ export default function BeritaPage({ onNavigate }) {
       }}
     >
 
-      {/* NAVBAR */}
-
       <div className="h-[68px]">
         <PublicNavbar
           onNavigate={onNavigate}
           activePage="berita"
-          scrolled={scrolled}
         />
       </div>
 
-
-      {/*PAGE HEADER*/}
-
       <PublicPageBanner pageKey="berita" breadcrumb="Berita" onNavigate={onNavigate} />
-
-
-      {/* CONTENT */}
 
       <section className="max-w-7xl mx-auto px-6 py-12 md:py-16">
 
         <div className="grid xl:grid-cols-[minmax(0,1fr)_320px] gap-8 xl:gap-10">
-
-
-          {/* KOLOM KIRI */}
 
           <div
             id="daftar-berita"
             className="scroll-mt-24 min-w-0"
           >
 
-            {/* SEARCH + SORT */}
-
             <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
-
-              {/* SEARCH */}
 
               <div className="relative flex-1">
 
@@ -547,9 +335,6 @@ export default function BeritaPage({ onNavigate }) {
                 />
 
               </div>
-
-
-              {/* SORT DROPDOWN */}
 
               <div className="relative shrink-0">
 
@@ -603,9 +388,6 @@ export default function BeritaPage({ onNavigate }) {
 
             </div>
 
-
-            {/* CATEGORY PILLS */}
-
             <div className="flex flex-wrap gap-2 mb-6 md:mb-8">
 
               {categories.map((c) => (
@@ -644,9 +426,6 @@ export default function BeritaPage({ onNavigate }) {
 
             </div>
 
-
-            {/*SECTION HEADER */}
-
             <div className="flex flex-wrap items-baseline justify-between gap-2 mb-6">
 
               <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">
@@ -667,9 +446,6 @@ export default function BeritaPage({ onNavigate }) {
 
             </div>
 
-
-            {/* LOADING */}
-
             {newsLoading ? (
 
               <div className="px-6 py-10 text-center">
@@ -683,8 +459,6 @@ export default function BeritaPage({ onNavigate }) {
               </div>
 
             ) : newsError ? (
-
-              /* ERROR */
 
               <div className="px-6 py-10 text-center border border-dashed border-red-200 rounded-2xl">
 
@@ -708,8 +482,6 @@ export default function BeritaPage({ onNavigate }) {
               </div>
 
             ) : visible.length === 0 ? (
-
-              /* EMPTY */
 
               <div className="text-center px-6 py-10 border border-dashed border-gray-200 rounded-2xl">
 
@@ -737,8 +509,6 @@ export default function BeritaPage({ onNavigate }) {
 
             ) : (
 
-              /*  NEWS GRID */
-
               <div className={`grid gap-6 items-stretch ${visible.length > 1 ? 'sm:grid-cols-2' : ''}`}>
 
                 {visible.map((p, i) => (
@@ -752,16 +522,6 @@ export default function BeritaPage({ onNavigate }) {
                     <article
                       className={`group h-full min-w-0 bg-white border border-gray-200/80 rounded-xl overflow-hidden hover:border-[#0284c7]/50 transition-colors flex flex-col cursor-pointer ${visible.length === 1 ? 'md:flex-row' : ''}`}
                       onClick={() => {
-                        /**
-                         * Nanti arahkan ke:
-                         *
-                         * /berita/{slug}
-                         *
-                         * sesuai routing project kamu.
-                         *
-                         * Untuk sementara menggunakan
-                         * onNavigate.
-                         */
                         if (p.slug) {
                           onNavigate?.(
                             `berita/${p.slug}`
@@ -769,8 +529,6 @@ export default function BeritaPage({ onNavigate }) {
                         }
                       }}
                     >
-
-                      {/* IMAGE */}
 
                       <div className={`relative aspect-[16/10] overflow-hidden ${visible.length === 1 ? 'md:w-2/5 md:shrink-0 md:aspect-auto' : ''}`}>
 
@@ -795,8 +553,6 @@ export default function BeritaPage({ onNavigate }) {
 
                         )}
 
-
-                        {/* CATEGORY */}
                           <div className="absolute left-3 right-3 top-3 flex flex-wrap gap-1.5">
                             {p.categories.map((name) => (
                               <span
@@ -809,24 +565,16 @@ export default function BeritaPage({ onNavigate }) {
                           </div>
                       </div>
 
-
-                      {/* CONTENT */}
-
                       <div className="p-5 flex flex-col flex-1 min-w-0">
-
-                        
-                        {/* DATE + TIME */}
 
                         <div className="flex flex-wrap items-center gap-2 text-[12px] text-gray-400 mb-3">
 
-                          {/* DATE */}
                           <span>
                             {formatDate(p.publishedAt)}
                           </span>
 
                           <span>•</span>
 
-                          {/* TIME */}
                           <div className="flex items-center gap-1.5">
                             <Clock size={13} />
 
@@ -837,23 +585,13 @@ export default function BeritaPage({ onNavigate }) {
 
                         </div>
 
-
-
-                        {/* TITLE */}
-
                         <h3 className="text-[17px] font-bold leading-[1.35] mb-3 group-hover:text-[#0284c7] transition-colors line-clamp-2 min-h-[2.7em]">
                           {p.title}
                         </h3>
 
-
-                        {/* EXCERPT */}
-
                         <p className="text-[13.5px] leading-relaxed text-[#364e52] mb-5 line-clamp-3">
                           {p.excerpt}
                         </p>
-
-
-                        {/* READ */}
 
                         <div className="mt-auto flex justify-end">
 
@@ -882,9 +620,6 @@ export default function BeritaPage({ onNavigate }) {
 
             )}
 
-
-            {/* PAGINATION */}
-
             {!newsLoading &&
               !newsError &&
               totalPages > 1 && (
@@ -910,7 +645,6 @@ export default function BeritaPage({ onNavigate }) {
                     />
                   </button>
 
-
                   {Array.from(
                     {
                       length:
@@ -935,7 +669,6 @@ export default function BeritaPage({ onNavigate }) {
                     </button>
 
                   ))}
-
 
                   <button
                     onClick={() =>
@@ -963,13 +696,7 @@ export default function BeritaPage({ onNavigate }) {
 
           </div>
 
-
-          {/* SIDEBAR KANAN */}
-
           <aside className="min-w-0 space-y-6 xl:sticky xl:top-24 xl:self-start">
-
-
-            {/* PALING POPULER */}
 
             <div className="bg-white border border-gray-200/80 rounded-xl overflow-hidden">
 
@@ -985,7 +712,6 @@ export default function BeritaPage({ onNavigate }) {
                 </h3>
 
               </div>
-
 
               <div>
 
@@ -1017,25 +743,17 @@ export default function BeritaPage({ onNavigate }) {
 
                         <div className="flex gap-3 items-start">
 
-                          {/* NUMBER */}
-
                           <span className="text-[20px] font-extrabold text-[#0284c7]/25 leading-none pt-0.5 w-6 shrink-0">
                             {String(
                               index + 1
                             ).padStart(2, '0')}
                           </span>
 
-
-                          {/* CONTENT */}
-
                           <div className="min-w-0 flex-1">
 
                             <h4 className="text-[13.5px] font-bold leading-[1.4] text-[#0c4a6e] line-clamp-2">
                               {news.title}
                             </h4>
-
-
-                            {/* VIEW COUNT */}
 
                             {news.viewCount > 0 && (
 
@@ -1071,9 +789,6 @@ export default function BeritaPage({ onNavigate }) {
 
             </div>
 
-
-            {/* KATEGORI */}
-
             <div className="bg-white border border-gray-200/80 rounded-xl overflow-hidden">
 
               <div className="bg-[#0c4a6e] px-5 py-3.5 flex items-center gap-2">
@@ -1083,7 +798,6 @@ export default function BeritaPage({ onNavigate }) {
                 </span>
 
               </div>
-
 
               <div className="p-5 space-y-3">
 
@@ -1122,9 +836,6 @@ export default function BeritaPage({ onNavigate }) {
               </div>
 
             </div>
-
-
-            {/* CTA SIDEBAR */}
 
             <div className="bg-[#0284c7] text-white rounded-xl overflow-hidden relative">
 
@@ -1166,9 +877,6 @@ export default function BeritaPage({ onNavigate }) {
         </div>
 
       </section>
-
-
-      {/*  FOOTER */}
 
       <PublicFooter onNavigate={onNavigate} />
 

@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState } from 'react'
+import Reveal from '../../components/Reveal'
 import PublicNavbar from '../../components/PublicNavbar'
 import PublicPageBanner from '../../components/PublicPageBanner'
 import { submitContactApi } from '../../api/contacts'
@@ -28,7 +29,6 @@ const contactInfo = [
   },
 ]
 
-// Pilihan topik pesan (menggantikan "department" di referensi Sandbox)
 const topics = [
   'Kemitraan & Partnership',
   'Program & Kolaborasi',
@@ -64,55 +64,14 @@ function validate(form) {
   return errors
 }
 
-// satu tempat buat "element ini udah keliatan di layar" — Reveal butuh
-// observer + jaring pengaman kalau observer-nya nggak kepicu
-function useInView({ threshold = 0.1, fallbackMs = 700 } = {}) {
-  const ref = useRef(null)
-  const [seen, setSeen] = useState(false)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const io = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { setSeen(true); io.disconnect() } },
-      { threshold }
-    )
-    io.observe(el)
-    const t = setTimeout(() => setSeen(true), fallbackMs)
-    return () => { io.disconnect(); clearTimeout(t) }
-  }, [threshold, fallbackMs])
-
-  return [ref, seen]
-}
-
-function Reveal({ children, delay = 0, className = '' }) {
-  const [ref, seen] = useInView()
-  return (
-    <div
-      ref={ref}
-      className={`transition-all duration-700 ease-out ${seen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'} ${className}`}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
-      {children}
-    </div>
-  )
-}
-
 const inputClass =
   'w-full rounded-xl border bg-white px-4 py-3 text-[14.5px] text-[#0c4a6e] placeholder:text-gray-400 outline-none transition-colors focus:border-sky-400 focus:ring-2 focus:ring-sky-100'
 
 export default function KontakPage({ onNavigate }) {
-  const [scrolled, setScrolled] = useState(false)
   const [form, setForm] = useState(initialForm)
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState('idle') // idle | submitting | success | error
   const [serverError, setServerError] = useState('')
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20)
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
 
   const update = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }))
@@ -158,13 +117,11 @@ export default function KontakPage({ onNavigate }) {
     <div className="min-h-screen bg-white text-[#0c4a6e]" style={{ fontFamily: "'Mona Sans', system-ui, sans-serif" }}>
 
       <div className="h-[68px]">
-        <PublicNavbar onNavigate={onNavigate} activePage="kontak" scrolled={scrolled} />
+        <PublicNavbar onNavigate={onNavigate} activePage="kontak" />
       </div>
 
-      {/* Page header */}
       <PublicPageBanner pageKey="kontak" breadcrumb="Hubungi Kami" onNavigate={onNavigate} />
 
-      {/* Kartu: peta (kiri) + info kontak (kanan) */}
       <section className="relative z-10 max-w-7xl mx-auto px-6 mt-6">
         <div className="rounded-2xl overflow-hidden shadow-xl shadow-[#0c4a6e]/10 border border-sky-100 bg-white grid md:grid-cols-2">
           <div className="min-h-[280px] md:min-h-[360px]">
@@ -193,7 +150,6 @@ export default function KontakPage({ onNavigate }) {
         </div>
       </section>
 
-      {/* Form — "Drop Us a Line" versi INOTAL */}
       <section className="max-w-7xl mx-auto px-6 py-12 md:py-16">
         <div className="max-w-3xl mx-auto">
           <Reveal>
@@ -341,7 +297,6 @@ export default function KontakPage({ onNavigate }) {
         </div>
       </section>
 
-      {/* Stats strip */}
       <section className="border-y border-sky-100 bg-[#F8FAFC]">
         <div className="max-w-7xl mx-auto px-6 py-12 md:py-16 text-center">
           <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight mb-10">
@@ -359,7 +314,6 @@ export default function KontakPage({ onNavigate }) {
         </div>
       </section>
 
-      {/* Footer strip */}
       <PublicFooter onNavigate={onNavigate} />
 
     </div>

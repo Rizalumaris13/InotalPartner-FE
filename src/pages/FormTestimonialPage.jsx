@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   Save,
   List,
@@ -6,7 +6,6 @@ import {
   ShieldAlert,
   ChevronRight,
   ImageIcon,
-  User,
   Quote,
   Upload,
   Trash2,
@@ -18,6 +17,25 @@ import {
 } from '../api/testimonials'
 import { uploadImageApi, resolveImageUrl } from '../api/posts'
 import { useAuth } from '../hooks/useAuth'
+
+function needsTestimonialDetail(data) {
+  return !!(data?.id && (!data.content || !data.name))
+}
+
+function toTestimonialDraft(data) {
+  const photoUrl = data?.photo_url || ''
+  return {
+    name: data?.name || '',
+    position: data?.position || '',
+    company: data?.company || '',
+    content: data?.content || '',
+    photoUrl,
+    displayOrder: data?.display_order ?? 0,
+    isActive: data?.is_active ?? true,
+    imageFile: null,
+    imagePreview: photoUrl ? resolveImageUrl(photoUrl) : '',
+  }
+}
 
 export default function FormTestimonialPage({
   editingTestimonial = null,
@@ -33,76 +51,39 @@ export default function FormTestimonialPage({
 
   const isEditing = !!editingTestimonial
 
-  // Form states
-  const [name, setName] = useState('')
-  const [position, setPosition] = useState('')
-  const [company, setCompany] = useState('')
-  const [content, setContent] = useState('')
-  const [photoUrl, setPhotoUrl] = useState('')
-  const [displayOrder, setDisplayOrder] = useState(0)
-  const [isActive, setIsActive] = useState(true)
-
-  // Upload photo states
-  const [imageFile, setImageFile] = useState(null)
-  const [imagePreview, setImagePreview] = useState('')
+  const [source, setSource] = useState(editingTestimonial)
+  const [draft, setDraft] = useState(() =>
+    toTestimonialDraft(needsTestimonialDetail(editingTestimonial) ? null : editingTestimonial)
+  )
+  const { name, position, company, content, photoUrl, displayOrder, isActive, imageFile, imagePreview } = draft
   const fileInputRef = useRef(null)
-
-  const [loadingDetail, setLoadingDetail] = useState(isEditing)
+  const [loadingDetail, setLoadingDetail] = useState(needsTestimonialDetail(editingTestimonial))
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
 
-  // Inisialisasi data saat mode edit atau tambah baru
+  if (source !== editingTestimonial) {
+    setSource(editingTestimonial)
+    // Incomplete props never replace the draft before a successful detail load.
+    if (!needsTestimonialDetail(editingTestimonial)) {
+      setDraft(toTestimonialDraft(editingTestimonial))
+    }
+    setLoadingDetail(needsTestimonialDetail(editingTestimonial))
+    setError('')
+  }
+
+  const updateDraft = (changes) => setDraft((previous) => ({ ...previous, ...changes }))
+
   useEffect(() => {
-    let isMounted = true
-
-    // Bersihkan preview blob lama jika ada
-    if (imagePreview?.startsWith('blob:')) {
-      URL.revokeObjectURL(imagePreview)
-    }
-
-    if (!isEditing) {
-      setName('')
-      setPosition('')
-      setCompany('')
-      setContent('')
-      setPhotoUrl('')
-      setImageFile(null)
-      setImagePreview('')
-      setDisplayOrder(0)
-      setIsActive(true)
-      setError('')
-      setLoadingDetail(false)
-      return
-    }
+    if (!needsTestimonialDetail(editingTestimonial)) return
+    let cancelled = false
 
     const loadDetail = async () => {
-      setLoadingDetail(true)
-      setError('')
       try {
-        let data = editingTestimonial
-        // Jika hanya ada ID atau data belum lengkap
-        if (
-          editingTestimonial?.id &&
-          (!editingTestimonial.content || !editingTestimonial.name)
-        ) {
-          data = await getTestimonialByIdApi(editingTestimonial.id)
-        }
-
-        if (isMounted && data) {
-          setName(data.name || '')
-          setPosition(data.position || '')
-          setCompany(data.company || '')
-          setContent(data.content || '')
-          const initialPhoto = data.photo_url || ''
-          setPhotoUrl(initialPhoto)
-          setImageFile(null)
-          setImagePreview(initialPhoto ? resolveImageUrl(initialPhoto) : '')
-          setDisplayOrder(data.display_order ?? 0)
-          setIsActive(data.is_active ?? true)
-        }
+        const data = await getTestimonialByIdApi(editingTestimonial.id)
+        if (!cancelled && data) setDraft(toTestimonialDraft(data))
       } catch (err) {
-        if (isMounted) {
+        if (!cancelled) {
           setError(
             err.response?.data?.message ||
               err.message ||
@@ -110,20 +91,17 @@ export default function FormTestimonialPage({
           )
         }
       } finally {
-        if (isMounted) {
-          setLoadingDetail(false)
-        }
+        if (!cancelled) setLoadingDetail(false)
       }
     }
 
     loadDetail()
-
     return () => {
-      isMounted = false
+      cancelled = true
     }
-  }, [editingTestimonial, isEditing])
+  }, [editingTestimonial])
 
-  // Cleanup object URL saat unmount
+  // This cleanup owns release on source change, replacement and unmount.
   useEffect(() => {
     return () => {
       if (imagePreview?.startsWith('blob:')) {
@@ -146,7 +124,6 @@ export default function FormTestimonialPage({
     )
   }
 
-  // ─── HANDLER PEMILIHAN FOTO ──────────────────────────────────────────────
   const handleImageChange = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -169,25 +146,20 @@ export default function FormTestimonialPage({
       URL.revokeObjectURL(imagePreview)
     }
 
-    setImageFile(file)
-    setImagePreview(URL.createObjectURL(file))
+    updateDraft({ imageFile: file, imagePreview: URL.createObjectURL(file) })
     if (error) setError('')
   }
 
-  // Menghapus pilihan foto
   const handleRemoveImage = () => {
     if (imagePreview?.startsWith('blob:')) {
       URL.revokeObjectURL(imagePreview)
     }
-    setImageFile(null)
-    setImagePreview('')
-    setPhotoUrl('')
+    updateDraft({ imageFile: null, imagePreview: '', photoUrl: '' })
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
   }
 
-  // ─── SUBMIT HANDLER ──────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
@@ -196,7 +168,6 @@ export default function FormTestimonialPage({
     const trimmedContent = content.trim()
     const parsedOrder = parseInt(displayOrder, 10)
 
-    // Validasi dasar frontend
     if (!trimmedName) {
       setError('Nama pemberi testimoni wajib diisi.')
       return
@@ -235,7 +206,7 @@ export default function FormTestimonialPage({
         setUploading(true)
         try {
           const uploadResult = await uploadImageApi(imageFile)
-          // Tangani hasil string atau objek response
+          // Keep legacy object handling: uploadImageApi does not enforce URL type.
           if (typeof uploadResult === 'string') {
             finalPhotoUrl = uploadResult
           } else if (uploadResult?.url) {
@@ -249,7 +220,8 @@ export default function FormTestimonialPage({
           throw new Error(
             uploadErr.response?.data?.message ||
               uploadErr.message ||
-              'Gagal mengunggah foto testimoni.'
+              'Gagal mengunggah foto testimoni.',
+            { cause: uploadErr }
           )
         } finally {
           setUploading(false)
@@ -298,7 +270,6 @@ export default function FormTestimonialPage({
 
   return (
     <div className="flex flex-col pb-12">
-      {/* ── HEADER ────────────────────────────────────────────────────────── */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-1.5">
@@ -311,11 +282,6 @@ export default function FormTestimonialPage({
           <h1 className="text-xl font-extrabold tracking-tight text-gray-900">
             {isEditing ? 'Edit Testimonial' : 'Tambah Testimonial Baru'}
           </h1>
-          {/* <p className="mt-1 text-sm text-gray-500">
-            {isEditing
-              ? 'Perbarui konten testimoni, data partner, dan pengaturan tampilannya.'
-              : 'Tambahkan testimoni partner baru untuk ditampilkan di section Beranda.'}
-          </p> */}
         </div>
 
         {onOpenList && (
@@ -330,7 +296,6 @@ export default function FormTestimonialPage({
         )}
       </div>
 
-      {/* ── ERROR ALERT ───────────────────────────────────────────────────── */}
       {error && (
         <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-start gap-2.5">
           <AlertCircle size={18} className="text-red-500 shrink-0 mt-0.5" />
@@ -341,12 +306,9 @@ export default function FormTestimonialPage({
         </div>
       )}
 
-      {/* ── FORM CONTENT ──────────────────────────────────────────────────── */}
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
-          {/* KOLOM KIRI: DATA UTAMA */}
           <div className="space-y-6">
-            {/* Nama */}
             <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
               <div className="mb-4">
                 <h2 className="text-base font-bold text-gray-900">
@@ -362,7 +324,7 @@ export default function FormTestimonialPage({
                 value={name}
                 maxLength={150}
                 onChange={(e) => {
-                  setName(e.target.value)
+                  updateDraft({ name: e.target.value })
                   if (error) setError('')
                 }}
                 placeholder="Contoh: Andi Prasetyo"
@@ -376,7 +338,6 @@ export default function FormTestimonialPage({
               </div>
             </section>
 
-            {/* Posisi & Perusahaan */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
                 <div className="mb-3">
@@ -392,7 +353,7 @@ export default function FormTestimonialPage({
                   type="text"
                   value={position}
                   maxLength={100}
-                  onChange={(e) => setPosition(e.target.value)}
+                  onChange={(e) => updateDraft({ position: e.target.value })}
                   placeholder="Contoh: CEO / Direktur"
                   className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
                 />
@@ -412,14 +373,13 @@ export default function FormTestimonialPage({
                   type="text"
                   value={company}
                   maxLength={150}
-                  onChange={(e) => setCompany(e.target.value)}
+                  onChange={(e) => updateDraft({ company: e.target.value })}
                   placeholder="Contoh: TechNusa Ventures"
                   className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
                 />
               </section>
             </div>
 
-            {/* Isi Testimoni */}
             <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
               <div className="mb-4 flex items-center justify-between">
                 <div>
@@ -437,7 +397,7 @@ export default function FormTestimonialPage({
                 rows={5}
                 value={content}
                 onChange={(e) => {
-                  setContent(e.target.value)
+                  updateDraft({ content: e.target.value })
                   if (error) setError('')
                 }}
                 placeholder="Tuliskan isi ulasan partner di sini..."
@@ -447,9 +407,7 @@ export default function FormTestimonialPage({
             </section>
           </div>
 
-          {/* KOLOM KANAN: UPLOAD FOTO, URUTAN & STATUS */}
           <aside className="space-y-6">
-            {/* Upload Foto Card */}
             <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
               <div className="mb-4 flex items-center gap-2">
                 <ImageIcon size={19} className="text-gray-500" />
@@ -528,7 +486,6 @@ export default function FormTestimonialPage({
               />
             </section>
 
-            {/* Pengaturan Tampilan */}
             <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm space-y-4">
               <div>
                 <h2 className="mb-1 text-sm font-bold text-gray-900">
@@ -542,7 +499,7 @@ export default function FormTestimonialPage({
                   min="0"
                   step="1"
                   value={displayOrder}
-                  onChange={(e) => setDisplayOrder(e.target.value)}
+                  onChange={(e) => updateDraft({ displayOrder: e.target.value })}
                   className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
                 />
               </div>
@@ -552,7 +509,7 @@ export default function FormTestimonialPage({
                   <input
                     type="checkbox"
                     checked={isActive}
-                    onChange={(e) => setIsActive(e.target.checked)}
+                    onChange={(e) => updateDraft({ isActive: e.target.checked })}
                     className="w-4 h-4 rounded border-gray-300 text-sky-500 focus:ring-sky-400"
                   />
                   <span className="text-sm font-semibold text-gray-700">
@@ -567,7 +524,6 @@ export default function FormTestimonialPage({
           </aside>
         </div>
 
-        {/* ── BOTTOM ACTIONS ───────────────────────────────────────────────── */}
         <div className="mt-6 flex items-center justify-end gap-3">
           {onOpenList && (
             <button

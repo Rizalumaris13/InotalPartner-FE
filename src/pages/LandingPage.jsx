@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
+import usePublicFeed from '../hooks/usePublicFeed'
 import PublicNavbar from '../components/PublicNavbar'
 import PublicFooter from '../components/PublicFooter'
 import PublicPartnerSection from '../components/PublicPartnerSection'
@@ -24,15 +25,10 @@ import { getPublicTestimonialsApi } from '../api/testimonials'
 import {
   ChevronLeft,
   ChevronRight,
-  Phone,
   MapPin,
-  Camera,
   Calendar,
-  Users,
   User,
 } from 'lucide-react'
-
-// ─── DATA ────────────────────────────────────────────────────────────────────
 
 const stats = [
   { value: '2021', label: 'TAHUN BERDIRI' },
@@ -40,17 +36,6 @@ const stats = [
   { value: '7', label: 'PARTNERSHIP' },
   { value: '19', label: 'PROGRAM' },
 ]
-
-const footerProfil = ['Tentang', 'Visi Misi', 'Kemitraan', 'Event']
-
-const footerPartnership = [
-  'Bergabung Sekarang',
-  'InotalHub Tech',
-  'Group & Div',
-  'Kontak',
-]
-
-// ─── SCROLL INDICATOR ────────────────────────────────────────────────────────
 
 function ScrollIndicator() {
   return (
@@ -65,8 +50,6 @@ function ScrollIndicator() {
     </div>
   )
 }
-
-// ─── FLOATING STAT CARD ──────────────────────────────────────────────────────
 
 function FloatingStat({
   value,
@@ -93,8 +76,6 @@ function FloatingStat({
     </div>
   )
 }
-
-// ─── CAROUSEL HOOK ───────────────────────────────────────────────────────────
 
 const CAROUSEL_BREAKPOINTS = ['(min-width: 40rem)', '(min-width: 64rem)']
 
@@ -140,13 +121,78 @@ function useCarousel(total, perView = 1) {
   }
 }
 
-// ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
+const newsFeed = {
+  load: () => getPublicNewsApi(1, 5),
+  mapItem: (news) => ({
+    id: news.id,
+    category:
+      news.categories?.[0]?.name ||
+      news.category?.name ||
+      'Berita',
+    title: news.title,
+    excerpt: news.excerpt || '',
+    img: news.thumbnail_url
+      ? resolveImageUrl(news.thumbnail_url)
+      : '',
+    date: news.created_at
+      ? new Date(news.created_at).toLocaleDateString('id-ID', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })
+      : '',
+    slug: news.slug,
+  }),
+  errorMessage: 'Gagal mengambil berita',
+}
+
+const eventsFeed = {
+  load: () => getPublicEventsApi(1, 9),
+  mapItem: (ev) => ({
+    id: ev.id,
+    category:
+      ev.categories?.[0]?.name || ev.category?.name || 'Event',
+    title: ev.title,
+    img: ev.thumbnail_url ? resolveImageUrl(ev.thumbnail_url) : '',
+    date: ev.event_date
+      ? new Date(ev.event_date).toLocaleDateString('id-ID', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })
+      : '',
+    time: ev.event_time ? ev.event_time.slice(0, 5) : '',
+    location: ev.event_location || '',
+    slug: ev.slug,
+  }),
+  errorMessage: 'Gagal mengambil event',
+}
+
+const articlesFeed = {
+  load: () => getPublicArticlesApi(1, 9),
+  mapItem: (art) => ({
+    id: art.id,
+    category:
+      art.categories?.[0]?.name || art.category?.name || 'Article',
+    title: art.title,
+    excerpt: art.excerpt || '',
+    img: art.thumbnail_url ? resolveImageUrl(art.thumbnail_url) : '',
+    date: art.created_at
+      ? new Date(art.created_at).toLocaleDateString('id-ID', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })
+      : '',
+    slug: art.slug,
+  }),
+  errorMessage: 'Gagal mengambil artikel',
+}
 
 export default function LandingPage({ onNavigate }) {
   const carouselColumns = useCarouselColumns()
   const actionBoxes = useHomepageJoinCards()
   const services = useHomepageServices()
-  // Navbar transparency on scroll
   const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
@@ -161,7 +207,6 @@ export default function LandingPage({ onNavigate }) {
     }
   }, [])
 
-  // Hero carousel dari database / public API
   const [heroSlides, setHeroSlides] = useState([])
   const [heroIdx, setHeroIdx] = useState(0)
   const [heroLoading, setHeroLoading] = useState(true)
@@ -204,6 +249,7 @@ export default function LandingPage({ onNavigate }) {
         console.error('Gagal mengambil slider Landing Page:', error)
         if (isMounted) {
           setHeroSlides([])
+          setHeroIdx(0)
           setHeroError(
             error.message || 'Gagal mengambil slider Landing Page.'
           )
@@ -230,13 +276,7 @@ export default function LandingPage({ onNavigate }) {
     return () => clearInterval(t)
   }, [heroSlides.length])
 
-  useEffect(() => {
-    if (heroSlides.length === 0) {
-      setHeroIdx(0)
-    } else if (heroIdx >= heroSlides.length) {
-      setHeroIdx(0)
-    }
-  }, [heroSlides.length, heroIdx])
+  const safeHeroIdx = heroIdx >= 0 && heroIdx < heroSlides.length ? heroIdx : 0
 
   const heroPrev = () => {
     if (heroSlides.length <= 1) return
@@ -248,241 +288,15 @@ export default function LandingPage({ onNavigate }) {
     setHeroIdx((i) => (i + 1) % heroSlides.length)
   }
 
-  // ─── BERITA DARI API PUBLIC ────────────────────────────────────────────────
-
-  const [newsItems, setNewsItems] = useState([])
-  const [newsLoading, setNewsLoading] = useState(true)
-  const [newsError, setNewsError] = useState('')
-
-  useEffect(() => {
-    let isMounted = true
-
-    const fetchNews = async () => {
-      try {
-        setNewsLoading(true)
-        setNewsError('')
-
-        const response = await getPublicNewsApi(1, 5)
-
-        /*
-          Bentuk response backend (gin.H dibungkus 2 level):
-          {
-            success: true,
-            message: "...",
-            data: {              <- ArticleListResponse
-              data: [...],       <- array artikel yang sebenarnya
-              total, page, limit, total_pages
-            }
-          }
-
-          getPublicNewsApi() mengembalikan response.data (body JSON di atas),
-          sehingga array berita ada di response.data.data (dua level "data").
-        */
-        const newsData = response?.data?.data || []
-
-        const formattedNews = newsData.map((news) => ({
-          id: news.id,
-
-          category:
-            news.categories?.[0]?.name ||
-            news.category?.name ||
-            'Berita',
-
-          title: news.title,
-
-          excerpt: news.excerpt || '',
-
-          img: news.thumbnail_url
-            ? resolveImageUrl(news.thumbnail_url)
-            : '',
-
-          date: news.created_at
-            ? new Date(news.created_at).toLocaleDateString('id-ID', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              })
-            : '',
-
-          slug: news.slug,
-        }))
-
-        if (isMounted) {
-          setNewsItems(formattedNews)
-        }
-      } catch (error) {
-        console.error('Gagal mengambil berita:', error)
-
-        if (isMounted) {
-          setNewsError(
-            error.response?.data?.message ||
-              'Gagal mengambil berita'
-          )
-
-          setNewsItems([])
-        }
-      } finally {
-        if (isMounted) {
-          setNewsLoading(false)
-        }
-      }
-    }
-
-    fetchNews()
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
-
-  // ─── EVENT DARI API PUBLIC ──────────────────────────────────────────────────
-
-  const [eventItems, setEventItems] = useState([])
-  const [eventsLoading, setEventsLoading] = useState(true)
-  const [eventsError, setEventsError] = useState('')
-
-  useEffect(() => {
-    let isMounted = true
-
-    const fetchEvents = async () => {
-      try {
-        setEventsLoading(true)
-        setEventsError('')
-
-        const response = await getPublicEventsApi(1, 9)
-
-        // Sama seperti berita: array asli ada di response.data.data
-        const eventData = response?.data?.data || []
-
-        const formattedEvents = eventData.map((ev) => ({
-          id: ev.id,
-
-          category:
-            ev.categories?.[0]?.name || ev.category?.name || 'Event',
-
-          title: ev.title,
-
-          img: ev.thumbnail_url ? resolveImageUrl(ev.thumbnail_url) : '',
-
-          date: ev.event_date
-            ? new Date(ev.event_date).toLocaleDateString('id-ID', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              })
-            : '',
-
-          time: ev.event_time ? ev.event_time.slice(0, 5) : '',
-
-          location: ev.event_location || '',
-
-          slug: ev.slug,
-        }))
-
-        if (isMounted) {
-          setEventItems(formattedEvents)
-        }
-      } catch (error) {
-        console.error('Gagal mengambil event:', error)
-
-        if (isMounted) {
-          setEventsError(
-            error.response?.data?.message || 'Gagal mengambil event'
-          )
-          setEventItems([])
-        }
-      } finally {
-        if (isMounted) {
-          setEventsLoading(false)
-        }
-      }
-    }
-
-    fetchEvents()
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
-
-  // ─── ARTICLE DARI API PUBLIC ────────────────────────────────────────────────
-
-  const [articleItems, setArticleItems] = useState([])
-  const [articlesLoading, setArticlesLoading] = useState(true)
-  const [articlesError, setArticlesError] = useState('')
-
-  useEffect(() => {
-    let isMounted = true
-
-    const fetchArticles = async () => {
-      try {
-        setArticlesLoading(true)
-        setArticlesError('')
-
-        const response = await getPublicArticlesApi(1, 9)
-
-        const articleData = response?.data?.data || []
-
-        const formattedArticles = articleData.map((art) => ({
-          id: art.id,
-
-          category:
-            art.categories?.[0]?.name || art.category?.name || 'Article',
-
-          title: art.title,
-
-          excerpt: art.excerpt || '',
-
-          img: art.thumbnail_url ? resolveImageUrl(art.thumbnail_url) : '',
-
-          date: art.created_at
-            ? new Date(art.created_at).toLocaleDateString('id-ID', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              })
-            : '',
-
-          slug: art.slug,
-        }))
-
-        if (isMounted) {
-          setArticleItems(formattedArticles)
-        }
-      } catch (error) {
-        console.error('Gagal mengambil artikel:', error)
-
-        if (isMounted) {
-          setArticlesError(
-            error.response?.data?.message || 'Gagal mengambil artikel'
-          )
-          setArticleItems([])
-        }
-      } finally {
-        if (isMounted) {
-          setArticlesLoading(false)
-        }
-      }
-    }
-
-    fetchArticles()
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
-
-  // ─── EVENT CAROUSEL ────────────────────────────────────────────────────────
+  const { items: newsItems, loading: newsLoading, error: newsError } = usePublicFeed(newsFeed)
+  const { items: eventItems, loading: eventsLoading, error: eventsError } = usePublicFeed(eventsFeed)
+  const { items: articleItems, loading: articlesLoading, error: articlesError } = usePublicFeed(articlesFeed)
 
   const eventPerView = Math.min(eventItems.length || 1, carouselColumns)
   const eventC = useCarousel(eventItems.length, eventPerView)
 
-  // ─── ARTICLE CAROUSEL ───────────────────────────────────────────────────────
-
   const articlePerView = Math.min(articleItems.length || 1, carouselColumns)
   const articleC = useCarousel(articleItems.length, articlePerView)
-
-  // ─── TESTIMONIAL DARI API PUBLIC ───────────────────────────────────────────
 
   const [testimonials, setTestimonials] = useState([])
   const [testiLoading, setTestiLoading] = useState(true)
@@ -526,8 +340,6 @@ export default function LandingPage({ onNavigate }) {
     }
   }, [])
 
-  // ─── TESTIMONIAL CAROUSEL ──────────────────────────────────────────────────
-
   const testiTotal = testimonials.length
   const testiPerView = Math.min(testiTotal || 1, carouselColumns === 3 ? 2 : 1)
   const testiMaxIdx = Math.max(0, testiTotal - testiPerView)
@@ -536,8 +348,6 @@ export default function LandingPage({ onNavigate }) {
   const [testiTouchStart, setTestiTouchStart] = useState(null)
   const [testiTouchEnd, setTestiTouchEnd] = useState(null)
 
-
-  // Navigasi manual melingkar (circular)
   const handleTestiPrev = () => {
     if (testiMaxIdx === 0) return
     setTestiIdx((curr) => (Math.min(curr, testiMaxIdx) <= 0 ? testiMaxIdx : Math.min(curr, testiMaxIdx) - 1))
@@ -552,7 +362,6 @@ export default function LandingPage({ onNavigate }) {
     setTestiIdx(targetIdx)
   }
 
-  // Touch handlers untuk swipe di mobile/touchscreen
   const handleTestiTouchStart = (e) => {
     setTestiTouchEnd(null)
     setTestiTouchStart(e.targetTouches[0].clientX)
@@ -601,16 +410,6 @@ export default function LandingPage({ onNavigate }) {
           }
         }
 
-        @keyframes marquee {
-          0% {
-            transform: translateX(0);
-          }
-
-          100% {
-            transform: translateX(-50%);
-          }
-        }
-
         @keyframes fadeIn {
           from {
             opacity: 0;
@@ -633,14 +432,6 @@ export default function LandingPage({ onNavigate }) {
           }
         }
 
-        .marquee-track {
-          animation: marquee 22s linear infinite;
-        }
-
-        .marquee-track:hover {
-          animation-play-state: paused;
-        }
-
         @keyframes blobMorph {
           0% {
             border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
@@ -659,22 +450,18 @@ export default function LandingPage({ onNavigate }) {
         }
       `}</style>
 
-      {/* ── 1. NAVBAR ── */}
-
       <PublicNavbar
         onNavigate={onNavigate}
         activePage="landing"
         scrolled={scrolled}
       />
 
-      {/* ── 2. HERO ── */}
-
       <section className="relative min-h-screen flex flex-col justify-center items-center text-center px-6 overflow-hidden">
         {heroSlides.map((slide, i) => (
           <div
             key={slide.id ?? i}
             className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out ${
-              i === heroIdx ? 'opacity-100' : 'opacity-0'
+              i === safeHeroIdx ? 'opacity-100' : 'opacity-0'
             }`}
             style={{
               backgroundImage: slide.image ? `url(${slide.image})` : undefined,
@@ -729,17 +516,17 @@ export default function LandingPage({ onNavigate }) {
             )}
 
             <div className="relative z-10 max-w-4xl mx-auto">
-              {heroSlides[heroIdx].title && (
+              {heroSlides[safeHeroIdx].title && (
                 <h1
-                  key={heroSlides[heroIdx].id}
+                  key={heroSlides[safeHeroIdx].id}
                   className="text-5xl md:text-7xl font-extrabold text-white leading-tight mb-10 drop-shadow-lg animate-[fadeIn_0.6s_ease]"
                 >
-                  {heroSlides[heroIdx].title}
+                  {heroSlides[safeHeroIdx].title}
                 </h1>
               )}
 
               <div className="flex flex-wrap items-center justify-center gap-4">
-                {heroSlides[heroIdx].buttons
+                {heroSlides[safeHeroIdx].buttons
                   .filter((button) => button?.label?.trim() && button?.url?.trim())
                   .map((button, index) => (
                     <a
@@ -760,7 +547,7 @@ export default function LandingPage({ onNavigate }) {
                       onClick={() => setHeroIdx(i)}
                       aria-label={`Slide ${i + 1}`}
                       className={`rounded-full transition-all ${
-                        i === heroIdx
+                        i === safeHeroIdx
                           ? 'w-6 h-2 bg-sky-400'
                           : 'w-2 h-2 bg-white/30'
                       }`}
@@ -804,11 +591,7 @@ export default function LandingPage({ onNavigate }) {
         </div>
       </section>
 
-      {/* ── 3. PARTNERSHIP ── */}
-
       <HomepageServicesSection services={services} />
-
-      {/* ── 4. EVENT UPDATE ── */}
 
       <section className="landing-section px-6 bg-gray-50">
         <div className="max-w-6xl mx-auto">
@@ -917,8 +700,6 @@ export default function LandingPage({ onNavigate }) {
         </div>
       </section>
 
-      {/* ── ARTICLE ── */}
-
       <section className="px-6 pb-12 md:pb-16 bg-gray-50">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-wrap items-center justify-between gap-4 mb-8 md:mb-10">
@@ -1014,8 +795,6 @@ export default function LandingPage({ onNavigate }) {
           )}
         </div>
       </section>
-
-      {/* ── 5. SOSOK INSPIRASI ── */}
 
       <section className="landing-section px-6 bg-white">
         <div className="max-w-6xl mx-auto">
@@ -1156,11 +935,7 @@ export default function LandingPage({ onNavigate }) {
         </div>
       </section>
 
-      {/* ── 6. PARTNER KAMI ── */}
-
       <PublicPartnerSection />
-
-      {/* ── 7. SAATNYA BERSAMA BERAKSI ── */}
 
       <section className="relative px-6 pb-12 md:pb-16 bg-white overflow-hidden">
         <div
@@ -1224,8 +999,6 @@ export default function LandingPage({ onNavigate }) {
         </div>
       </section>
 
-      {/* ── 8. INFORMASI / BERITA ── */}
-
       <section className="landing-section px-6 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 pb-4 border-b border-gray-200 gap-4">
@@ -1244,7 +1017,6 @@ export default function LandingPage({ onNavigate }) {
             </a>
           </div>
 
-          {/* Loading */}
           {newsLoading && (
             <div className="flex items-center justify-center py-6 md:py-8">
               <p className="text-gray-400">
@@ -1253,7 +1025,6 @@ export default function LandingPage({ onNavigate }) {
             </div>
           )}
 
-          {/* Error */}
           {!newsLoading && newsError && (
             <div className="flex items-center justify-center py-6 md:py-8">
               <p className="text-red-500">
@@ -1262,7 +1033,6 @@ export default function LandingPage({ onNavigate }) {
             </div>
           )}
 
-          {/* Tidak ada berita */}
           {!newsLoading &&
             !newsError &&
             newsItems.length === 0 && (
@@ -1273,12 +1043,10 @@ export default function LandingPage({ onNavigate }) {
               </div>
             )}
 
-          {/* Data berita */}
           {!newsLoading &&
             !newsError &&
             newsItems.length > 0 && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                {/* Berita Utama */}
                 <div className={`${newsItems.length > 1 ? 'lg:col-span-7' : 'lg:col-span-12'} group cursor-pointer`}>
                   <div className="overflow-hidden rounded-xl mb-5 bg-gray-100">
                     {newsItems[0].img ? (
@@ -1311,7 +1079,6 @@ export default function LandingPage({ onNavigate }) {
                   </p>
                 </div>
 
-                {/* List berita lainnya */}
                 {newsItems.length > 1 && <div className="lg:col-span-5 flex flex-col gap-6">
                   {newsItems.slice(1).map((news) => (
                     <div
@@ -1353,8 +1120,6 @@ export default function LandingPage({ onNavigate }) {
         </div>
       </section>
 
-      {/* ── 9. CTA KONSULTASI ── */}
-
       <section className="relative px-6 pb-12 md:pb-16 bg-gray-50 overflow-hidden">
         <div
           className="absolute inset-0 opacity-50 pointer-events-none"
@@ -1392,8 +1157,6 @@ export default function LandingPage({ onNavigate }) {
           </div>
         </div>
       </section>
-
-      {/* ── 10. FOOTER ── */}
 
       <PublicFooter onNavigate={onNavigate} />
     </div>

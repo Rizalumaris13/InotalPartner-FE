@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Search,
   Plus,
@@ -19,11 +19,7 @@ import {
 import { resolveImageUrl } from '../api/posts'
 import { useAuth } from '../hooks/useAuth'
 
-const STATUS_FILTERS = [
-  { key: 'all', label: 'Semua' },
-  { key: 'active', label: 'Aktif' },
-  { key: 'inactive', label: 'Tidak Aktif' },
-]
+import { STATUS_FILTERS } from '../data/statusFilters'
 
 export default function ListTestimonialPage({ onAddNew, onEdit }) {
   const { role, user } = useAuth()

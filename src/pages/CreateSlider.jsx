@@ -1,9 +1,8 @@
-import { useFeedback } from '../components/FeedbackUI';
-import React, { useEffect, useRef, useState } from 'react';
+import { useFeedback } from '../hooks/useFeedback';
+import { useRef, useState } from 'react';
 import {
   Image,
   Link,
-  Plus,
   Save,
   Trash2,
   Upload,
@@ -15,27 +14,16 @@ import {
 import {
   createBannerApi,
   getBannersApi,
-  resolveBannerImageUrl,
   updateBannerApi,
   uploadBannerImageApi,
 } from '../api/homepageBanners';
 
 import { useAuth } from '../hooks/useAuth';
+import { createSliderDraft, unwrapBannerList } from '../utils/sliders';
 
 const EMPTY_BUTTON = {
   label: '',
   url: '',
-};
-
-const EMPTY_FORM = {
-  title: '',
-  buttons: [
-    { ...EMPTY_BUTTON },
-    { ...EMPTY_BUTTON },
-    { ...EMPTY_BUTTON },
-  ],
-  image: '',
-  order: 1,
 };
 
 export default function CreateSlider({
@@ -43,24 +31,15 @@ export default function CreateSlider({
   onFinishEdit,
   onOpenList,
 }) {
-  const { notify, confirmAction, FeedbackUI } = useFeedback();
+  const { notify, feedback } = useFeedback();
   const { role } = useAuth();
 
   const isAdmin = role === 'admin' || role === 'super_admin';
   const isEditing = !!editingSlider;
 
-  const [title, setTitle] = useState('');
-  const [buttons, setButtons] = useState([
-    { ...EMPTY_BUTTON },
-    { ...EMPTY_BUTTON },
-    { ...EMPTY_BUTTON },
-  ]);
-
-  const [imageUrl, setImageUrl] = useState('');
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState('');
-
-  const [order, setOrder] = useState(1);
+  const [sourceSlider, setSourceSlider] = useState(editingSlider);
+  const [draft, setDraft] = useState(() => createSliderDraft(editingSlider));
+  const { title, buttons, imageUrl, imageFile, imagePreview, order } = draft;
 
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -68,67 +47,12 @@ export default function CreateSlider({
 
   const fileInputRef = useRef(null);
 
-  // ---------------------------------------------------------
-  // LOAD DATA SAAT EDIT
-  // ---------------------------------------------------------
-
-  useEffect(() => {
-    if (!editingSlider) {
-      setTitle('');
-      setButtons([
-        { ...EMPTY_BUTTON },
-        { ...EMPTY_BUTTON },
-        { ...EMPTY_BUTTON },
-      ]);
-      setImageUrl('');
-      setImageFile(null);
-      setImagePreview('');
-      setOrder(1);
-      setError('');
-      return;
-    }
-
-    const banner = editingSlider;
-
-    setTitle(banner.title || '');
-
-    const existingButtons = Array.isArray(banner.buttons)
-      ? banner.buttons
-      : [];
-
-    setButtons([
-      {
-        label: existingButtons[0]?.label || '',
-        url: existingButtons[0]?.url || '',
-      },
-      {
-        label: existingButtons[1]?.label || '',
-        url: existingButtons[1]?.url || '',
-      },
-      {
-        label: existingButtons[2]?.label || '',
-        url: existingButtons[2]?.url || '',
-      },
-    ]);
-
-    setImageUrl(banner.background_image || '');
-    setImageFile(null);
-
-    if (banner.background_image) {
-      setImagePreview(
-        resolveBannerImageUrl(banner.background_image)
-      );
-    } else {
-      setImagePreview('');
-    }
-
-    setOrder(Number(banner.order) || 1);
+  // Record pengganti dengan ID sama juga membuang draf, tanpa melepas fokus input.
+  if (sourceSlider !== editingSlider) {
+    setSourceSlider(editingSlider);
+    setDraft(createSliderDraft(editingSlider));
     setError('');
-  }, [editingSlider]);
-
-  // ---------------------------------------------------------
-  // ADMIN GUARD
-  // ---------------------------------------------------------
+  }
 
   if (!isAdmin) {
     return (
@@ -152,36 +76,25 @@ export default function CreateSlider({
     );
   }
 
-  // ---------------------------------------------------------
-  // BUTTON
-  // ---------------------------------------------------------
+  const updateDraft = (field, value) => {
+    setDraft((prev) => ({ ...prev, [field]: value }));
+  };
 
   const updateButton = (index, field, value) => {
-    setButtons((prev) =>
-      prev.map((button, i) =>
-        i === index
-          ? {
-              ...button,
-              [field]: value,
-            }
-          : button
-      )
-    );
+    setDraft((prev) => ({
+      ...prev,
+      buttons: prev.buttons.map((button, i) =>
+        i === index ? { ...button, [field]: value } : button
+      ),
+    }));
   };
 
   const clearButton = (index) => {
-    setButtons((prev) =>
-      prev.map((button, i) =>
-        i === index
-          ? { ...EMPTY_BUTTON }
-          : button
-      )
-    );
+    setDraft((prev) => ({
+      ...prev,
+      buttons: prev.buttons.map((button, i) => i === index ? { ...EMPTY_BUTTON } : button),
+    }));
   };
-
-  // ---------------------------------------------------------
-  // IMAGE
-  // ---------------------------------------------------------
 
   const handleImageChange = (event) => {
     const file = event.target.files?.[0];
@@ -202,9 +115,8 @@ export default function CreateSlider({
       URL.revokeObjectURL(imagePreview);
     }
 
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
-    setImageUrl('');
+    const preview = URL.createObjectURL(file);
+    setDraft((prev) => ({ ...prev, imageFile: file, imagePreview: preview, imageUrl: '' }));
   };
 
   const removeImage = () => {
@@ -212,18 +124,12 @@ export default function CreateSlider({
       URL.revokeObjectURL(imagePreview);
     }
 
-    setImageFile(null);
-    setImagePreview('');
-    setImageUrl('');
+    setDraft((prev) => ({ ...prev, imageFile: null, imagePreview: '', imageUrl: '' }));
 
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
-
-  // ---------------------------------------------------------
-  // PAYLOAD
-  // ---------------------------------------------------------
 
   const buildPayload = (backgroundImage) => {
     const validButtons = buttons
@@ -246,19 +152,10 @@ export default function CreateSlider({
     };
   };
 
-  // ---------------------------------------------------------
-  // SAVE
-  // ---------------------------------------------------------
-
   const handleSubmit = async () => {
     setError('');
 
-    /*
-     * SEMUA FIELD BOLEH KOSONG.
-     *
-     * Jadi kita tidak mewajibkan title,
-     * image, ataupun button.
-     */
+    // Judul, gambar, dan tombol memang boleh kosong.
 
     setSaving(true);
 
@@ -271,13 +168,7 @@ export default function CreateSlider({
 
       // Cek lebih awal agar pengguna mendapat feedback sebelum proses upload gambar.
       const response = await getBannersApi();
-      const existingBanners = Array.isArray(response)
-        ? response
-        : Array.isArray(response?.data)
-          ? response.data
-          : Array.isArray(response?.banners)
-            ? response.banners
-            : [];
+      const existingBanners = unwrapBannerList(response);
 
       const duplicateOrder = existingBanners.find(
         (banner) =>
@@ -293,13 +184,10 @@ export default function CreateSlider({
 
       let backgroundImage = imageUrl;
 
-      // Upload gambar baru terlebih dahulu
       if (imageFile) {
         setUploading(true);
 
-        backgroundImage = await uploadBannerImageApi(
-          imageFile
-        );
+        backgroundImage = await uploadBannerImageApi(imageFile);
 
         setUploading(false);
 
@@ -313,10 +201,7 @@ export default function CreateSlider({
       const payload = buildPayload(backgroundImage);
 
       if (isEditing) {
-        await updateBannerApi(
-          editingSlider.id,
-          payload
-        );
+        await updateBannerApi(editingSlider.id, payload);
 
         notify('Slider berhasil diperbarui.');
 
@@ -326,19 +211,7 @@ export default function CreateSlider({
 
         notify('Slider berhasil dibuat.');
 
-        // Reset form
-        setTitle('');
-
-        setButtons([
-          { ...EMPTY_BUTTON },
-          { ...EMPTY_BUTTON },
-          { ...EMPTY_BUTTON },
-        ]);
-
-        setImageUrl('');
-        setImageFile(null);
-        setImagePreview('');
-        setOrder(1);
+        setDraft(createSliderDraft());
 
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
@@ -358,14 +231,10 @@ export default function CreateSlider({
     }
   };
 
-  // ---------------------------------------------------------
-  // RENDER
-  // ---------------------------------------------------------
-
   return (
     <div className="flex flex-col">
-      <FeedbackUI />
-      {/* HEADER */}
+      {feedback}
+
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-extrabold tracking-tight text-gray-900">
@@ -383,7 +252,6 @@ export default function CreateSlider({
         </button>
       </div>
 
-      {/* ERROR */}
       {error && (
         <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           <strong>Error: </strong>
@@ -392,9 +260,9 @@ export default function CreateSlider({
       )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
-        {/* LEFT */}
+
         <div className="space-y-6">
-          {/* TITLE */}
+
           <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
             <div className="mb-5">
               <h2 className="text-base font-bold text-gray-900">
@@ -405,13 +273,12 @@ export default function CreateSlider({
             <input
               type="text"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => updateDraft('title', e.target.value)}
               placeholder="Contoh: Kreativitas"
               className="w-full rounded-lg border border-gray-200 px-4 py-3 text-lg font-semibold outline-none transition placeholder:font-normal focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
             />
           </section>
 
-          {/* BUTTONS */}
           <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
             <div className="mb-5">
               <h2 className="text-base font-bold text-gray-900">
@@ -499,12 +366,10 @@ export default function CreateSlider({
             </div>
           </section>
 
-          
         </div>
 
-        {/* RIGHT */}
         <aside className="space-y-6">
-          {/* IMAGE */}
+
           <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
             <div className="mb-5 flex items-center gap-2">
               <Image size={19} className="text-gray-500" />
@@ -570,7 +435,6 @@ export default function CreateSlider({
             />
           </section>
 
-          {/* ORDER */}
           <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
             <h2 className="mb-4 text-base font-bold text-gray-900">
               Urutan Slider
@@ -582,7 +446,7 @@ export default function CreateSlider({
               step="1"
               value={order}
               onChange={(e) =>
-                setOrder(e.target.value)
+                updateDraft('order', e.target.value)
               }
               className="w-full max-w-xs rounded-lg border border-gray-200 px-4 py-3 text-sm outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
             />
@@ -594,7 +458,6 @@ export default function CreateSlider({
         </aside>
       </div>
 
-      {/* SAVE */}
       <div className="mt-6 flex justify-end">
         <button
           type="button"

@@ -10,12 +10,16 @@ const footerPartnership = [
   'Kontak',
 ]
 
+const footerColumns = [
+  { title: 'Profil', items: footerProfil },
+  { title: 'Partnership', items: footerPartnership },
+]
+
 export default function PublicFooter({ onNavigate }) {
   return (
     <footer className="bg-gray-900 text-gray-400 px-6 pt-14 pb-8">
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_auto] gap-10 mb-12">
-          {/* Identitas dan kontak */}
           <div>
             <div className="flex items-center gap-2 mb-4">
               <div className="w-8 h-8 rounded-lg bg-sky-500 flex items-center justify-center">
@@ -46,54 +50,30 @@ export default function PublicFooter({ onNavigate }) {
             </div>
           </div>
 
-          {/* Navigasi profil */}
-          <div>
-            <h4 className="text-white font-semibold text-sm mb-5 tracking-wider uppercase">
-              Profil
-            </h4>
+          {footerColumns.map(({ title, items }) => (
+            <div key={title}>
+              <h4 className="text-white font-semibold text-sm mb-5 tracking-wider uppercase">
+                {title}
+              </h4>
 
-            <ul className="space-y-3">
-              {footerProfil.map((item) => (
-                <li key={item}>
-                  <a
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      onNavigate?.(item)
-                    }}
-                    className="text-sm text-gray-500 hover:text-sky-400 transition-colors"
-                  >
-                    {item}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Navigasi partnership */}
-          <div>
-            <h4 className="text-white font-semibold text-sm mb-5 tracking-wider uppercase">
-              Partnership
-            </h4>
-
-            <ul className="space-y-3">
-              {footerPartnership.map((item) => (
-                <li key={item}>
-                  <a
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      onNavigate?.(item)
-                    }}
-                    className="text-sm text-gray-500 hover:text-sky-400 transition-colors"
-                  >
-                    {item}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-          {/* Media sosial di sisi kanan footer */}
+              <ul className="space-y-3">
+                {items.map((item) => (
+                  <li key={item}>
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        onNavigate?.(item)
+                      }}
+                      className="text-sm text-gray-500 hover:text-sky-400 transition-colors"
+                    >
+                      {item}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
           <nav
             aria-label="Media sosial"
             className="flex items-start gap-3 lg:justify-self-end"
@@ -142,7 +122,6 @@ export default function PublicFooter({ onNavigate }) {
           </nav>
         </div>
 
-        {/* Copyright dan kebijakan */}
         <div className="border-t border-gray-800 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-600">
           <div className="flex gap-5">
             <a

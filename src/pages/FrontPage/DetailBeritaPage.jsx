@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { formatDate, formatTime, formatViewCount } from '../../utils/newsFormat'
 
 import PublicNavbar from '../../components/PublicNavbar'
 
@@ -15,50 +16,6 @@ import {
 } from 'lucide-react'
 import PublicFooter from '../../components/PublicFooter'
 
-
-function formatDate(iso) {
-  if (!iso) return '-'
-
-  try {
-    return new Date(iso).toLocaleDateString(
-      'id-ID',
-      {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-        timeZone: 'Asia/Jakarta',
-      }
-    )
-  } catch {
-    return '-'
-  }
-}
-
-
-function formatTime(iso) {
-  if (!iso) return '--:--'
-
-  try {
-    return new Date(iso).toLocaleTimeString(
-      'id-ID',
-      {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-        timeZone: 'Asia/Jakarta',
-      }
-    )
-  } catch {
-    return '--:--'
-  }
-}
-
-
-function formatViewCount(value) {
-  return Number(value || 0).toLocaleString('id-ID')
-}
-
-
 export default function DetailBeritaPage({
   onNavigate,
   slug,
@@ -68,39 +25,6 @@ export default function DetailBeritaPage({
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-
-  const [scrolled, setScrolled] = useState(false)
-
-
-  /* =========================
-     NAVBAR SCROLL
-  ========================= */
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 24)
-    }
-
-    handleScroll()
-
-    window.addEventListener(
-      'scroll',
-      handleScroll,
-      { passive: true }
-    )
-
-    return () => {
-      window.removeEventListener(
-        'scroll',
-        handleScroll
-      )
-    }
-  }, [])
-
-
-  /* =========================
-     FETCH BERITA
-  ========================= */
 
   useEffect(() => {
     let mounted = true
@@ -194,11 +118,6 @@ export default function DetailBeritaPage({
     }
   }, [slug])
 
-
-  /* =========================
-     RELATED POSTS
-  ========================= */
-
   const relatedPosts = useMemo(() => {
     if (!news) return []
 
@@ -213,20 +132,6 @@ export default function DetailBeritaPage({
 
     const currentTags =
       news.tags || []
-
-    /*
-     * Ambil slug/tag dari berita sekarang.
-     *
-     * API bisa mengirim:
-     *
-     * tags: [
-     *   {
-     *     id: 1,
-     *     name: "AI",
-     *     slug: "ai"
-     *   }
-     * ]
-     */
 
     const currentTagIds =
       currentTags
@@ -244,26 +149,13 @@ export default function DetailBeritaPage({
         )
         .filter(Boolean)
 
-
-    /*
-     * Jangan masukkan berita
-     * yang sedang dibuka.
-     */
-
     const candidates =
       allNews.filter(
         (item) =>
           item.id !== news.id
       )
 
-
-    /*
-     * PRIORITAS RELATED POST:
-     *
-     * 1. Kategori sama
-     * 2. Punya tag yang sama
-     * 3. Popularitas berdasarkan view_count
-     */
+    // Kategori sama diprioritaskan, lalu kecocokan tag dan jumlah kunjungan.
 
     const scored =
       candidates.map((item) => {
@@ -295,7 +187,6 @@ export default function DetailBeritaPage({
             )
             .filter(Boolean)
 
-
         const sameCategory =
           currentCategoryId &&
           itemCategoryId
@@ -305,7 +196,6 @@ export default function DetailBeritaPage({
               itemCategoryName ===
                 currentCategoryName
 
-
         const sharedTags =
           itemTagIds.some((id) =>
             currentTagIds.includes(id)
@@ -314,72 +204,34 @@ export default function DetailBeritaPage({
             currentTagNames.includes(name)
           )
 
-
         let score = 0
 
-        /*
-         * Kategori sama = prioritas utama
-         */
         if (sameCategory) {
           score += 100
         }
 
-        /*
-         * Tag sama = tambahan prioritas
-         */
         if (sharedTags) {
           score += 50
         }
 
-        /*
-         * View count sebagai penentu
-         * popularitas.
-         */
         score += Number(
           item.view_count || 0
         ) / 1000
-
 
         return {
           ...item,
           _score: score,
           _sameCategory: sameCategory,
-          _sharedTags: sharedTags,
         }
       })
 
-
-    /*
-     * Hanya ambil yang kategorinya sama.
-     *
-     * Jadi contoh:
-     *
-     * Artikel sekarang:
-     * kategori = Teknologi
-     * tags = AI, Coding
-     *
-     * Related:
-     * - Teknologi + Coding
-     * - Teknologi + AI
-     * - Teknologi + Pemula
-     *
-     * Semuanya masih boleh.
-     *
-     * Artikel dari kategori lain
-     * tidak akan muncul.
-     */
+    // Selama ada kategori yang sama, jangan campurkan kategori lain.
 
     const sameCategoryPosts =
       scored.filter(
         (item) =>
           item._sameCategory
       )
-
-
-    /*
-     * Jika ada artikel kategori sama,
-     * urutkan berdasarkan score.
-     */
 
     if (sameCategoryPosts.length > 0) {
       return sameCategoryPosts
@@ -391,14 +243,7 @@ export default function DetailBeritaPage({
         .slice(0, 3)
     }
 
-
-    /*
-     * Fallback:
-     *
-     * Jika tidak ada artikel kategori sama,
-     * ambil artikel paling populer
-     * dari semua berita.
-     */
+    // Tanpa kategori yang sama, pilih berdasarkan popularitas semua berita.
 
     return scored
       .sort(
@@ -409,11 +254,6 @@ export default function DetailBeritaPage({
       .slice(0, 3)
 
   }, [news, allNews])
-
-
-  /* =========================
-     LOADING
-  ========================= */
 
   if (loading) {
     return (
@@ -428,7 +268,6 @@ export default function DetailBeritaPage({
           <PublicNavbar
             onNavigate={onNavigate}
             activePage="berita"
-            scrolled={scrolled}
           />
         </div>
 
@@ -443,11 +282,6 @@ export default function DetailBeritaPage({
     )
   }
 
-
-  /* =========================
-     ERROR
-  ========================= */
-
   if (error || !news) {
     return (
       <div
@@ -461,7 +295,6 @@ export default function DetailBeritaPage({
           <PublicNavbar
             onNavigate={onNavigate}
             activePage="berita"
-            scrolled={scrolled}
           />
         </div>
 
@@ -489,11 +322,6 @@ export default function DetailBeritaPage({
     )
   }
 
-
-  /* =========================
-     DATA BERITA
-  ========================= */
-
   const categories =
     Array.isArray(news.categories) && news.categories.length > 0
         ? news.categories
@@ -508,7 +336,6 @@ export default function DetailBeritaPage({
         )
       : ''
 
-
   return (
     <div
       className="min-h-screen bg-white text-[#0c4a6e]"
@@ -518,34 +345,18 @@ export default function DetailBeritaPage({
       }}
     >
 
-      {/* NAVBAR */}
-
       <div className="h-[68px]">
         <PublicNavbar
           onNavigate={onNavigate}
           activePage="berita"
-          scrolled={scrolled}
         />
       </div>
-
-
-      {/* HERO / ARTICLE HEADER */}
-
-
-
-
-      {/* NEWS */}
-
-      
-        {/* ARTICLE */}
 
         <main className="max-w-7xl mx-auto px-6 py-8 md:py-12">
         <div className="grid xl:grid-cols-[minmax(0,1fr)_320px] gap-8 xl:gap-10">
 
-            {/* CONTENT */}
             <article className="min-w-0 w-full max-w-3xl mx-auto xl:max-w-none">
 
-            {/* BACK BUTTON */}
             <button
                 onClick={() => onNavigate?.('berita')}
                 className="inline-flex items-center gap-2 text-[#0c4a6e]/70 hover:text-[#0284c7] text-sm font-semibold mb-6 transition"
@@ -554,11 +365,8 @@ export default function DetailBeritaPage({
                 Kembali ke Berita
             </button>
 
-           
-            {/* CATEGORY + DATE/TIME */}
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
 
-                {/* CATEGORY - LEFT */}
                     <div className="flex flex-wrap items-center gap-2">
                         {categories.map((item, index) => {
                             const name =
@@ -579,7 +387,6 @@ export default function DetailBeritaPage({
                         })}
                     </div>
 
-                {/* DATE/TIME - RIGHT */}
                     <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
                         <Clock size={15} />
 
@@ -604,7 +411,6 @@ export default function DetailBeritaPage({
 
             </div>
 
-            {/* IMAGE */}
             {image && (
                 <div className="overflow-hidden rounded-2xl mb-8 bg-[#F0F4F8]">
                 <img
@@ -615,12 +421,10 @@ export default function DetailBeritaPage({
                 </div>
             )}
 
-            {/* TITLE: BELOW IMAGE */}
             <h1 className="text-3xl md:text-4xl font-extrabold leading-tight tracking-tight text-[#0b8bd5] mb-6">
                 {news.title}
             </h1>
 
-            {/* NEWS CONTENT */}
             <div
                 className="
                 text-[#172f3d]
@@ -661,7 +465,6 @@ export default function DetailBeritaPage({
                 }}
             />
 
-            {/* TAGS: BELOW NEWS CONTENT */}
             {Array.isArray(news.tags) && news.tags.length > 0 && (
                 <div className="mt-10 pt-6 border-t border-gray-200">
                 <h2 className="text-sm font-bold text-[#0c4a6e] mb-3">
@@ -692,7 +495,6 @@ export default function DetailBeritaPage({
 
             </article>
 
-            {/* SIDEBAR */}
             <aside className="min-w-0 w-full max-w-3xl mx-auto xl:max-w-none xl:sticky xl:top-24 xl:self-start">
             <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white">
 
@@ -769,10 +571,6 @@ export default function DetailBeritaPage({
 
         </div>
         </main>
-
-
-
-      {/* FOOTER */}
 
       <PublicFooter onNavigate={onNavigate} />
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Search,
   Plus,
@@ -14,15 +14,10 @@ import {
 import {
   getAboutFAQsApi,
   deleteAboutFAQApi,
-  updateAboutFAQApi,
 } from '../api/about'
 import { useAuth } from '../hooks/useAuth'
 
-const STATUS_FILTERS = [
-  { key: 'all', label: 'Semua' },
-  { key: 'active', label: 'Aktif' },
-  { key: 'inactive', label: 'Tidak Aktif' },
-]
+import { STATUS_FILTERS } from '../data/statusFilters'
 
 export default function ListFAQPage({ onAddNew, onEdit }) {
   const { role, user } = useAuth()
@@ -44,7 +39,6 @@ export default function ListFAQPage({ onAddNew, onEdit }) {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [feedbackMessage, setFeedbackMessage] = useState('')
-  const [updatingStatusId, setUpdatingStatusId] = useState(null)
 
   useEffect(() => {
     let isMounted = true
@@ -81,13 +75,15 @@ export default function ListFAQPage({ onAddNew, onEdit }) {
 
   // Filter list data berdasarkan search dan status
   const filteredFAQs = useMemo(() => {
+    const query = search.toLowerCase()
+    const isEmptySearch = search === ''
     return faqs.filter((item) => {
       const matchSearch =
-        search === '' ||
+        isEmptySearch ||
         (item.question &&
-          item.question.toLowerCase().includes(search.toLowerCase())) ||
+          item.question.toLowerCase().includes(query)) ||
         (item.answer &&
-          item.answer.toLowerCase().includes(search.toLowerCase()))
+          item.answer.toLowerCase().includes(query))
 
       const matchStatus =
         statusFilter === 'all' ||
@@ -97,46 +93,6 @@ export default function ListFAQPage({ onAddNew, onEdit }) {
       return matchSearch && matchStatus
     })
   }, [faqs, search, statusFilter])
-
-  // Toggle status aktif / tidak aktif
-  const handleToggleStatus = async (item) => {
-    if (!isAdmin) {
-      alert('Hanya admin dan super_admin yang dapat mengubah status FAQ.')
-      return
-    }
-    if (updatingStatusId) return
-
-    const newStatus = !item.is_active
-    setUpdatingStatusId(item.id)
-
-    try {
-      await updateAboutFAQApi(item.id, {
-        question: item.question,
-        answer: item.answer,
-        display_order: item.display_order,
-        is_active: newStatus,
-      })
-
-      setFaqs((prev) =>
-        prev.map((f) => (f.id === item.id ? { ...f, is_active: newStatus } : f))
-      )
-
-      setFeedbackMessage(
-        `Status FAQ "${item.question.slice(0, 30)}..." diubah menjadi ${
-          newStatus ? 'Aktif' : 'Tidak Aktif'
-        }.`
-      )
-      setTimeout(() => setFeedbackMessage(''), 3500)
-    } catch (err) {
-      alert(
-        err.response?.data?.message ||
-          err.message ||
-          'Gagal memperbarui status FAQ'
-      )
-    } finally {
-      setUpdatingStatusId(null)
-    }
-  }
 
   // Handle Delete Action
   const handleDeleteClick = async (item) => {
@@ -326,7 +282,7 @@ export default function ListFAQPage({ onAddNew, onEdit }) {
                   <th className="px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider text-center w-24">
                     Urutan
                   </th>
-                  <th className="px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider w-28">
+                  <th className="px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider text-center w-32">
                     Status
                   </th>
                   <th className="px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right w-24">
@@ -376,34 +332,16 @@ export default function ListFAQPage({ onAddNew, onEdit }) {
                       </span>
                     </td>
 
-                    {/* Status Toggle */}
-                    <td className="px-5 py-3.5">
-                      <button
-                        type="button"
-                        onClick={() => handleToggleStatus(item)}
-                        disabled={updatingStatusId === item.id || !isAdmin}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider transition-colors ${
-                          isAdmin
-                            ? 'cursor-pointer'
-                            : 'cursor-not-allowed opacity-80'
-                        } ${
-                          item.is_active
-                            ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        } ${updatingStatusId === item.id ? 'opacity-50 cursor-wait' : ''}`}
-                        title={
-                          isAdmin
-                            ? 'Klik untuk mengubah status'
-                            : 'Hanya admin yang dapat mengubah status'
-                        }
-                      >
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            item.is_active ? 'bg-emerald-500' : 'bg-gray-400'
-                          }`}
-                        />
-                        {item.is_active ? 'Aktif' : 'Tidak Aktif'}
-                      </button>
+                    {/* Status hanya ditampilkan; perubahan lewat form edit. */}
+                    <td className="px-5 py-3.5 text-center">
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-bold whitespace-nowrap ${
+                        item.is_active
+                          ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                          : 'bg-gray-100 text-gray-400 border-gray-200'
+                      }`}>
+                        <span aria-hidden="true" className={`w-1.5 h-1.5 shrink-0 rounded-full ${item.is_active ? 'bg-emerald-500' : 'bg-gray-400'}`} />
+                        <span>{item.is_active ? 'Aktif' : 'Nonaktif'}</span>
+                      </span>
                     </td>
 
                     {/* Aksi */}

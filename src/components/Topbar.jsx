@@ -63,28 +63,6 @@ export default function Topbar({ activeNav, setSidebarOpen }) {
         </div>
       </div>
 
-      {/*
-      <div className="flex items-center gap-3">
-        <div className="hidden md:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5">
-          <Search size={14} className="text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search..."
-            className="text-xs bg-transparent outline-none text-gray-600 w-36 placeholder:text-gray-300"
-          />
-          <span className="text-[10px] text-gray-300 bg-white border border-gray-200 px-1.5 py-0.5 rounded font-mono">⌘K</span>
-        </div>
-
-        <button className="relative w-8 h-8 rounded-lg hover:bg-sky-50 flex items-center justify-center transition-colors">
-          <Bell size={16} className="text-gray-500" />
-          <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-sky-500" />
-        </button>
-
-        <div className="w-8 h-8 rounded-full bg-sky-500 flex items-center justify-center">
-          <span className="text-white text-xs font-bold">AD</span>
-        </div>
-      </div>
-      */}
     </header>
   )
 }

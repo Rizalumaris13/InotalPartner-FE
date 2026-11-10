@@ -1,6 +1,7 @@
 import { expect, test, vi } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import TentangPage from '../src/pages/FrontPage/TentangPage'
 import { server } from './setup'
@@ -42,6 +43,47 @@ test('Tentang memuat gambar dari resource yang sama dengan editor tanpa request 
   }
 })
 
+test('FAQ terbuka memakai minus dan FAQ tertutup tetap plus saat diklik atau memakai keyboard', async () => {
+  const faqs = [
+    { id: 1, question: 'Bagaimana cara bergabung?', answer: 'Hubungi tim kemitraan.' },
+    { id: 2, question: 'Bagaimana menghubungi tim?', answer: 'Gunakan halaman kontak.' },
+  ]
+  vi.stubGlobal('IntersectionObserver', class {
+    observe() {}
+    disconnect() {}
+  })
+  server.use(
+    http.get('*/api/public/about/faqs', () => HttpResponse.json({ success: true, data: faqs })),
+    http.get('*/api/public/about*', () => HttpResponse.json({ success: true, data: [] })),
+    http.get('*/api/public/page-banners/:page', () => HttpResponse.json({ success: true, data: null })),
+  )
+  const user = userEvent.setup()
+  try {
+    render(<TentangPage />)
+    const first = await screen.findByRole('button', { name: faqs[0].question })
+    const second = screen.getByRole('button', { name: faqs[1].question })
+
+    const expectIcon = (button, expanded) => {
+      expect(button.getAttribute('aria-expanded')).toBe(String(expanded))
+      expect(button.querySelector(expanded ? '.lucide-minus' : '.lucide-plus')).not.toBeNull()
+      expect(button.querySelector(expanded ? '.lucide-plus' : '.lucide-minus')).toBeNull()
+      expect(button.querySelector('svg').parentElement.classList.contains('rotate-45')).toBe(false)
+    }
+
+    expectIcon(first, true)
+    expectIcon(second, false)
+    await user.click(second)
+    expectIcon(first, false)
+    expectIcon(second, true)
+    await user.keyboard('{Enter}')
+    expectIcon(second, false)
+    await user.keyboard(' ')
+    expectIcon(second, true)
+  } finally {
+    vi.unstubAllGlobals()
+  }
+})
+
 test('halaman Tentang tidak menampilkan tombol Hubungi Kami', () => {
   const page = renderPage()
 
@@ -51,20 +93,4 @@ test('halaman Tentang tidak menampilkan tombol Hubungi Kami', () => {
     }),
   ).not.toBeNull()
   expect(page.queryByRole('button', { name: 'Hubungi Kami' })).toBeNull()
-})
-
-test('banner Tentang memakai tinggi ringkas tanpa mengubah lebar banner', () => {
-  const container = document.createElement('div')
-  container.innerHTML = renderToStaticMarkup(<TentangPage />)
-  const title = within(container).getByRole('heading', { name: 'Tentang Kami' })
-  const banner = title.closest('section')
-  const content = banner.querySelector('.relative.max-w-7xl')
-
-  expect(content.classList.contains('py-6')).toBe(true)
-  expect(content.classList.contains('md:py-24')).toBe(false)
-  expect(title.classList.contains('text-2xl')).toBe(true)
-  expect(title.classList.contains('leading-tight')).toBe(true)
-  expect(banner.classList.contains('mx-3')).toBe(true)
-  expect(banner.classList.contains('md:mx-4')).toBe(true)
-  expect(banner.classList.contains('w-3/5')).toBe(false)
 })

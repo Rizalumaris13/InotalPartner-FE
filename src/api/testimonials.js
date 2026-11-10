@@ -13,7 +13,7 @@ export const getPublicTestimonialsApi = async () => {
       error?.response?.data?.message ||
       error?.message ||
       'Gagal mengambil data testimoni'
-    throw new Error(message)
+    throw new Error(message, { cause: error })
   }
 }
 
@@ -30,7 +30,7 @@ export const getTestimonialsApi = async () => {
       error?.response?.data?.message ||
       error?.message ||
       'Gagal mengambil daftar testimoni'
-    throw new Error(message)
+    throw new Error(message, { cause: error })
   }
 }
 
@@ -47,7 +47,7 @@ export const getTestimonialByIdApi = async (id) => {
       error?.response?.data?.message ||
       error?.message ||
       'Gagal mengambil detail testimoni'
-    throw new Error(message)
+    throw new Error(message, { cause: error })
   }
 }
 
@@ -64,7 +64,7 @@ export const createTestimonialApi = async (payload) => {
       error?.response?.data?.message ||
       error?.message ||
       'Gagal membuat testimoni'
-    throw new Error(message)
+    throw new Error(message, { cause: error })
   }
 }
 
@@ -81,7 +81,7 @@ export const updateTestimonialApi = async (id, payload) => {
       error?.response?.data?.message ||
       error?.message ||
       'Gagal memperbarui testimoni'
-    throw new Error(message)
+    throw new Error(message, { cause: error })
   }
 }
 
@@ -98,6 +98,6 @@ export const deleteTestimonialApi = async (id) => {
       error?.response?.data?.message ||
       error?.message ||
       'Gagal menghapus testimoni'
-    throw new Error(message)
+    throw new Error(message, { cause: error })
   }
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Menu, X } from 'lucide-react'
 
 export default function PublicNavbar({ onNavigate, activePage, scrolled }) {
@@ -20,7 +20,6 @@ export default function PublicNavbar({ onNavigate, activePage, scrolled }) {
     onNavigate?.(page)
   }
 
-  // Transparent at top of hero, solid white after scroll
   const isHero = activePage === 'landing'
   const transparent = isHero && !scrolled && !menuOpen
 
@@ -34,7 +33,6 @@ export default function PublicNavbar({ onNavigate, activePage, scrolled }) {
     >
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
 
-        {/* Logo */}
         <button
           className="flex items-center gap-2"
           onClick={() => handleNav('landing')}
@@ -49,7 +47,6 @@ export default function PublicNavbar({ onNavigate, activePage, scrolled }) {
           </span>
         </button>
 
-        {/* Desktop Nav */}
         <div className="hidden xl:flex items-center gap-6 text-sm font-medium">
           {navLinks.map(({ label, page }) => (
             <button
@@ -68,7 +65,6 @@ export default function PublicNavbar({ onNavigate, activePage, scrolled }) {
           ))}
         </div>
 
-        {/* CTA */}
         <div className="hidden xl:flex items-center gap-3">
           <button
             onClick={() => handleNav('login')}
@@ -88,7 +84,6 @@ export default function PublicNavbar({ onNavigate, activePage, scrolled }) {
           </button>
         </div>
 
-        {/* Mobile toggle */}
         <button
           className={`xl:hidden transition-colors ${transparent ? 'text-white' : 'text-gray-500'}`}
           onClick={() => setMenuOpen(!menuOpen)}
@@ -98,7 +93,6 @@ export default function PublicNavbar({ onNavigate, activePage, scrolled }) {
         </button>
       </div>
 
-      {/* Mobile menu — always solid white */}
       {menuOpen && (
         <div className="xl:hidden max-h-[calc(100dvh-4rem)] overflow-y-auto bg-white border-t border-sky-100 px-6 py-4 flex flex-col gap-3 text-sm text-gray-600">
           {navLinks.map(({ label, page }) => (

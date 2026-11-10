@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Save,
   List,
   AlertCircle,
   ShieldAlert,
-  ChevronRight,
   Sparkles,
   X,
 } from 'lucide-react'
@@ -13,12 +12,19 @@ import {
   getAboutVideoHighlightByIdApi,
   updateAboutVideoHighlightApi,
 } from '../api/about'
-import {
-  HIGHLIGHT_ICON_OPTIONS,
-  DynamicHighlightIcon,
-  normalizeIconName,
-} from '../components/HighlightIconHelper'
+import { DynamicHighlightIcon } from '../components/HighlightIcon'
+import { HIGHLIGHT_ICON_OPTIONS, normalizeIconName } from '../utils/highlightIcons'
 import { useAuth } from '../hooks/useAuth'
+
+function toHighlightDraft(data) {
+  return {
+    icon: normalizeIconName(data?.icon || 'Video'),
+    title: data?.title || '',
+    description: data?.description || '',
+    displayOrder: typeof data?.display_order === 'number' ? data.display_order : 0,
+    isActive: data?.is_active !== false,
+  }
+}
 
 export default function FormVideoHighlightPage({
   editingHighlight = null,
@@ -34,71 +40,45 @@ export default function FormVideoHighlightPage({
 
   const isEditing = !!editingHighlight
 
-  // Form states
-  const [icon, setIcon] = useState('Video')
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [displayOrder, setDisplayOrder] = useState(0)
-  const [isActive, setIsActive] = useState(true)
-
-  const [loadingDetail, setLoadingDetail] = useState(isEditing)
+  const [source, setSource] = useState(editingHighlight)
+  const [draft, setDraft] = useState(() => toHighlightDraft(editingHighlight))
+  const { icon, title, description, displayOrder, isActive } = draft
+  const [loadingDetail, setLoadingDetail] = useState(!!editingHighlight?.id)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  // Inisialisasi data form saat mode tambah atau edit
-  useEffect(() => {
-    let isMounted = true
+  // Prop identity matters: a refreshed record with the same ID is a new source.
+  // Adjust before commit rather than remounting inputs or resetting in an effect.
+  if (source !== editingHighlight) {
+    setSource(editingHighlight)
+    setDraft(toHighlightDraft(editingHighlight))
+    setLoadingDetail(!!editingHighlight?.id)
+    setError('')
+  }
 
-    if (!isEditing) {
-      setIcon('Video')
-      setTitle('')
-      setDescription('')
-      setDisplayOrder(0)
-      setIsActive(true)
-      setError('')
-      setLoadingDetail(false)
-      return
-    }
+  const updateDraft = (changes) => setDraft((previous) => ({ ...previous, ...changes }))
+
+  useEffect(() => {
+    if (!editingHighlight?.id) return
+    let cancelled = false
 
     const loadDetail = async () => {
-      setLoadingDetail(true)
-      setError('')
-
-      const applyData = (data) => {
-        const itemIcon = normalizeIconName(data.icon || 'Video')
-        setIcon(itemIcon)
-        setTitle(data.title || '')
-        setDescription(data.description || '')
-        setDisplayOrder(typeof data.display_order === 'number' ? data.display_order : 0)
-        setIsActive(data.is_active !== false)
-      }
-
-      if (editingHighlight) {
-        applyData(editingHighlight)
-      }
-
-      if (editingHighlight?.id) {
-        try {
-          const freshData = await getAboutVideoHighlightByIdApi(editingHighlight.id)
-          if (isMounted && freshData) {
-            applyData(freshData)
-          }
-        } catch (err) {
-          console.warn('Gagal memuat detail terbaru poin video:', err)
-        }
-      }
-
-      if (isMounted) {
-        setLoadingDetail(false)
+      try {
+        const freshData = await getAboutVideoHighlightByIdApi(editingHighlight.id)
+        if (!cancelled && freshData) setDraft(toHighlightDraft(freshData))
+      } catch (err) {
+        // The seeded props remain usable when the optional refresh fails.
+        console.warn('Gagal memuat detail terbaru poin video:', err)
+      } finally {
+        if (!cancelled) setLoadingDetail(false)
       }
     }
 
     loadDetail()
-
     return () => {
-      isMounted = false
+      cancelled = true
     }
-  }, [editingHighlight, isEditing])
+  }, [editingHighlight])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -116,9 +96,9 @@ export default function FormVideoHighlightPage({
       return
     }
 
-    const orderNum = parseInt(displayOrder, 10)
-    if (isNaN(orderNum) || orderNum < 0) {
-      setError('Urutan tampil tidak boleh bernilai negatif.')
+    const orderNum = Number(displayOrder)
+    if (!/^\d+$/.test(String(displayOrder)) || !Number.isSafeInteger(orderNum)) {
+      setError('Urutan tampil harus berupa bilangan bulat 0 atau lebih.')
       return
     }
 
@@ -158,7 +138,6 @@ export default function FormVideoHighlightPage({
 
   return (
     <div className="w-full max-w-none space-y-6">
-      {/* Breadcrumb & Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
@@ -199,7 +178,6 @@ export default function FormVideoHighlightPage({
         </button>
       </div>
 
-      {/* Role Warning jika bukan Admin */}
       {!isAdmin && (
         <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3">
           <ShieldAlert className="text-amber-500 shrink-0 mt-0.5" size={20} />
@@ -212,7 +190,6 @@ export default function FormVideoHighlightPage({
         </div>
       )}
 
-      {/* Alert Error */}
       {error && (
         <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-start justify-between gap-3 text-rose-700 animate-in fade-in">
           <div className="flex items-start gap-3">
@@ -228,7 +205,6 @@ export default function FormVideoHighlightPage({
         </div>
       )}
 
-      {/* Form Card */}
       <div className="bg-white border border-gray-100 shadow-sm rounded-3xl p-6 sm:p-8">
         {loadingDetail ? (
           <div className="py-12 flex flex-col items-center justify-center text-center">
@@ -237,7 +213,6 @@ export default function FormVideoHighlightPage({
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Pilihan Ikon */}
             <div className="p-5 rounded-2xl bg-sky-50/40 border border-sky-100 space-y-4">
               <div>
                 <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
@@ -252,7 +227,7 @@ export default function FormVideoHighlightPage({
                 <div className="sm:col-span-8">
                   <select
                     value={icon}
-                    onChange={(e) => setIcon(e.target.value)}
+                    onChange={(e) => updateDraft({ icon: e.target.value })}
                     disabled={!isAdmin || saving}
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition disabled:opacity-60 cursor-pointer"
                   >
@@ -269,7 +244,6 @@ export default function FormVideoHighlightPage({
                   </select>
                 </div>
 
-                {/* Preview Box */}
                 <div className="sm:col-span-4 flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white border border-gray-200">
                   <div className="w-10 h-10 rounded-xl bg-sky-100/70 text-sky-600 flex items-center justify-center shrink-0">
                     <DynamicHighlightIcon name={icon} size={20} />
@@ -282,7 +256,6 @@ export default function FormVideoHighlightPage({
               </div>
             </div>
 
-            {/* Judul Poin Video */}
             <div>
               <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
                 Judul Poin Video <span className="text-rose-500">*</span>
@@ -290,7 +263,7 @@ export default function FormVideoHighlightPage({
               <input
                 type="text"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => updateDraft({ title: e.target.value })}
                 disabled={!isAdmin || saving}
                 placeholder="Contoh: Transparansi Penuh"
                 required
@@ -298,14 +271,13 @@ export default function FormVideoHighlightPage({
               />
             </div>
 
-            {/* Deskripsi Poin Video */}
             <div>
               <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
                 Deskripsi Singkat <span className="text-rose-500">*</span>
               </label>
               <textarea
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e) => updateDraft({ description: e.target.value })}
                 disabled={!isAdmin || saving}
                 rows={3}
                 placeholder="Tuliskan penjelasan singkat poin video ini..."
@@ -314,9 +286,7 @@ export default function FormVideoHighlightPage({
               />
             </div>
 
-            {/* Grid 2 Kolom: Urutan & Status */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Urutan Tampil */}
               <div>
                 <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
                   Urutan Tampil (Display Order)
@@ -325,7 +295,7 @@ export default function FormVideoHighlightPage({
                   type="number"
                   min="0"
                   value={displayOrder}
-                  onChange={(e) => setDisplayOrder(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                  onChange={(e) => updateDraft({ displayOrder: e.target.value })}
                   disabled={!isAdmin || saving}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-gray-800 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition disabled:opacity-60"
                 />
@@ -334,7 +304,6 @@ export default function FormVideoHighlightPage({
                 </p>
               </div>
 
-              {/* Status Publikasi */}
               <div>
                 <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
                   Status Publikasi
@@ -344,7 +313,7 @@ export default function FormVideoHighlightPage({
                     <input
                       type="checkbox"
                       checked={isActive}
-                      onChange={(e) => setIsActive(e.target.checked)}
+                      onChange={(e) => updateDraft({ isActive: e.target.checked })}
                       disabled={!isAdmin || saving}
                       className="sr-only peer"
                     />
@@ -361,7 +330,6 @@ export default function FormVideoHighlightPage({
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
               <button
                 type="button"
