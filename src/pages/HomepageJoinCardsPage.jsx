@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { LayoutList, RefreshCw, Save } from 'lucide-react'
-import { getJoinCardsApi, saveJoinCardsApi, JOIN_CARDS_PATH } from '../api/homepageJoinCards'
+import { getJoinCardsApi, saveJoinCardsApi, REASONS_PATH } from '../api/homepageJoinCards'
 import HomepageJoinCard from '../components/HomepageJoinCard'
 import { DEFAULT_JOIN_CARDS, JOIN_CARD_FIELDS } from '../data/homepageJoinCards'
 import {
@@ -59,7 +59,7 @@ export default function HomepageJoinCardsPage({ role }) {
       .catch((err) => {
         if (controller.signal.aborted) return
         const message = err?.response?.status === 404
-          ? `Pengaturan kartu belum tersedia di backend. Endpoint GET /api${JOIN_CARDS_PATH} perlu disediakan; simpan belum diaktifkan.`
+          ? `Pengaturan kartu belum tersedia di backend. Endpoint GET /api${REASONS_PATH} perlu disediakan; simpan belum diaktifkan.`
           : getJoinCardsErrorMessage(err, 'Gagal memuat kartu. Periksa koneksi lalu Muat Ulang.')
         setLoad({ status: 'error', record: null, message })
       })

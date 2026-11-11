@@ -110,18 +110,9 @@ export default function FormVideoSettingPage() {
       {/* Breadcrumb & Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-            <span>About</span>
-            <span>/</span>
-            <span className="text-sky-600">Pengaturan Section Video</span>
-          </div>
           <h1 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2">
-            <Sliders className="text-sky-500" size={26} />
-            Pengaturan Section Video Profil
+            Pengaturan Video Tentang 
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Kelola label, judul, dan deskripsi pengantar pada section Video Profil di halaman Tentang Kami.
-          </p>
         </div>
       </div>
 
@@ -193,9 +184,6 @@ export default function FormVideoSettingPage() {
                   placeholder="Contoh: VIDEO PROFIL"
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-gray-800 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition disabled:opacity-60"
                 />
-                <p className="text-[11px] text-gray-400 mt-1">
-                  Label kecil yang muncul di atas judul (misal badge atau subjudul).
-                </p>
               </div>
 
               {/* Status Publikasi */}
@@ -222,9 +210,6 @@ export default function FormVideoSettingPage() {
                     )}
                   </span>
                 </div>
-                <p className="text-[11px] text-gray-400 mt-1">
-                  Jika nonaktif, teks fallback default akan digunakan atau disembunyikan.
-                </p>
               </div>
             </div>
 
@@ -257,9 +242,6 @@ export default function FormVideoSettingPage() {
                 placeholder="Tuliskan deskripsi pengantar video profil..."
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-gray-800 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition disabled:opacity-60 resize-y"
               />
-              <p className="text-[11px] text-gray-400 mt-1">
-                Deskripsi singkat yang tampil tepat di bawah judul utama.
-              </p>
             </div>
 
             {/* Action Buttons */}

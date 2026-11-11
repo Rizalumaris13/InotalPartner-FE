@@ -170,24 +170,8 @@ export default function FormFAQPage({
       {/* ── Breadcrumb & Action bar ────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
-            <span>About</span>
-            <ChevronRight size={12} />
-            <button
-              type="button"
-              onClick={onOpenList}
-              className="hover:text-sky-600 transition-colors cursor-pointer"
-            >
-              FAQ
-            </button>
-            <ChevronRight size={12} />
-            <span className="text-gray-900 font-semibold">
-              {isEditing ? 'Edit FAQ' : 'Tambah FAQ'}
-            </span>
-          </div>
           <h1 className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-            <HelpCircle className="text-sky-600" size={24} />
-            {isEditing ? 'Edit Pertanyaan FAQ' : 'Tambah Pertanyaan FAQ Baru'}
+            {isEditing ? 'Edit Pertanyaan FAQ' : 'Tambah FAQ Baru'}
           </h1>
         </div>
 
@@ -256,7 +240,6 @@ export default function FormFAQPage({
               </div>
               <input
                 type="text"
-                placeholder="Contoh: Bagaimana mekanisme pengajuan kerja sama atau partnership?"
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 maxLength={255}
@@ -272,7 +255,6 @@ export default function FormFAQPage({
               </label>
               <textarea
                 rows={7}
-                placeholder="Tuliskan jawaban yang lengkap, jelas, dan informatif untuk pengunjung..."
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
                 disabled={!isAdmin || saving}
@@ -295,9 +277,6 @@ export default function FormFAQPage({
                   disabled={!isAdmin || saving}
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:border-sky-500 focus:bg-white transition-colors"
                 />
-                <p className="text-[11px] text-gray-400">
-                  Angka lebih kecil tampil lebih awal (mulai dari 0).
-                </p>
               </div>
 
               {/* Status Aktif / Tidak Aktif */}
@@ -311,12 +290,9 @@ export default function FormFAQPage({
                   disabled={!isAdmin || saving}
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:border-sky-500 focus:bg-white transition-colors cursor-pointer"
                 >
-                  <option value="true">Aktif (Tampil di Halaman Publik)</option>
-                  <option value="false">Tidak Aktif (Disembunyikan)</option>
+                  <option value="true">Aktif</option>
+                  <option value="false">Tidak Aktif</option>
                 </select>
-                <p className="text-[11px] text-gray-400">
-                  Pilih apakah FAQ ini langsung dapat dilihat oleh publik.
-                </p>
               </div>
             </div>
 

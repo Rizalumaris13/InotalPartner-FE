@@ -164,20 +164,9 @@ export default function ListVideoHighlightPage({ onAddNew, onEdit }) {
       {/* Header & Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-            <span>About</span>
-            <span>/</span>
-            <span>Video Profil</span>
-            <span>/</span>
-            <span className="text-sky-600">Poin Video Profil</span>
-          </div>
           <h1 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2">
-            <Sparkles className="text-sky-500" size={26} />
             Daftar Poin Video Profil
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Kelola poin-poin keunggulan perusahaan yang ditampilkan di samping video profil.
-          </p>
         </div>
 
         {isAdmin && (

@@ -11,6 +11,9 @@ import {
 import PublicFooter from '../../components/PublicFooter'
 import { getPublicAboutSettingApi, getPublicTeamMembersApi, getPublicAboutFAQsApi, getPublicAboutVideosApi, getPublicAboutVideoSettingApi, getPublicAboutVideoHighlightsApi, resolveImageUrl } from '../../api/about'
 import { DynamicHighlightIcon } from '../../components/HighlightIconHelper'
+import { getPublicStatisticsApi } from '../../api/statistics'
+import { DynamicStatisticIcon } from '../../components/StatisticIconHelper'
+import { getPublicJoinInvitationApi } from '../../api/joinInvitation'
 
 
 const team = [
@@ -353,7 +356,11 @@ function StatCard({ icon, value, decimals, suffix, label, note, index }) {
       <span className="absolute left-0 top-0 h-full w-1 bg-sky-500 origin-top scale-y-0 transition-transform duration-500 group-hover:scale-y-100" />
       <div className="flex items-start justify-between gap-4 mb-6">
         <span className="inline-flex w-12 h-12 rounded-lg bg-[#F0F4F8] text-[#0284c7] items-center justify-center transition-colors duration-500 group-hover:bg-[#0284c7] group-hover:text-white">
-          <SvgIcon shape={icon} className="w-[23px] h-[23px]" />
+          {ICON_PATHS[icon] ? (
+            <SvgIcon shape={icon} className="w-[23px] h-[23px]" />
+          ) : (
+            <DynamicStatisticIcon name={icon} size={23} />
+          )}
         </span>
         <span className="text-[11px] font-bold tracking-[0.14em] text-gray-300 select-none">
           {`0${index + 1}`}
@@ -398,6 +405,9 @@ export default function TentangPage({ onNavigate }) {
   const [faqLoading, setFaqLoading] = useState(true)
   const [faqError, setFaqError] = useState('')
 
+  // Statistik Pencapaian (Dinamis dari GET /api/public/about/statistics)
+  const [statList, setStatList] = useState(impactStats)
+
   // Video Profil State
   const [profileVideo, setProfileVideo] = useState(null)
   const [videoLoading, setVideoLoading] = useState(true)
@@ -409,6 +419,15 @@ export default function TentangPage({ onNavigate }) {
   })
   const [videoHighlightsList, setVideoHighlightsList] = useState([])
 
+  // CTA State (Dinamis dari GET /api/public/home/cta)
+  const defaultCTA = {
+    section_label: 'Kesempatan Terbuka',
+    title: 'Bangun masa depan bersama kami.',
+    button_text: 'Mulai Sekarang',
+    button_url: '/register',
+  }
+  const [ctaData, setCtaData] = useState(defaultCTA)
+
   useEffect(() => {
     let isMounted = true
 
@@ -418,13 +437,15 @@ export default function TentangPage({ onNavigate }) {
         setFaqLoading(true)
         setFaqError('')
         setVideoLoading(true)
-        const [settingRes, teamRes, faqRes, videoRes, videoSettingRes, videoHighlightsRes] = await Promise.allSettled([
+        const [settingRes, teamRes, faqRes, videoRes, videoSettingRes, videoHighlightsRes, statRes, ctaRes] = await Promise.allSettled([
           getPublicAboutSettingApi(),
           getPublicTeamMembersApi(),
           getPublicAboutFAQsApi(),
           getPublicAboutVideosApi(),
           getPublicAboutVideoSettingApi(),
           getPublicAboutVideoHighlightsApi(),
+          getPublicStatisticsApi(),
+          getPublicJoinInvitationApi(),
         ])
 
         if (isMounted) {
@@ -500,6 +521,53 @@ export default function TentangPage({ onNavigate }) {
                 : []
             setVideoHighlightsList(rawHighlights)
           }
+
+          if (statRes.status === 'fulfilled' && statRes.value) {
+            const rawStats = Array.isArray(statRes.value?.data)
+              ? statRes.value.data
+              : Array.isArray(statRes.value)
+                ? statRes.value
+                : []
+            const activeStats = rawStats
+              .filter((item) => item?.is_active !== false)
+              .sort((a, b) => {
+                const orderA = Number(a?.display_order) || 0
+                const orderB = Number(b?.display_order) || 0
+                return orderA - orderB || (Number(a?.id) || 0) - (Number(b?.id) || 0)
+              })
+
+            if (activeStats.length > 0) {
+              const mapped = activeStats.map((item) => {
+                const numVal = parseFloat(item.statistic_value)
+                const isNumeric = !Number.isNaN(numVal)
+                const valStr = String(item.statistic_value || '')
+                const decimals = isNumeric && valStr.includes('.') ? (valStr.split('.')[1] || '').length : 0
+
+                return {
+                  icon: item.icon || 'layers',
+                  value: isNumeric ? numVal : 0,
+                  decimals,
+                  suffix: item.statistic_suffix || '',
+                  label: item.title || '',
+                  note: item.description || '',
+                }
+              })
+              setStatList(mapped)
+            }
+          }
+
+          if (ctaRes.status === 'fulfilled' && ctaRes.value) {
+            const rawCTA = ctaRes.value?.data || ctaRes.value
+            if (rawCTA && (rawCTA.title || rawCTA.section_label)) {
+              setCtaData({
+                section_label: rawCTA.section_label || defaultCTA.section_label,
+                title: rawCTA.title || defaultCTA.title,
+                button_text: rawCTA.button_text || defaultCTA.button_text,
+                button_url: rawCTA.button_url || defaultCTA.button_url,
+              })
+            }
+          }
+
         }
       } catch (err) {
         console.error('Gagal mengambil data Tentang Kami:', err)
@@ -529,6 +597,27 @@ export default function TentangPage({ onNavigate }) {
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+
+  const handleCTANavigation = (url) => {
+    if (!url) return
+    const trimmed = url.trim()
+
+    // Cek jika URL eksternal (http://, https://, mailto:, tel:)
+    if (/^(https?:\/\/|mailto:|tel:)/i.test(trimmed)) {
+      window.open(trimmed, '_blank', 'noopener,noreferrer')
+      return
+    }
+
+    // Jika internal path (contoh: /kontak, #kontak, register, /register)
+    let internalTarget = trimmed.replace(/^[/#]+/, '')
+    if (!internalTarget) internalTarget = 'landing'
+
+    if (onNavigate) {
+      onNavigate(internalTarget)
+    } else {
+      window.location.hash = internalTarget === 'landing' ? '' : internalTarget
+    }
+  }
 
   return (
     <div className="min-h-screen bg-white text-[#0c4a6e]" style={{ fontFamily: "'Mona Sans', system-ui, sans-serif" }}>
@@ -591,8 +680,8 @@ export default function TentangPage({ onNavigate }) {
       </section>
       <section className="max-w-7xl mx-auto px-6 pb-20 md:pb-28">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {impactStats.map((stat, i) => (
-            <StatCard key={stat.label} {...stat} index={i} />
+          {statList.map((stat, i) => (
+            <StatCard key={stat.label || i} {...stat} index={i} />
           ))}
         </div>
       </section>
@@ -725,21 +814,16 @@ export default function TentangPage({ onNavigate }) {
         <div className="absolute -top-40 -right-40 w-[480px] h-[480px] rounded-full border-[40px] border-white/10" />
         <div className="absolute -bottom-52 -left-32 w-[420px] h-[420px] rounded-full border-[32px] border-[#0c4a6e]/20" />
         <div className="relative max-w-7xl mx-auto px-6 py-20 md:py-28 text-center">
-          <p className="text-[12px] font-bold tracking-[0.2em] uppercase text-sky-400 mb-5">
-            Kesempatan Terbuka
-          </p>
+          {ctaData.section_label && (
+            <p className="text-[12px] font-bold tracking-[0.2em] uppercase text-sky-400 mb-5">
+              {ctaData.section_label}
+            </p>
+          )}
           <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.08] mb-8 max-w-3xl mx-auto">
-            Bangun masa depan{' '}
-            <span className="relative inline-block">
-              bersama kami
-              <svg className="absolute -bottom-4 left-0 w-full" viewBox="0 0 200 12" fill="none" aria-hidden="true">
-                <path d="M3 8 C 40 2, 80 11, 118 5 S 176 3, 197 7" stroke="#7DD3FC" strokeWidth="4" strokeLinecap="round"/>
-              </svg>
-            </span>
-            .
+            {ctaData.title}
           </h2>
-          <PillButton onClick={() => onNavigate?.('register')}>
-            Mulai Sekarang
+          <PillButton onClick={() => handleCTANavigation(ctaData.button_url)}>
+            {ctaData.button_text}
           </PillButton>
         </div>
       </section>

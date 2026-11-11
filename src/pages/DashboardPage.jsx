@@ -14,6 +14,10 @@ import CreateSlider from './CreateSlider'
 import ListSliderPage from './ListSliderPage'
 import FormTestimonialPage from './FormTestimonialPage'
 import ListTestimonialPage from './ListTestimonialPage'
+import FormJoinInvitationPage from './FormJoinInvitationPage'
+import ListJoinInvitationPage from './ListJoinInvitationPage'
+import FormStatisticPage from './FormStatisticPage'
+import ListStatisticPage from './ListStatisticPage'
 import CreateAboutPage from './CreateAboutPage'
 import ListAboutPage from './ListAboutPage'
 import FormTeamMemberPage from './FormTeamMemberPage'
@@ -48,6 +52,8 @@ export default function DashboardPage({ onNavigate }) {
   const [editingVideo, setEditingVideo] = useState(null)
   const [editingHighlight, setEditingHighlight] = useState(null)
   const [editingFAQ, setEditingFAQ] = useState(null)
+  const [editingStatistic, setEditingStatistic] = useState(null)
+  const [editingJoinInvitation, setEditingJoinInvitation] = useState(null)
 
   const { user } = useAuth()
 
@@ -60,6 +66,8 @@ export default function DashboardPage({ onNavigate }) {
     setEditingVideo(null);
     setEditingHighlight(null);
     setEditingFAQ(null);
+    setEditingStatistic(null);
+    setEditingJoinInvitation(null);
     setActiveNav(key) 
   }
 
@@ -94,6 +102,28 @@ export default function DashboardPage({ onNavigate }) {
   const finishEditTestimonial = () => {
     setEditingTestimonial(null)
     setActiveNav('listTestimonial')
+  }
+
+  // Join Invitation (Ajakan Bergabung) handlers
+  const handleEditJoinInvitation = (item) => {
+    setEditingJoinInvitation(item)
+    setActiveNav('createJoinInvitation')
+  }
+
+  const finishEditJoinInvitation = () => {
+    setEditingJoinInvitation(null)
+    setActiveNav('listJoinInvitation')
+  }
+
+  // Statistic handlers
+  const handleEditStatistic = (statistic) => {
+    setEditingStatistic(statistic)
+    setActiveNav('createStatistic')
+  }
+
+  const finishEditStatistic = () => {
+    setEditingStatistic(null)
+    setActiveNav('listStatistic')
   }
 
   // About member handlers
@@ -261,6 +291,56 @@ export default function DashboardPage({ onNavigate }) {
           />
         )
 
+      case 'createJoinInvitation':
+      case 'createHomeCTA':
+        return (
+          <FormJoinInvitationPage
+            key={editingJoinInvitation ? `edit-join-${editingJoinInvitation.id}` : 'new-join'}
+            editingCTA={editingJoinInvitation}
+            onFinish={finishEditJoinInvitation}
+            onOpenList={() => {
+              setEditingJoinInvitation(null)
+              setActiveNav('listJoinInvitation')
+            }}
+          />
+        )
+
+      case 'listJoinInvitation':
+      case 'listHomeCTA':
+        return (
+          <ListJoinInvitationPage
+            onAddNew={() => {
+              setEditingJoinInvitation(null)
+              setActiveNav('createJoinInvitation')
+            }}
+            onEdit={handleEditJoinInvitation}
+          />
+        )
+
+      case 'createStatistic':
+        return (
+          <FormStatisticPage
+            key={editingStatistic ? `edit-stat-${editingStatistic.id}` : 'new-stat'}
+            editingStatistic={editingStatistic}
+            onFinish={finishEditStatistic}
+            onOpenList={() => {
+              setEditingStatistic(null)
+              setActiveNav('listStatistic')
+            }}
+          />
+        )
+
+      case 'listStatistic':
+        return (
+          <ListStatisticPage
+            onAddNew={() => {
+              setEditingStatistic(null)
+              setActiveNav('createStatistic')
+            }}
+            onEdit={handleEditStatistic}
+          />
+        )
+
       case 'createAbout':
         return (
           <CreateAboutPage
@@ -268,7 +348,7 @@ export default function DashboardPage({ onNavigate }) {
             onCancelEdit={() => setEditingMember(null)}
             onAddNew={() => {
               setEditingMember(null)
-              setActiveNav('formAboutMember')
+              setActiveNav('createAbout')
             }}
             onEdit={handleEditMember}
             onOpenList={() => setActiveNav('listAbout')}
@@ -280,7 +360,7 @@ export default function DashboardPage({ onNavigate }) {
           <ListAboutPage
             onAddNew={() => {
               setEditingMember(null)
-              setActiveNav('formAboutMember')
+              setActiveNav('createAbout')
             }}
             onEdit={handleEditMember}
           />
