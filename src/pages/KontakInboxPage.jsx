@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import {
   Search, Trash2, RefreshCw, Inbox, AlertCircle, X,
-  Phone, Calendar, MessageSquare, CheckCheck,
+  Briefcase, Calendar, MessageSquare, CheckCheck,
 } from 'lucide-react'
 import { listContactsApi, markContactReadApi, deleteContactApi } from '../api/contacts'
 
@@ -122,6 +122,7 @@ export default function KontakInboxPage() {
         !keyword ||
         c.name?.toLowerCase().includes(keyword) ||
         c.email?.toLowerCase().includes(keyword) ||
+        c.profession?.toLowerCase().includes(keyword) ||
         c.subject?.toLowerCase().includes(keyword) ||
         c.message?.toLowerCase().includes(keyword)
       return matchStatus && matchSearch
@@ -223,7 +224,7 @@ export default function KontakInboxPage() {
               type="text"
               value={search}
               onChange={(e) => changeSearch(e.target.value)}
-              placeholder="Cari nama, email, subjek, atau isi pesan..."
+              placeholder="Cari nama, email, profesi, subjek, atau isi pesan..."
               className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition-colors"
             />
           </div>
@@ -377,10 +378,10 @@ export default function KontakInboxPage() {
                   <Calendar size={13} className="text-gray-400" />
                   {formatDateTime(selected.created_at)}
                 </span>
-                {selected.phone && (
+                {selected.profession && (
                   <span className="inline-flex items-center gap-1.5">
-                    <Phone size={13} className="text-gray-400" />
-                    {selected.phone}
+                    <Briefcase size={13} className="text-gray-400" />
+                    {selected.profession}
                   </span>
                 )}
                 <span

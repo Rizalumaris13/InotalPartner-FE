@@ -4,7 +4,7 @@ import PublicNavbar from '../../components/PublicNavbar'
 import PublicPageBanner from '../../components/PublicPageBanner'
 import { submitContactApi } from '../../api/contacts'
 import {
-  MapPin, Phone, Mail,
+  MapPin, Clock, Mail,
   Send, CheckCircle2, AlertCircle, Loader2, MessageSquare,
 } from 'lucide-react'
 import PublicFooter from '../../components/PublicFooter'
@@ -18,9 +18,9 @@ const contactInfo = [
     lines: ['Bandung, Jawa Barat', 'Indonesia'],
   },
   {
-    icon: Phone,
-    title: 'Telepon',
-    lines: ['(022) 1234 5678', 'Senin – Jumat, 08.30 – 17.00 WIB'],
+    icon: Clock,
+    title: 'Jam Operasional',
+    lines: ['Senin – Jumat, 08.30 – 17.00 WIB'],
   },
   {
     icon: Mail,
@@ -50,15 +50,19 @@ const stats = [
   { value: '15+', label: 'Kota di Indonesia' },
 ]
 
-const initialForm = { firstName: '', lastName: '', email: '', topic: '', message: '' }
+const initialForm = { fullName: '', email: '', profession: '', topic: '', message: '' }
 
-// Validasi sisi klien — nama digabung (first + last) jadi satu field "name"
-// buat kontrak API, aturan panjang mengikuti SubmitContactRequest di BE.
+// Validasi sisi klien — satu field "Nama Lengkap" dikirim sebagai `name`,
+// aturan panjang mengikuti SubmitContactRequest di BE (name 2..150).
 function validate(form) {
   const errors = {}
-  if (form.firstName.trim().length < 2) errors.firstName = 'Nama depan minimal 2 karakter'
-  if (form.lastName.trim().length < 2) errors.lastName = 'Nama belakang minimal 2 karakter'
+  const fullName = form.fullName.trim()
+  const profession = form.profession.trim()
+  if (fullName.length < 2) errors.fullName = 'Nama lengkap minimal 2 karakter'
+  else if (fullName.length > 150) errors.fullName = 'Nama lengkap maksimal 150 karakter'
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) errors.email = 'Format email tidak valid'
+  if (!profession) errors.profession = 'Profesi wajib diisi'
+  else if (profession.length > 100) errors.profession = 'Profesi maksimal 100 karakter'
   if (!form.topic) errors.topic = 'Pilih topik pesan'
   if (form.message.trim().length < 10) errors.message = 'Pesan minimal 10 karakter'
   return errors
@@ -96,13 +100,14 @@ export default function KontakPage({ onNavigate }) {
     setStatus('submitting')
     setServerError('')
     try {
-      // Kontrak API: name = gabungan first + last, subject = topik pesan
+      // Kontrak API: name = nama lengkap, profession = profesi pengirim,
+      // subject = topik pesan. Nomor telepon tidak lagi dikirim.
       await submitContactApi({
-        name: `${form.firstName.trim()} ${form.lastName.trim()}`,
-        email: form.email,
-        phone: '',
+        name: form.fullName.trim(),
+        email: form.email.trim(),
+        profession: form.profession.trim(),
         subject: form.topic,
-        message: form.message,
+        message: form.message.trim(),
       })
       setStatus('success')
       setForm(initialForm)
@@ -192,36 +197,19 @@ export default function KontakPage({ onNavigate }) {
                 <form onSubmit={handleSubmit} noValidate className="space-y-5">
                   <div className="grid md:grid-cols-2 gap-5">
                     <div>
-                      <label htmlFor="firstName" className="block text-[13px] font-semibold mb-1.5">
-                        Nama Depan <span className="text-red-400">*</span>
+                      <label htmlFor="fullName" className="block text-[13px] font-semibold mb-1.5">
+                        Nama Lengkap <span className="text-red-400">*</span>
                       </label>
                       <input
-                        id="firstName"
+                        id="fullName"
                         type="text"
-                        value={form.firstName}
-                        onChange={update('firstName')}
-                        placeholder="Nama depan kamu"
-                        className={`${inputClass} ${errors.firstName ? 'border-red-300' : 'border-sky-100'}`}
+                        value={form.fullName}
+                        onChange={update('fullName')}
+                        placeholder="Nama lengkap kamu"
+                        className={`${inputClass} ${errors.fullName ? 'border-red-300' : 'border-sky-100'}`}
                       />
-                      {errors.firstName && <p className="text-[12.5px] text-red-500 mt-1.5">{errors.firstName}</p>}
+                      {errors.fullName && <p className="text-[12.5px] text-red-500 mt-1.5">{errors.fullName}</p>}
                     </div>
-                    <div>
-                      <label htmlFor="lastName" className="block text-[13px] font-semibold mb-1.5">
-                        Nama Belakang <span className="text-red-400">*</span>
-                      </label>
-                      <input
-                        id="lastName"
-                        type="text"
-                        value={form.lastName}
-                        onChange={update('lastName')}
-                        placeholder="Nama belakang kamu"
-                        className={`${inputClass} ${errors.lastName ? 'border-red-300' : 'border-sky-100'}`}
-                      />
-                      {errors.lastName && <p className="text-[12.5px] text-red-500 mt-1.5">{errors.lastName}</p>}
-                    </div>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-5">
                     <div>
                       <label htmlFor="email" className="block text-[13px] font-semibold mb-1.5">
                         Email <span className="text-red-400">*</span>
@@ -235,6 +223,23 @@ export default function KontakPage({ onNavigate }) {
                         className={`${inputClass} ${errors.email ? 'border-red-300' : 'border-sky-100'}`}
                       />
                       {errors.email && <p className="text-[12.5px] text-red-500 mt-1.5">{errors.email}</p>}
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-5">
+                    <div>
+                      <label htmlFor="profession" className="block text-[13px] font-semibold mb-1.5">
+                        Profesi <span className="text-red-400">*</span>
+                      </label>
+                      <input
+                        id="profession"
+                        type="text"
+                        value={form.profession}
+                        onChange={update('profession')}
+                        placeholder="Contoh: Manajer Produk"
+                        className={`${inputClass} ${errors.profession ? 'border-red-300' : 'border-sky-100'}`}
+                      />
+                      {errors.profession && <p className="text-[12.5px] text-red-500 mt-1.5">{errors.profession}</p>}
                     </div>
                     <div>
                       <label htmlFor="topic" className="block text-[13px] font-semibold mb-1.5">

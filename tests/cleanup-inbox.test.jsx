@@ -38,7 +38,7 @@ describe('inbox filter and pagination contract', () => {
     render(<KontakInboxPage />)
     await screen.findByText('Pesan Uji 24')
     fireEvent.click(screen.getByRole('button', { name: 'Berikutnya' }))
-    fireEvent.change(screen.getByPlaceholderText('Cari nama, email, subjek, atau isi pesan...'), { target: { value: ' ' } })
+    fireEvent.change(screen.getByPlaceholderText('Cari nama, email, profesi, subjek, atau isi pesan...'), { target: { value: ' ' } })
     await waitFor(() => expect(screen.getByText('1 / 3')).toBeTruthy())
     expect(screen.getByText('Pesan Uji 24')).toBeTruthy()
   })
