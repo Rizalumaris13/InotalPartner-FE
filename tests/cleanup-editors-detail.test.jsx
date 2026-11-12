@@ -51,9 +51,16 @@ function deferred() {
   return { promise, resolve }
 }
 
+function draftInput(spec, field) {
+  if (spec.label === 'FAQ') {
+    return screen.getByRole('textbox', { name: field === 'primary' ? /^Pertanyaan/ : /^Jawaban/ })
+  }
+  return screen.getByPlaceholderText(spec[`${field}Placeholder`])
+}
+
 function assertDraft(spec, record) {
-  expect(screen.getByPlaceholderText(spec.primaryPlaceholder).value).toBe(record[spec.primary])
-  expect(screen.getByPlaceholderText(spec.secondaryPlaceholder).value).toBe(record[spec.secondary])
+  expect(draftInput(spec, 'primary').value).toBe(record[spec.primary])
+  expect(draftInput(spec, 'secondary').value).toBe(record[spec.secondary])
   if (spec.label === 'FAQ') {
     expect(screen.getByRole('switch').getAttribute('aria-checked')).toBe(String(record.is_active))
   } else {
@@ -82,7 +89,7 @@ describe.each(cases)('$label editor source lifecycle', (spec) => {
     }))
     const { rerender } = render(<Component />)
     assertDraft(spec, spec.empty)
-    fireEvent.change(screen.getByPlaceholderText(spec.primaryPlaceholder), { target: { value: 'Draf baru' } })
+    fireEvent.change(draftInput(spec, 'primary'), { target: { value: 'Draf baru' } })
     rerender(<Component {...{ [spec.prop]: spec.record }} />)
     await screen.findByDisplayValue('Data fresh')
     assertDraft(spec, response)
@@ -94,9 +101,9 @@ describe.each(cases)('$label editor source lifecycle', (spec) => {
     assertDraft(spec, sameIdReplacement)
     expect(warn).toHaveBeenCalled()
     expect(screen.queryByText('Detail tidak tersedia')).toBeNull()
-    fireEvent.change(screen.getByPlaceholderText(spec.primaryPlaceholder), { target: { value: 'Draf tetap' } })
+    fireEvent.change(draftInput(spec, 'primary'), { target: { value: 'Draf tetap' } })
     rerender(<Component {...{ [spec.prop]: sameIdReplacement }} onFinish={() => {}} />)
-    expect(screen.getByPlaceholderText(spec.primaryPlaceholder).value).toBe('Draf tetap')
+    expect(draftInput(spec, 'primary').value).toBe('Draf tetap')
     expect(reads).toEqual(['11', '11'])
 
     response = { ...spec.record, id: 12, [spec.primary]: 'Target B' }
@@ -126,12 +133,12 @@ describe.each(cases)('$label editor source lifecycle', (spec) => {
   test('ID-less prop updates reseed without losing the focused input', () => {
     const record = { ...spec.record, id: undefined }
     const { rerender } = render(<Component {...{ [spec.prop]: record }} />)
-    const input = screen.getByPlaceholderText(spec.primaryPlaceholder)
+    const input = draftInput(spec, 'primary')
     input.focus()
     const replacement = { ...record, [spec.primary]: 'Prop baru tanpa ID' }
     rerender(<Component {...{ [spec.prop]: replacement }} />)
     assertDraft(spec, replacement)
-    expect(screen.getByPlaceholderText(spec.primaryPlaceholder)).toBe(input)
+    expect(draftInput(spec, 'primary')).toBe(input)
     expect(document.activeElement).toBe(input)
   })
 
@@ -157,7 +164,7 @@ describe.each(cases)('$label editor source lifecycle', (spec) => {
       requests[0].resolve({ ...spec.record, [spec.primary]: 'Respons basi A' })
       await load.mock.results[0].value
     })
-    expect(screen.getByPlaceholderText(spec.primaryPlaceholder).value).toBe('Target terbaru')
+    expect(draftInput(spec, 'primary').value).toBe('Target terbaru')
 
     rerender(<Component {...{ [spec.prop]: { ...spec.record, id: 13 } }} />)
     await waitFor(() => expect(requests).toHaveLength(3))
@@ -186,14 +193,14 @@ describe.each(cases)('$label editor source lifecycle', (spec) => {
       }),
     )
     render(<Component {...{ [spec.prop]: mode === 'edit' ? spec.record : null }} onFinish={onFinish} onOpenList={onOpenList} />)
-    const primary = await screen.findByPlaceholderText(spec.primaryPlaceholder)
+    const primary = await waitFor(() => draftInput(spec, 'primary'))
     fireEvent.change(primary, { target: { value: '  Nilai baru  ' } })
-    fireEvent.change(screen.getByPlaceholderText(spec.secondaryPlaceholder), { target: { value: '  Isi baru  ' } })
+    fireEvent.change(draftInput(spec, 'secondary'), { target: { value: '  Isi baru  ' } })
     if (spec.label === 'video') fireEvent.change(screen.getByPlaceholderText(videoPlaceholder), { target: { value: '  URL non-YouTube tetap diterima  ' } })
     const submit = screen.getByRole('button', { name: mode === 'edit' ? 'Simpan Perubahan' : spec.createLabel })
     fireEvent.click(submit)
     await screen.findByText('Simpan ditolak untuk pengujian')
-    expect(screen.getByPlaceholderText(spec.primaryPlaceholder).value).toBe('  Nilai baru  ')
+    expect(draftInput(spec, 'primary').value).toBe('  Nilai baru  ')
     expect(onFinish).not.toHaveBeenCalled()
     expect(submit.disabled).toBe(false)
     fireEvent.click(submit)
@@ -219,7 +226,7 @@ describe.each(cases)('$label editor source lifecycle', (spec) => {
     signIn(role)
     render(<Component />)
     const allowed = role === 'admin' || role.name === 'super_admin'
-    expect(screen.getByPlaceholderText(spec.primaryPlaceholder).disabled).toBe(!allowed)
+    expect(draftInput(spec, 'primary').disabled).toBe(!allowed)
     expect(Boolean(screen.queryByRole('button', { name: spec.createLabel }))).toBe(allowed)
   })
 })
@@ -230,8 +237,8 @@ test('FAQ and video use list fallback after save, while highlight only calls onF
     const onOpenList = vi.fn()
     server.use(http.post(`*/api/${spec.endpoint}`, () => HttpResponse.json({ data: { id: 1 } })))
     const { unmount } = render(<Component onOpenList={onOpenList} />)
-    fireEvent.change(screen.getByPlaceholderText(spec.primaryPlaceholder), { target: { value: 'Judul pengujian' } })
-    fireEvent.change(screen.getByPlaceholderText(spec.secondaryPlaceholder), { target: { value: 'Isi pengujian' } })
+    fireEvent.change(draftInput(spec, 'primary'), { target: { value: 'Judul pengujian' } })
+    fireEvent.change(draftInput(spec, 'secondary'), { target: { value: 'Isi pengujian' } })
     if (spec.label === 'video') fireEvent.change(screen.getByPlaceholderText(videoPlaceholder), { target: { value: 'https://youtu.be/videoA' } })
     const button = screen.getByRole('button', { name: spec.createLabel })
     fireEvent.click(button)

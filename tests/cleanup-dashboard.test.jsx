@@ -90,6 +90,18 @@ vi.mock('../src/pages/FormTestimonialPage', () => ({
 vi.mock('../src/pages/ListTestimonialPage', () => ({
   default: (props) => <PageProbe name="ListTestimonialPage" props={props} />,
 }))
+vi.mock('../src/pages/FormStatisticPage', () => ({
+  default: (props) => <EditorProbe name="FormStatisticPage" props={props} value={props.editingStatistic} />,
+}))
+vi.mock('../src/pages/ListStatisticPage', () => ({
+  default: (props) => <PageProbe name="ListStatisticPage" props={props} />,
+}))
+vi.mock('../src/pages/FormJoinInvitationPage', () => ({
+  default: (props) => <EditorProbe name="FormJoinInvitationPage" props={props} value={props.editingCTA} />,
+}))
+vi.mock('../src/pages/ListJoinInvitationPage', () => ({
+  default: (props) => <PageProbe name="ListJoinInvitationPage" props={props} />,
+}))
 vi.mock('../src/pages/CreateAboutPage', () => ({
   default: (props) => <PageProbe name="CreateAboutPage" props={props} />,
 }))
@@ -125,6 +137,8 @@ const flows = [
   { kind: 'post', list: 'PostListPage', listRoute: 'listPost', form: 'CreatePost', formRoute: 'createPost', selection: 'editingPost', finish: 'onFinishEdit', add: false, openList: false },
   { kind: 'slider', list: 'ListSliderPage', listRoute: 'listSlider', form: 'CreateSlider', formRoute: 'createSlider', selection: 'editingSlider', finish: 'onFinishEdit', add: false, openList: true },
   { kind: 'testimonial', list: 'ListTestimonialPage', listRoute: 'listTestimonial', form: 'FormTestimonialPage', formRoute: 'createTestimonial', selection: 'editingTestimonial', finish: 'onFinish', add: true, openList: true },
+  { kind: 'statistic', list: 'ListStatisticPage', listRoute: 'listStatistic', form: 'FormStatisticPage', formRoute: 'createStatistic', selection: 'editingStatistic', finish: 'onFinish', add: true, openList: true },
+  { kind: 'joinInvitation', list: 'ListJoinInvitationPage', listRoute: 'listJoinInvitation', form: 'FormJoinInvitationPage', formRoute: 'createJoinInvitation', selection: 'editingCTA', finish: 'onFinish', add: true, openList: true },
   { kind: 'member', list: 'ListAboutPage', listRoute: 'listAbout', form: 'FormTeamMemberPage', formRoute: 'formAboutMember', selection: 'editingMember', finish: 'onFinish', add: true, openList: true },
   { kind: 'video', list: 'ListVideoPage', listRoute: 'listVideo', form: 'FormVideoPage', formRoute: 'createVideo', selection: 'editingVideo', finish: 'onFinish', add: true, openList: true },
   { kind: 'highlight', list: 'ListVideoHighlightPage', listRoute: 'listVideoHighlight', form: 'FormVideoHighlightPage', formRoute: 'createVideoHighlight', selection: 'editingHighlight', finish: 'onFinish', add: true, openList: true },

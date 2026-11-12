@@ -68,14 +68,6 @@ export const navItems = [
         ],
       },
       {
-        key: 'aboutSettingsGroup',
-        label: 'Tim Kami',
-        items: [
-          { key: 'createAbout', label: 'Tambah Tim Kami' },
-          { key: 'listAbout',   label: 'List Tim Kami' },
-        ],
-      },
-      {
         key: 'aboutVideoGroup',
         label: 'Video Profil',
         items: [
@@ -94,11 +86,35 @@ export const navItems = [
         ],
       },
       {
+        key: 'aboutStatisticGroup',
+        label: 'Statistik',
+        items: [
+          { key: 'createStatistic', label: 'Tambah Statistik' },
+          { key: 'listStatistic', label: 'List Statistik' },
+        ],
+      },
+      {
+        key: 'aboutSettingsGroup',
+        label: 'Tim Kami',
+        items: [
+          { key: 'createAbout', label: 'Tambah Tim Kami' },
+          { key: 'listAbout', label: 'List Tim Kami' },
+        ],
+      },
+      {
         key: 'aboutFAQGroup',
         label: 'FAQ',
         items: [
           { key: 'createFAQ',   label: 'Create FAQ' },
           { key: 'listFAQ',     label: 'List FAQ' },
+        ],
+      },
+      {
+        key: 'aboutJoinInvitationGroup',
+        label: 'Ajakan Bergabung',
+        items: [
+          { key: 'createJoinInvitation', label: 'Tambah Ajakan Bergabung' },
+          { key: 'listJoinInvitation', label: 'Daftar Ajakan Bergabung' },
         ],
       },
     ],

@@ -4,8 +4,6 @@ import {
   List,
   AlertCircle,
   ShieldAlert,
-  ChevronRight,
-  HelpCircle,
   X,
 } from 'lucide-react'
 import {
@@ -145,24 +143,8 @@ export default function FormFAQPage({
     <div className="space-y-6 w-full max-w-none">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
-            <span>About</span>
-            <ChevronRight size={12} />
-            <button
-              type="button"
-              onClick={onOpenList}
-              className="hover:text-sky-600 transition-colors cursor-pointer"
-            >
-              FAQ
-            </button>
-            <ChevronRight size={12} />
-            <span className="text-gray-900 font-semibold">
-              {isEditing ? 'Edit FAQ' : 'Tambah FAQ'}
-            </span>
-          </div>
           <h1 className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-            <HelpCircle className="text-sky-600" size={24} />
-            {isEditing ? 'Edit Pertanyaan FAQ' : 'Tambah Pertanyaan FAQ Baru'}
+            {isEditing ? 'Edit Pertanyaan FAQ' : 'Tambah FAQ Baru'}
           </h1>
         </div>
 
@@ -212,7 +194,7 @@ export default function FormFAQPage({
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-gray-700">
+                <label htmlFor="faq-question" className="text-xs font-semibold text-gray-700">
                   Pertanyaan <span className="text-red-500">*</span>
                 </label>
                 <span
@@ -226,8 +208,8 @@ export default function FormFAQPage({
                 </span>
               </div>
               <input
+                id="faq-question"
                 type="text"
-                placeholder="Contoh: Bagaimana mekanisme pengajuan kerja sama atau partnership?"
                 value={question}
                 onChange={(e) => updateDraft({ question: e.target.value })}
                 maxLength={255}
@@ -237,12 +219,12 @@ export default function FormFAQPage({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-gray-700">
+              <label htmlFor="faq-answer" className="text-xs font-semibold text-gray-700">
                 Jawaban <span className="text-red-500">*</span>
               </label>
               <textarea
+                id="faq-answer"
                 rows={7}
-                placeholder="Tuliskan jawaban yang lengkap, jelas, dan informatif untuk pengunjung..."
                 value={answer}
                 onChange={(e) => updateDraft({ answer: e.target.value })}
                 disabled={!isAdmin || saving}
@@ -263,9 +245,6 @@ export default function FormFAQPage({
                   disabled={!isAdmin || saving}
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:border-sky-500 focus:bg-white transition-colors"
                 />
-                <p className="text-[11px] text-gray-400">
-                  Angka lebih kecil tampil lebih awal (mulai dari 0).
-                </p>
               </div>
 
               <div>
@@ -332,4 +311,3 @@ export default function FormFAQPage({
     </div>
   )
 }
-

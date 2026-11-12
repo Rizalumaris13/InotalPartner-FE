@@ -1,10 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import {
   Save,
-  List,
   AlertCircle,
   ShieldAlert,
-  ChevronRight,
   ImageIcon,
   Quote,
   Upload,
@@ -272,28 +270,10 @@ export default function FormTestimonialPage({
     <div className="flex flex-col pb-12">
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-1.5">
-            <span>Slider</span>
-            <ChevronRight size={12} />
-            <span className="text-gray-700 font-medium">
-              {isEditing ? 'Edit Testimonial' : 'Create Testimonial'}
-            </span>
-          </div>
           <h1 className="text-xl font-extrabold tracking-tight text-gray-900">
             {isEditing ? 'Edit Testimonial' : 'Tambah Testimonial Baru'}
           </h1>
         </div>
-
-        {onOpenList && (
-          <button
-            type="button"
-            onClick={onOpenList}
-            className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 self-start sm:self-auto shadow-sm"
-          >
-            <List size={17} />
-            Lihat List Testimonial
-          </button>
-        )}
       </div>
 
       {error && (
@@ -314,9 +294,6 @@ export default function FormTestimonialPage({
                 <h2 className="text-base font-bold text-gray-900">
                   Nama Pemberi Testimoni <span className="text-red-500">*</span>
                 </h2>
-                <p className="mt-1 text-xs text-gray-400">
-                  Nama lengkap pemberi testimoni (maks. 150 karakter).
-                </p>
               </div>
 
               <input
@@ -344,9 +321,6 @@ export default function FormTestimonialPage({
                   <h2 className="text-sm font-bold text-gray-900">
                     Posisi / Jabatan
                   </h2>
-                  <p className="mt-1 text-xs text-gray-400">
-                    Opsional (maks. 100 karakter).
-                  </p>
                 </div>
 
                 <input
@@ -364,9 +338,6 @@ export default function FormTestimonialPage({
                   <h2 className="text-sm font-bold text-gray-900">
                     Perusahaan / Instansi
                   </h2>
-                  <p className="mt-1 text-xs text-gray-400">
-                    Opsional (maks. 150 karakter).
-                  </p>
                 </div>
 
                 <input
@@ -387,9 +358,7 @@ export default function FormTestimonialPage({
                     <Quote size={18} className="text-sky-500" />
                     Isi Testimoni <span className="text-red-500">*</span>
                   </h2>
-                  <p className="mt-1 text-xs text-gray-400">
-                    Ulasan atau kutipan pengalaman partner bersama Inotal.
-                  </p>
+
                 </div>
               </div>
 
@@ -491,9 +460,6 @@ export default function FormTestimonialPage({
                 <h2 className="mb-1 text-sm font-bold text-gray-900">
                   Urutan Tampilan
                 </h2>
-                <p className="text-xs text-gray-400 mb-2">
-                  Nomor urut tampil (0 = paling awal).
-                </p>
                 <input
                   type="number"
                   min="0"
@@ -516,9 +482,6 @@ export default function FormTestimonialPage({
                     Aktifkan di Halaman Beranda
                   </span>
                 </label>
-                <p className="mt-1 text-xs text-gray-400">
-                  Testimoni nonaktif hanya tersimpan di database dan tidak muncul pada landing page publik.
-                </p>
               </div>
             </section>
           </aside>

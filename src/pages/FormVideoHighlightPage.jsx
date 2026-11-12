@@ -140,32 +140,10 @@ export default function FormVideoHighlightPage({
     <div className="w-full max-w-none space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-            <span>About</span>
-            <span>/</span>
-            <span>Video Profil</span>
-            <span>/</span>
-            <button
-              type="button"
-              onClick={onOpenList}
-              className="hover:text-sky-600 transition"
-            >
-              Poin Video
-            </button>
-            <span>/</span>
-            <span className="text-sky-600">
-              {isEditing ? 'Edit Poin Video' : 'Tambah Poin Video'}
-            </span>
-          </div>
           <h1 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2">
             <Sparkles className="text-sky-500" size={26} />
             {isEditing ? 'Edit Poin Video Profil' : 'Tambah Poin Video Profil'}
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            {isEditing
-              ? 'Perbarui informasi dan urutan poin keunggulan video profil.'
-              : 'Tambahkan poin keunggulan baru yang akan tampil di samping video profil.'}
-          </p>
         </div>
 
         <button

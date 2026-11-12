@@ -132,15 +132,12 @@ export default function ListFAQPage({ onAddNew, onEdit }) {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-            <HelpCircle className="text-sky-600" size={24} />
-            Daftar FAQ (Pertanyaan Umum)
+            List Daftar FAQ
           </h1>
-          <p className="text-xs text-gray-500 mt-1">
-            Kelola daftar pertanyaan dan jawaban FAQ untuk halaman Tentang Kami.
-          </p>
+
         </div>
 
-        {isAdmin && (
+        {/* {isAdmin && (
           <button
             type="button"
             onClick={onAddNew}
@@ -149,7 +146,7 @@ export default function ListFAQPage({ onAddNew, onEdit }) {
             <Plus size={16} />
             Tambah FAQ Baru
           </button>
-        )}
+        )} */}
       </div>
 
       {/* ── Banner Proteksi Non-Admin ──────────────────────────────────── */}
@@ -459,4 +456,3 @@ export default function ListFAQPage({ onAddNew, onEdit }) {
     </div>
   )
 }
-

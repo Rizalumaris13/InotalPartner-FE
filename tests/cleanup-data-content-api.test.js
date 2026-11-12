@@ -14,9 +14,9 @@ import { server } from './setup'
 const resources = [
   { name: 'intro Tentang', path: ABOUT_INTRO_PATH, expectedPath: '/about/intro', admin: getAboutIntroApi, public: getPublicAboutIntroApi, save: saveAboutIntroApi, record: DEFAULT_ABOUT_INTRO,
     invalidMessage: 'Isian intro Tentang belum valid.', formatMessage: 'Format data intro Tentang tidak sesuai kontrak.', acknowledgement: 'Backend belum mengonfirmasi penerimaan intro Tentang.' },
-  { name: 'kartu Mengapa Bergabung', path: JOIN_CARDS_PATH, expectedPath: '/homepage/join-cards', admin: getJoinCardsApi, public: getPublicJoinCardsApi, save: saveJoinCardsApi, record: DEFAULT_JOIN_CARDS,
+  { name: 'kartu Mengapa Bergabung', path: JOIN_CARDS_PATH, expectedPath: '/homepage/join-cards', fallbackPath: '/homepage/reasons', admin: getJoinCardsApi, public: getPublicJoinCardsApi, save: saveJoinCardsApi, record: DEFAULT_JOIN_CARDS,
     invalidMessage: 'Enam kartu wajib berisi posisi, judul, dan deskripsi yang valid.', formatMessage: 'Format data kartu Mengapa Bergabung tidak sesuai kontrak.', acknowledgement: 'Backend belum mengonfirmasi penerimaan kartu.' },
-  { name: 'gambar kolase', path: JOIN_IMAGES_PATH, expectedPath: '/homepage/join-images', admin: getJoinImagesApi, public: getPublicJoinImagesApi, save: saveJoinImagesApi, record: DEFAULT_JOIN_IMAGES,
+  { name: 'gambar kolase', path: JOIN_IMAGES_PATH, expectedPath: '/homepage/join-images', fallbackPath: '/homepage/reason-settings', admin: getJoinImagesApi, public: getPublicJoinImagesApi, save: saveJoinImagesApi, record: DEFAULT_JOIN_IMAGES,
     invalidMessage: 'Ketiga URL gambar kolase harus valid.', formatMessage: 'Format data gambar kolase tidak sesuai kontrak.', acknowledgement: 'Backend belum mengonfirmasi penerimaan gambar kolase.' },
   { name: 'layanan Beranda', path: HOMEPAGE_SERVICES_PATH, expectedPath: '/homepage/services', admin: getHomepageServicesApi, public: getPublicHomepageServicesApi, save: saveHomepageServicesApi, record: DEFAULT_HOMEPAGE_SERVICES,
     invalidMessage: 'Isian layanan Beranda belum valid.', formatMessage: 'Format data layanan Beranda tidak sesuai kontrak.', acknowledgement: 'Backend belum mengonfirmasi penerimaan layanan Beranda.' },
@@ -73,6 +73,10 @@ describe.each(resources)('singleton $name', (resource) => {
     test.each([404, 500])('HTTP %s tetap reject transport; bukan konfigurasi null', async (status) => {
       server.use(http.get(`*/api${access === 'public' ? '/public' : ''}${resource.expectedPath}`, () =>
         HttpResponse.json({ message: 'Gagal dari server.' }, { status })))
+      if (resource.fallbackPath) {
+        const path = access === 'public' ? '/public/homepage/reasons' : resource.fallbackPath
+        server.use(http.get(`*/api${path}`, () => HttpResponse.json({ message: 'Endpoint tim belum tersedia.' }, { status })))
+      }
       await expect(resource[access]()).rejects.toMatchObject({ isAxiosError: true, response: { status } })
     })
 

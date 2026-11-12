@@ -8,6 +8,8 @@ import * as aboutCardsApi from '../src/api/aboutCards'
 import * as aboutIntroApi from '../src/api/aboutIntro'
 import * as aboutEmpoweringApi from '../src/api/aboutEmpowering'
 import * as pageBannersApi from '../src/api/pageBanners'
+import * as statisticsApi from '../src/api/statistics'
+import * as joinInvitationApi from '../src/api/joinInvitation'
 import { server } from './setup'
 
 const team = [{ id: 1, name: 'Tim dari API', photo_url: '/uploads/tim.png', position: 'Koordinator' }]
@@ -31,6 +33,8 @@ beforeEach(() => {
   vi.spyOn(aboutApi, 'getPublicAboutVideosApi').mockResolvedValue({ data: [] })
   vi.spyOn(aboutApi, 'getPublicAboutVideoSettingApi').mockResolvedValue({ data: null })
   vi.spyOn(aboutApi, 'getPublicAboutVideoHighlightsApi').mockResolvedValue({ data: [] })
+  vi.spyOn(statisticsApi, 'getPublicStatisticsApi').mockResolvedValue([])
+  vi.spyOn(joinInvitationApi, 'getPublicJoinInvitationApi').mockResolvedValue(null)
 })
 
 afterEach(() => {
@@ -194,4 +198,61 @@ test('statistik mempertahankan threshold dan fallback 1600 ms dengan reduced mot
     unmount()
     vi.useRealTimers()
   }
+})
+
+test('statistik tim tampil berurutan, memfilter nonaktif, dan membatasi presisi agar tidak crash', async () => {
+  statisticsApi.getPublicStatisticsApi.mockResolvedValue([
+    { id: 3, title: 'Statistik ketiga', icon: 'TrendingUp', statistic_value: `1.${'1'.repeat(150)}`, display_order: 2 },
+    { id: 2, title: 'Statistik kedua', icon: 'createLucideIcon', statistic_value: 'Infinity', display_order: 1 },
+    { id: 4, title: 'Statistik nonaktif', statistic_value: '50', is_active: false },
+    { id: 5, title: {}, statistic_value: '60' },
+  ])
+  const { container } = render(<TentangPage />)
+  await settled()
+  const labels = [...container.querySelectorAll('p')].filter((node) => /^Statistik (kedua|ketiga)$/.test(node.textContent))
+  expect(labels.map((node) => node.textContent)).toEqual(['Statistik kedua', 'Statistik ketiga'])
+  expect(screen.queryByText('Statistik nonaktif')).toBeNull()
+  expect(screen.queryByText('Kolaborasi Dituntaskan')).toBeNull()
+  expect(screen.getByText('0.000000')).not.toBeNull()
+})
+
+test.each([
+  ['/kontak', 'kontak'], ['#partnership', 'partnership'],
+])('CTA tim memakai rute internal %s', async (url, target) => {
+  joinInvitationApi.getPublicJoinInvitationApi.mockResolvedValue({
+    id: 1, section_label: 'Ajakan dari tim', title: 'Judul CTA tim', button_text: 'Tombol CTA tim', button_url: url,
+  })
+  const onNavigate = vi.fn()
+  render(<TentangPage onNavigate={onNavigate} />)
+  await settled()
+  expect(screen.getByRole('heading', { name: 'Judul CTA tim' })).not.toBeNull()
+  await userEvent.setup().click(screen.getByRole('button', { name: 'Tombol CTA tim' }))
+  expect(onNavigate).toHaveBeenCalledExactlyOnceWith(target)
+})
+
+test('CTA eksternal memakai noopener/noreferrer tanpa berpindah route internal', async () => {
+  const url = 'https://example.test/bergabung'
+  joinInvitationApi.getPublicJoinInvitationApi.mockResolvedValue({
+    id: 1, title: 'Ajakan tim', button_text: 'Buka situs tim', button_url: url,
+  })
+  const open = vi.spyOn(window, 'open').mockImplementation(() => null)
+  const onNavigate = vi.fn()
+  render(<TentangPage onNavigate={onNavigate} />)
+  await settled()
+  await userEvent.setup().click(screen.getByRole('button', { name: 'Buka situs tim' }))
+  expect(open).toHaveBeenCalledExactlyOnceWith(url, '_blank', 'noopener,noreferrer')
+  expect(onNavigate).not.toHaveBeenCalled()
+})
+
+test.each(['javascript:alert(1)', 'data:text/html,unsafe', '//example.test/unsafe', '/\\example.test/unsafe'])('CTA tidak menavigasikan URL berbahaya %s', async (url) => {
+  joinInvitationApi.getPublicJoinInvitationApi.mockResolvedValue({
+    id: 1, title: 'Ajakan tim', button_text: 'Tombol uji URL', button_url: url,
+  })
+  const open = vi.spyOn(window, 'open').mockImplementation(() => null)
+  const onNavigate = vi.fn()
+  render(<TentangPage onNavigate={onNavigate} />)
+  await settled()
+  await userEvent.setup().click(screen.getByRole('button', { name: 'Tombol uji URL' }))
+  expect(open).not.toHaveBeenCalled()
+  expect(onNavigate).not.toHaveBeenCalled()
 })

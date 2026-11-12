@@ -188,9 +188,6 @@ export default function ListTestimonialPage({ onAddNew, onEdit }) {
           <h1 className="text-xl font-extrabold text-gray-900 tracking-tight">
             List Testimonial
           </h1>
-          <p className="text-sm text-gray-400 mt-0.5">
-            Daftar testimoni partner untuk ditampilkan pada section Beranda.
-          </p>
         </div>
 
         <button

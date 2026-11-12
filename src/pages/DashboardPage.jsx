@@ -14,6 +14,10 @@ import CreateSlider from './CreateSlider'
 import ListSliderPage from './ListSliderPage'
 import FormTestimonialPage from './FormTestimonialPage'
 import ListTestimonialPage from './ListTestimonialPage'
+import FormJoinInvitationPage from './FormJoinInvitationPage'
+import ListJoinInvitationPage from './ListJoinInvitationPage'
+import FormStatisticPage from './FormStatisticPage'
+import ListStatisticPage from './ListStatisticPage'
 import CreateAboutPage from './CreateAboutPage'
 import ListAboutPage from './ListAboutPage'
 import FormTeamMemberPage from './FormTeamMemberPage'
@@ -41,6 +45,8 @@ const EDITOR_ROUTES = {
   post: { form: 'createPost', list: 'listPost' },
   slider: { form: 'createSlider', list: 'listSlider' },
   testimonial: { form: 'createTestimonial', list: 'listTestimonial' },
+  joinInvitation: { form: 'createJoinInvitation', list: 'listJoinInvitation' },
+  statistic: { form: 'createStatistic', list: 'listStatistic' },
   member: { form: 'formAboutMember', list: 'listAbout' },
   video: { form: 'createVideo', list: 'listVideo' },
   highlight: { form: 'createVideoHighlight', list: 'listVideoHighlight' },
@@ -56,6 +62,8 @@ export default function DashboardPage({ onNavigate }) {
     post: editingPost,
     slider: editingSlider,
     testimonial: editingTestimonial,
+    joinInvitation: editingJoinInvitation,
+    statistic: editingStatistic,
     member: editingMember,
     video: editingVideo,
     highlight: editingHighlight,
@@ -87,6 +95,10 @@ export default function DashboardPage({ onNavigate }) {
   const finishEdit = () => finishEditing('post')
   const finishEditSlider = () => finishEditing('slider')
   const finishEditTestimonial = () => finishEditing('testimonial')
+  const finishEditJoinInvitation = () => finishEditing('joinInvitation')
+  const finishEditStatistic = () => finishEditing('statistic')
+  const handleEditJoinInvitation = (item) => beginEdit('joinInvitation', item)
+  const handleEditStatistic = (statistic) => beginEdit('statistic', statistic)
   const finishEditMember = () => finishEditing('member')
   const finishEditVideo = () => finishEditing('video')
   const finishEditHighlight = () => finishEditing('highlight')
@@ -206,6 +218,44 @@ export default function DashboardPage({ onNavigate }) {
           <ListTestimonialPage
             onAddNew={() => beginEdit('testimonial', null)}
             onEdit={(testimonial) => beginEdit('testimonial', testimonial)}
+          />
+        )
+
+      case 'createJoinInvitation':
+      case 'createHomeCTA':
+        return (
+          <FormJoinInvitationPage
+            key={editingJoinInvitation ? `edit-join-${editingJoinInvitation.id}` : 'new-join'}
+            editingCTA={editingJoinInvitation}
+            onFinish={finishEditJoinInvitation}
+            onOpenList={finishEditJoinInvitation}
+          />
+        )
+
+      case 'listJoinInvitation':
+      case 'listHomeCTA':
+        return (
+          <ListJoinInvitationPage
+            onAddNew={() => beginEdit('joinInvitation', null)}
+            onEdit={handleEditJoinInvitation}
+          />
+        )
+
+      case 'createStatistic':
+        return (
+          <FormStatisticPage
+            key={editingStatistic ? `edit-stat-${editingStatistic.id}` : 'new-stat'}
+            editingStatistic={editingStatistic}
+            onFinish={finishEditStatistic}
+            onOpenList={finishEditStatistic}
+          />
+        )
+
+      case 'listStatistic':
+        return (
+          <ListStatisticPage
+            onAddNew={() => beginEdit('statistic', null)}
+            onEdit={handleEditStatistic}
           />
         )
 

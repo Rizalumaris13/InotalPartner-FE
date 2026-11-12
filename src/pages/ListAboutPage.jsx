@@ -180,9 +180,6 @@ export default function ListAboutPage({ onAddNew, onEdit }) {
           <h1 className="text-xl font-extrabold text-gray-900 tracking-tight">
             List Anggota Tim
           </h1>
-          <p className="text-sm text-gray-400 mt-0.5">
-            Daftar anggota tim untuk ditampilkan pada halaman Tentang Kami.
-          </p>
         </div>
 
         <button

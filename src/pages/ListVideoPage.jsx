@@ -186,12 +186,8 @@ export default function ListVideoPage({ onAddNew, onEdit }) {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-            <Video className="text-sky-600" size={24} />
             Daftar Video Profil Perusahaan
           </h1>
-          <p className="text-xs text-gray-500 mt-1">
-            Kelola tautan video YouTube profil perusahaan untuk ditampilkan pada halaman Tentang Kami.
-          </p>
         </div>
 
         {isAdmin && (

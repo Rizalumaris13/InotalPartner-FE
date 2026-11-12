@@ -96,7 +96,7 @@ test('About cancel clears photo and fields, uses the first available order, and 
   expect(screen.getByPlaceholderText(namePlaceholder).value).toBe('')
   expect(screen.getByPlaceholderText(positionPlaceholder).value).toBe('')
   expect(screen.getByRole('spinbutton').value).toBe('2')
-  expect(screen.getByRole('combobox').value).toBe('active')
+  expect(screen.getByRole('checkbox', { name: 'Status Anggota' }).checked).toBe(true)
   expect(screen.queryByAltText('Preview Foto Anggota')).toBeNull()
   expect(revoke).toHaveBeenCalledWith('blob:cancel')
   expect(onCancelEdit).toHaveBeenCalledOnce()

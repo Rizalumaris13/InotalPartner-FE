@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Images, RefreshCw, Save, Upload, X } from 'lucide-react'
-import { getJoinImagesApi, saveJoinImagesApi, JOIN_IMAGES_PATH } from '../api/homepageJoinImages'
+import { getJoinImagesApi, saveJoinImagesApi, REASON_SETTINGS_PATH } from '../api/homepageJoinImages'
 import { uploadImageApi } from '../api/posts'
 import { JoinImageCollage } from '../components/HomepageJoinImages'
 import { DEFAULT_JOIN_IMAGES, JOIN_IMAGE_SLOTS } from '../data/homepageJoinImages'
@@ -48,7 +48,7 @@ export default function HomepageJoinImagesPage({ role }) {
       .catch((err) => {
         if (controller.signal.aborted) return
         const message = err?.response?.status === 404
-          ? `Pengaturan kolase belum tersedia di backend. Endpoint GET /api${JOIN_IMAGES_PATH} perlu disediakan; simpan belum diaktifkan.`
+          ? `Pengaturan kolase belum tersedia di backend. Endpoint GET /api${REASON_SETTINGS_PATH} perlu disediakan; simpan belum diaktifkan.`
           : getJoinImagesErrorMessage(err, 'Gagal memuat gambar kolase. Periksa koneksi lalu Muat Ulang.')
         setLoad({ status: 'error', record: null, message })
       })

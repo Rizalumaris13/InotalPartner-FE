@@ -1,5 +1,5 @@
 import { Menu, ChevronRight } from 'lucide-react'
-import { navItems } from '../data/dashboardNavItems'
+import { navItems } from '../data/sidebarNavItems'
 import { JOIN_SECTION_NAV_GROUP } from '../data/homepageJoinSection'
 import { ABOUT_INTRO_NAV } from '../data/aboutIntro'
 import { HOMEPAGE_SERVICES_NAV } from '../data/homepageServices'

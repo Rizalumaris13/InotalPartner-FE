@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react'
 import {
   Save,
-  List,
   AlertCircle,
   ShieldAlert,
-  ChevronRight,
   Video,
   X,
   Play,
@@ -207,35 +205,12 @@ export default function FormVideoPage({
     <div className="space-y-6 w-full max-w-none">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
-            <span>About</span>
-            <ChevronRight size={12} />
-            <button
-              type="button"
-              onClick={onOpenList}
-              className="hover:text-sky-600 transition-colors cursor-pointer"
-            >
-              Video Profil
-            </button>
-            <ChevronRight size={12} />
-            <span className="text-gray-900 font-semibold">
-              {isEditing ? 'Edit Video' : 'Tambah Video'}
-            </span>
-          </div>
           <h1 className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-            <Video className="text-sky-600" size={24} />
+            {/* <Video className="text-sky-600" size={24} /> */}
             {isEditing ? 'Edit Video Profil' : 'Tambah Video Profil Baru'}
           </h1>
         </div>
 
-        <button
-          type="button"
-          onClick={onOpenList}
-          className="inline-flex items-center gap-2 px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-gray-700 rounded-xl text-xs font-semibold shadow-xs transition-colors cursor-pointer self-start sm:self-auto"
-        >
-          <List size={16} />
-          Kembali ke Daftar
-        </button>
       </div>
 
       {!isAdmin && (

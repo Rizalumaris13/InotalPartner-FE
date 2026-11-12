@@ -30,8 +30,8 @@ test('switch publikasi FAQ mendukung klik dan keyboard tanpa menyimpan sebelum t
   const onFinish = vi.fn()
   render(<FormFAQPage onFinish={onFinish} />)
   const user = userEvent.setup()
-  await user.type(screen.getByPlaceholderText('Contoh: Bagaimana mekanisme pengajuan kerja sama atau partnership?'), faq.question)
-  await user.type(screen.getByPlaceholderText('Tuliskan jawaban yang lengkap, jelas, dan informatif untuk pengunjung...'), faq.answer)
+  await user.type(screen.getByRole('textbox', { name: /^Pertanyaan/ }), faq.question)
+  await user.type(screen.getByRole('textbox', { name: /^Jawaban/ }), faq.answer)
   const toggle = screen.getByRole('switch', { name: 'Status Publikasi' })
 
   expect(toggle.textContent).toBe('Aktif (Ditampilkan)')

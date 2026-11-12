@@ -414,11 +414,8 @@ export default function CreateAboutPage({
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-extrabold tracking-tight text-gray-900">
-            About Us
+            Tim Kami
           </h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Kelola judul utama dan tambahkan anggota tim untuk ditampilkan pada halaman Tentang Kami.
-          </p>
         </div>
 
         {onOpenList && (
@@ -546,7 +543,7 @@ export default function CreateAboutPage({
         )}
 
         <form onSubmit={handleSaveMember}>
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             <div className="lg:col-span-7 space-y-5">
               <div>
                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
@@ -575,82 +572,33 @@ export default function CreateAboutPage({
                 />
               </div>
 
-              <div className="pt-2">
-                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+              <div>
+                <label htmlFor="status-anggota" className="mb-1.5 block text-xs font-semibold text-gray-700">
                   Status Anggota
                 </label>
-                <select
-                  id="status-anggota"
-                  value={memberIsActive ? 'active' : 'inactive'}
-                  onChange={(e) => updateMemberDraft({ isActive: e.target.value === 'active' })}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 cursor-pointer"
-                >
-                  <option value="active">Aktif</option>
-                  <option value="inactive">Tidak Aktif</option>
-                </select>
+                <div className="flex items-center gap-3 mt-2">
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      id="status-anggota"
+                      type="checkbox"
+                      checked={memberIsActive}
+                      onChange={(e) => updateMemberDraft({ isActive: e.target.checked })}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500" />
+                  </label>
+                  <span className="text-xs font-semibold text-gray-700">
+                    {memberIsActive ? 'Aktif (Tampil di Publik)' : 'Tidak Aktif (Tidak Ditampilkan)'}
+                  </span>
+                </div>
                 <p className="mt-1.5 text-[11px] text-gray-400">
                   {memberIsActive
-                    ? 'Aktif: anggota ditampilkan pada halaman Tentang Kami publik.'
+                    ? 'Aktif: anggota akan ditampilkan pada halaman publik Tentang Kami.'
                     : 'Tidak Aktif: anggota tetap tersimpan di database, tetapi tidak ditampilkan pada halaman publik.'}
                 </p>
               </div>
-            </div>
 
-            <div className="lg:col-span-5 space-y-5">
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                  Foto Anggota
-                </label>
-                {memberImagePreview ? (
-                  <div className="relative overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
-                    <img
-                      src={memberImagePreview}
-                      alt="Preview Foto Anggota"
-                      className="h-44 w-full object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleRemoveImage}
-                      className="absolute right-2.5 top-2.5 rounded-lg bg-white/90 p-1.5 text-red-500 shadow-md backdrop-blur-xs transition hover:bg-white hover:text-red-700"
-                      title="Hapus foto"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                    {memberImageFile && (
-                      <div className="border-t border-gray-100 bg-white px-3 py-1.5">
-                        <p className="truncate text-[11px] font-medium text-gray-600">
-                          {memberImageFile.name}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex h-44 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/60 p-4 transition hover:border-sky-400 hover:bg-sky-50/40"
-                  >
-                    <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-white text-sky-500 shadow-xs">
-                      <Upload size={18} />
-                    </div>
-                    <p className="text-xs font-semibold text-gray-700">
-                      Upload Foto Anggota
-                    </p>
-                    <p className="mt-0.5 text-[10px] text-gray-400">
-                      PNG, JPG, WEBP — Maks. 5MB
-                    </p>
-                  </button>
-                )}
-
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  onChange={handleImageChange}
-                  className="hidden"
-                />
-              </div>
-
+              {/* Urutan Tampil */}
               <div>
                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
                   Urutan Tampil <span className="text-red-500">*</span>
@@ -679,6 +627,86 @@ export default function CreateAboutPage({
                     Menentukan urutan kemunculan di halaman publik (nomor urut kecil tampil lebih awal).
                   </p>
                 )}
+              </div>
+            </div>
+
+            {/* Kolom Kanan: Foto Anggota & Preview Utuh (5 cols) */}
+            <div className="lg:col-span-5">
+              <div className="w-[230px] mx-auto lg:ml-auto lg:mr-0 space-y-2.5">
+                <label className="block text-xs font-semibold text-gray-700">
+                  Foto Anggota
+                </label>
+                {memberImagePreview ? (
+                  <>
+                    <div className="w-full aspect-[3/4] relative overflow-hidden rounded-xl border border-gray-200 bg-slate-50 flex items-center justify-center p-2.5 shadow-inner">
+                      <img
+                        src={memberImagePreview}
+                        alt="Preview Foto Anggota"
+                        className="h-full w-full object-contain rounded-lg"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleRemoveImage}
+                        className="absolute right-2 top-2 rounded-lg bg-white/95 p-1.5 text-red-500 shadow-md backdrop-blur-xs transition hover:bg-white hover:text-red-700"
+                        title="Hapus foto"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white py-2 px-3 text-xs font-semibold text-gray-700 shadow-2xs transition hover:bg-gray-50 hover:text-gray-900"
+                      >
+                        <Upload size={14} />
+                        Ganti Foto
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleRemoveImage}
+                        className="flex items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-red-50 py-2 px-3 text-xs font-semibold text-red-600 transition hover:bg-red-100"
+                      >
+                        <Trash2 size={14} />
+                        Hapus
+                      </button>
+                    </div>
+
+                    {memberImageFile && (
+                      <p className="truncate text-[11px] text-gray-500 px-1">
+                        File baru: <span className="font-medium text-gray-700">{memberImageFile.name}</span>
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full aspect-[3/4] flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/60 p-4 transition hover:border-sky-400 hover:bg-sky-50/40"
+                  >
+                    <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-sky-500 shadow-xs">
+                      <Upload size={20} />
+                    </div>
+                    <p className="text-xs font-semibold text-gray-700">
+                      Upload Foto Anggota
+                    </p>
+                    <p className="mt-1 text-[11px] text-gray-400">
+                      PNG, JPG, WEBP — Maks. 5MB
+                    </p>
+                    <p className="mt-2 text-[10px] text-sky-600 bg-sky-50 px-2 py-0.5 rounded-md font-medium">
+                      Foto akan ditampilkan utuh tanpa terpotong
+                    </p>
+                  </button>
+                )}
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
               </div>
             </div>
           </div>
