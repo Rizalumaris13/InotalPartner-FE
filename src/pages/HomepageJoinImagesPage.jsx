@@ -213,7 +213,7 @@ export default function HomepageJoinImagesPage({ role }) {
               {JOIN_IMAGE_SLOTS.map((slot) => (
                 <div key={slot.key} className="rounded-2xl border border-sky-100 bg-white p-5 shadow-sm">
                   <h2 className="mb-3 text-sm font-bold text-gray-800">{slot.label}</h2>
-                  <div className="mb-4">
+                  <div className="relative mb-4">
                     <input id={`join-file-${slot.key}`} type="file" accept={JOIN_IMAGE_MIME_TYPES.join(',')}
                       aria-label={`Pilih ${slot.label.toLowerCase()}`} onChange={(event) => selectFile(slot.key, event)}
                       aria-invalid={Boolean(errors[slot.key])} aria-describedby={`join-file-help-${slot.key}${errors[slot.key] ? ` join-error-${slot.key}` : ''}`}

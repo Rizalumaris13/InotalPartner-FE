@@ -280,7 +280,7 @@ export default function AboutIntroPage({ role }) {
                 />
               </div>
 
-              <div className="space-y-3 rounded-2xl border border-sky-100 bg-white p-5 shadow-sm">
+              <div className="relative space-y-3 rounded-2xl border border-sky-100 bg-white p-5 shadow-sm">
                 <h2 className="text-sm font-bold text-gray-800">Foto</h2>
                 <input id="intro-photo-file" type="file" accept="image/jpeg,image/png,image/webp"
                   aria-label="Pilih foto intro" onChange={selectFile} className="peer sr-only" />

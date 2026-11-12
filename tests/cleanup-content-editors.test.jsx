@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { server } from './setup'
 import AboutIntroPage from '../src/pages/AboutIntroPage'
@@ -25,6 +25,8 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  // Unmount while observer and object-URL stubs still exist; cleanup flushes effects.
+  cleanup()
   if (originalCreate) Object.defineProperty(URL, 'createObjectURL', originalCreate)
   else delete URL.createObjectURL
   if (originalRevoke) Object.defineProperty(URL, 'revokeObjectURL', originalRevoke)

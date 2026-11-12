@@ -1,9 +1,13 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { act, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import TentangPage from '../src/pages/FrontPage/TentangPage'
 import * as aboutApi from '../src/api/about'
+import * as aboutCardsApi from '../src/api/aboutCards'
+import * as aboutIntroApi from '../src/api/aboutIntro'
+import * as aboutEmpoweringApi from '../src/api/aboutEmpowering'
+import * as pageBannersApi from '../src/api/pageBanners'
 import { server } from './setup'
 
 const team = [{ id: 1, name: 'Tim dari API', photo_url: '/uploads/tim.png', position: 'Koordinator' }]
@@ -30,6 +34,8 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  // Unmount before restoring globals: cleanup also flushes pending React effects.
+  cleanup()
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
 })
@@ -154,6 +160,11 @@ test('unmount mengabaikan penyelesaian data Tentang yang terlambat', async () =>
 })
 
 test('statistik mempertahankan threshold dan fallback 1600 ms dengan reduced motion', async () => {
+  // Isolate the observer clock from unrelated HTTP/abort timers.
+  vi.spyOn(aboutCardsApi, 'getPublicAboutCardsApi').mockResolvedValue([])
+  vi.spyOn(aboutIntroApi, 'getPublicAboutIntroApi').mockResolvedValue(null)
+  vi.spyOn(aboutEmpoweringApi, 'getPublicAboutEmpoweringApi').mockResolvedValue(null)
+  vi.spyOn(pageBannersApi, 'getPublicPageBannerApi').mockResolvedValue(null)
   vi.useFakeTimers()
   const observers = []
   vi.stubGlobal('IntersectionObserver', class {

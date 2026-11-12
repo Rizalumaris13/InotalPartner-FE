@@ -6,6 +6,7 @@ import { PAGE_BANNER_PAGES, PAGE_BANNER_ROLES } from './pageBanners'
 import { JOIN_SECTION_NAV_GROUP } from './homepageJoinSection'
 import { ABOUT_INTRO_NAV } from './aboutIntro'
 import { HOMEPAGE_SERVICES_NAV } from './homepageServices'
+import { ABOUT_EMPOWERING_NAV } from './aboutEmpowering'
 
 export const navItems = [
   { key: 'dashboard', label: 'Dashboard',     icon: LayoutDashboard, roles: ['super_admin','admin','operator','guest'] },
@@ -109,10 +110,8 @@ export const navItems = [
     roles: ['super_admin', 'admin'],
   },
   {
-    key: 'aboutCards',
-    label: 'Kartu Tentang',
+    ...ABOUT_EMPOWERING_NAV,
     icon: LayoutList,
-    roles: ['super_admin', 'admin'],
   },
   { key: 'users',     label: 'Users',         icon: Users,           roles: ['super_admin','admin'] },
   {

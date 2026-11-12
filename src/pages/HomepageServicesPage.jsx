@@ -243,7 +243,7 @@ export default function HomepageServicesPage({ role }) {
               </div>
 
               {PHOTO_KEYS.map((key, index) => (
-                <div key={key} className="space-y-3 rounded-2xl border border-sky-100 bg-white p-5 shadow-sm">
+                <div key={key} className="relative space-y-3 rounded-2xl border border-sky-100 bg-white p-5 shadow-sm">
                   <h2 className="text-sm font-bold text-gray-800">{index === 0 ? 'Foto utama (belakang)' : 'Foto kedua (depan)'}</h2>
                   <input id={`svc-${key}-file`} type="file" accept="image/jpeg,image/png,image/webp"
                     aria-label={`Pilih ${index === 0 ? 'foto utama' : 'foto kedua'}`} onChange={(event) => selectPhoto(key, event)}

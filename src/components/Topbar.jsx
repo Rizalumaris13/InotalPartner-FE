@@ -3,12 +3,16 @@ import { navItems } from '../data/dashboardNavItems'
 import { JOIN_SECTION_NAV_GROUP } from '../data/homepageJoinSection'
 import { ABOUT_INTRO_NAV } from '../data/aboutIntro'
 import { HOMEPAGE_SERVICES_NAV } from '../data/homepageServices'
+import { ABOUT_EMPOWERING_NAV } from '../data/aboutEmpowering'
 
 export default function Topbar({ activeNav, setSidebarOpen }) {
   const getActiveLabel = () => {
     if (activeNav === 'dashboard') return 'Dashboard'
     if (activeNav === 'formAboutMember') return 'About / Form Member'
     if (activeNav === 'changePassword') return 'Change Password'
+
+    const empoweringItem = ABOUT_EMPOWERING_NAV.subItems.find((item) => item.key === activeNav)
+    if (empoweringItem) return `${ABOUT_EMPOWERING_NAV.label} / ${empoweringItem.label}`
 
     const joinItem = JOIN_SECTION_NAV_GROUP.items.find((item) => item.key === activeNav)
     if (joinItem) return `Home Page / ${JOIN_SECTION_NAV_GROUP.label} / ${joinItem.label}`

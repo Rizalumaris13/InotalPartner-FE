@@ -8,9 +8,9 @@ export const readNullableContent = (body, isRecord, fallback) => {
   return body.data
 }
 
-// Penerimaan PUT bukan bukti tersimpan: pemanggil tetap memverifikasi dengan GET.
+// Respons tulis bukan bukti tersimpan: pemanggil tetap memverifikasi dengan GET.
 export const requireContentAcknowledgement = (body, fallback) => {
-  if (body?.success !== true) {
+  if (body?.success !== true || (Object.hasOwn(body, 'message') && typeof body.message !== 'string')) {
     throw new Error(typeof body?.message === 'string' && body.message.trim()
       ? body.message : fallback)
   }

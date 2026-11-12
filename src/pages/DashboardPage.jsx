@@ -27,6 +27,7 @@ import ListVideoHighlightPage from './ListVideoHighlightPage'
 import KontakInboxPage from './KontakInboxPage'
 import KemitraanPage from './KemitraanPage'
 import KartuTentangPage from './KartuTentangPage'
+import AboutEmpoweringPage from './AboutEmpoweringPage'
 import AboutIntroPage from './AboutIntroPage'
 import PageBannerPage from './PageBannerPage'
 import HomepageJoinImagesPage from './HomepageJoinImagesPage'
@@ -127,6 +128,9 @@ export default function DashboardPage({ onNavigate }) {
 
       case 'aboutCards':
         return <KartuTentangPage role={user?.role} />
+
+      case 'aboutEmpowering':
+        return <AboutEmpoweringPage role={user?.role} />
 
       case 'aboutIntro':
         return <AboutIntroPage role={user?.role} />

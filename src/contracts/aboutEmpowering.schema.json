@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:inotal:about-empowering",
+  "title": "AboutEmpoweringConfiguration",
+  "type": "object",
+  "required": ["label", "title", "title_accent"],
+  "properties": {
+    "label": {
+      "type": "string", "minLength": 1, "maxLength": 60,
+      "pattern": "^[^\\u0000-\\u001F\\u007F]*$"
+    },
+    "title": {
+      "type": "string", "minLength": 2, "maxLength": 150,
+      "pattern": "^[^\\u0000-\\u001F\\u007F]*$"
+    },
+    "title_accent": {
+      "type": "string", "minLength": 0, "maxLength": 100,
+      "pattern": "^[^\\u0000-\\u001F\\u007F]*$"
+    }
+  },
+  "additionalProperties": true,
+  "default": {
+    "label": "Pilih yang Terbaik",
+    "title": "Memberdayakan Bisnis dengan",
+    "title_accent": "Keahlian."
+  },
+  "$defs": {
+    "payload": {
+      "type": "object",
+      "required": ["label", "title", "title_accent"],
+      "additionalProperties": false,
+      "properties": {
+        "label": { "$ref": "#/properties/label" },
+        "title": { "$ref": "#/properties/title" },
+        "title_accent": { "$ref": "#/properties/title_accent" }
+      }
+    },
+    "readResponse": {
+      "type": "object", "required": ["success", "data"],
+      "properties": {
+        "success": { "const": true },
+        "data": { "anyOf": [{ "$ref": "#" }, { "type": "null" }] }
+      }
+    },
+    "writeAcknowledgement": {
+      "type": "object", "required": ["success"],
+      "properties": { "success": { "const": true }, "message": { "type": "string" } },
+      "description": "Acknowledgement only. A subsequent GET must verify the exact target before frontend success. Optional data is not the persistence proof."
+    },
+    "errorResponse": {
+      "type": "object", "required": ["success", "message"],
+      "properties": { "success": { "const": false }, "message": { "type": "string", "minLength": 1 } }
+    }
+  },
+  "x-http": {
+    "base_path": "/api",
+    "admin_path": "/about/empowering",
+    "public_path": "/public/about/empowering",
+    "admin_methods": ["GET", "POST", "PUT", "DELETE"],
+    "public_methods": ["GET"],
+    "roles": ["admin", "super_admin"],
+    "get_empty": "success:true,data:null means no configuration. 404 means the endpoint is unavailable.",
+    "post": "Create one configuration; return 201 and success:true. Do not create a duplicate singleton.",
+    "put": "Replace the three configuration fields atomically; return 200 and success:true.",
+    "delete": "Return 204 or 200 with success:true. GET must then return data:null. Card collection is not deleted.",
+    "normalization": "Trim leading/trailing whitespace; reject control characters. title_accent may be an explicit empty string. Length is measured in Unicode code points.",
+    "provider_status": "Frontend proposal; provider implementation and live persistence are not verified."
+  }
+}

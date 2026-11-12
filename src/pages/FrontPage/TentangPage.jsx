@@ -6,6 +6,8 @@ import PublicPageBanner from '../../components/PublicPageBanner'
 import PublicAboutCards from '../../components/PublicAboutCards'
 import AboutIntroSection from '../../components/AboutIntroSection'
 import useAboutIntro from '../../hooks/useAboutIntro'
+import useAboutEmpowering from '../../hooks/useAboutEmpowering'
+import AboutEmpoweringHeader from '../../components/AboutEmpoweringHeader'
 import { ArrowRight, Plus, Minus, User } from 'lucide-react'
 import PublicFooter from '../../components/PublicFooter'
 import { getPublicAboutSettingApi, getPublicTeamMembersApi, getPublicAboutFAQsApi, getPublicAboutVideosApi, getPublicAboutVideoSettingApi, getPublicAboutVideoHighlightsApi, resolveImageUrl } from '../../api/about'
@@ -331,6 +333,7 @@ function renderTeamHeading(title) {
 export default function TentangPage({ onNavigate }) {
   const [openFaq, setOpenFaq] = useState(0)
   const intro = useAboutIntro()
+  const empowering = useAboutEmpowering()
 
   const [teamSectionTitle, setTeamSectionTitle] = useState('Orang-orang di Balik Ekosistem Ini.')
   const [teamMembers, setTeamMembers] = useState([])
@@ -448,11 +451,7 @@ export default function TentangPage({ onNavigate }) {
       <section className="max-w-7xl mx-auto px-6 py-12 md:py-16">
         <div className="mb-8 md:mb-10">
           <Reveal>
-            <SubTitle>Pilih yang Terbaik</SubTitle>
-            <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight leading-[1.15] max-w-2xl">
-              Memberdayakan Bisnis dengan{' '}
-              <span className="text-[#0284c7]">Keahlian.</span>
-            </h2>
+            <AboutEmpoweringHeader configuration={empowering} />
           </Reveal>
         </div>
 
