@@ -8,6 +8,7 @@ import {
   Settings,
   LogOut,
   Bell,
+  CheckCheck,
 } from 'lucide-react'
 import { navItems } from './Sidebar'
 import { JOIN_SECTION_NAV_GROUP } from '../data/homepageJoinSection'
@@ -15,8 +16,44 @@ import { ABOUT_INTRO_NAV } from '../data/aboutIntro'
 import { HOMEPAGE_SERVICES_NAV } from '../data/homepageServices'
 import { useAuth } from '../hooks/useAuth'
 
-// Jumlah notifikasi sementara (dapat dihubungkan ke API notifikasi nantinya)
-const NOTIFICATION_COUNT = 3
+// Data dummy awal notifikasi (aktivitas akun & kemitraan)
+const INITIAL_NOTIFICATIONS = [
+  {
+    id: 1,
+    title: 'Pengajuan Kemitraan Diterima',
+    description: 'Proposal kemitraan strategis Anda telah disetujui oleh tim Inotal Partner.',
+    time: '10 menit yang lalu',
+    unread: true,
+  },
+  {
+    id: 2,
+    title: 'Verifikasi Dokumen Profil',
+    description: 'Dokumen legalitas profil perusahaan Anda berhasil diverifikasi.',
+    time: '1 jam yang lalu',
+    unread: true,
+  },
+  {
+    id: 3,
+    title: 'Undangan Kolaborasi Baru',
+    description: 'Ada 1 program kolaborasi inovasi baru yang sesuai dengan industri Anda.',
+    time: '3 jam yang lalu',
+    unread: true,
+  },
+  {
+    id: 4,
+    title: 'Pembaruan Kebijakan Kemitraan',
+    description: 'Kami telah memperbarui syarat dan ketentuan kemitraan tahun 2026.',
+    time: 'Kemarin',
+    unread: false,
+  },
+  {
+    id: 5,
+    title: 'Selamat Datang di Inotal Partner',
+    description: 'Akun Anda telah aktif. Jelajahi fitur dan peluang kemitraan sekarang.',
+    time: '3 hari yang lalu',
+    unread: false,
+  },
+]
 
 export default function Topbar({
   activeNav,
@@ -32,6 +69,25 @@ export default function Topbar({
     authRole ||
     'guest'
   const isGuest = currentRole === 'guest'
+
+  // State notifikasi
+  const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS)
+  const [notifOpen, setNotifOpen] = useState(false)
+  const notifRef = useRef(null)
+
+  const unreadCount = notifications.filter((n) => n.unread).length
+
+  const handleMarkAllAsRead = () => {
+    setNotifications((prev) => prev.map((item) => ({ ...item, unread: false })))
+  }
+
+  const handleNotificationClick = (id) => {
+    setNotifications((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, unread: false } : item))
+    )
+  }
+
+  // Profile dropdown state
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef(null)
 
@@ -39,6 +95,9 @@ export default function Topbar({
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setDropdownOpen(false)
+      }
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setNotifOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -124,20 +183,108 @@ export default function Topbar({
       </div>
 
       <div className="flex items-center gap-2">
-        {/* Notification Button (hanya untuk role guest) */}
+        {/* Notification Dropdown (hanya untuk role guest) */}
         {isGuest && (
-          <button
-            type="button"
-            aria-label="Notifikasi"
-            className="relative p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-slate-50 transition-colors focus:outline-none"
-          >
-            <Bell size={18} />
-            {NOTIFICATION_COUNT > 0 && (
-              <span className="absolute top-1 right-1 flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-[10px] font-bold text-white leading-none shadow-sm">
-                {NOTIFICATION_COUNT > 99 ? '99+' : NOTIFICATION_COUNT}
-              </span>
+          <div className="relative" ref={notifRef}>
+            <button
+              type="button"
+              onClick={() => setNotifOpen((prev) => !prev)}
+              aria-label="Notifikasi"
+              aria-expanded={notifOpen}
+              className={`relative p-2 rounded-lg transition-colors focus:outline-none ${
+                notifOpen ? 'text-sky-600 bg-sky-50' : 'text-gray-500 hover:text-gray-700 hover:bg-slate-50'
+              }`}
+            >
+              <Bell size={18} />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-[10px] font-bold text-white leading-none shadow-sm">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {notifOpen && (
+              <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white border border-gray-100 rounded-xl shadow-[0_4px_24px_-4px_rgba(0,0,0,0.12)] z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                {/* Header Dropdown Notifikasi */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-white">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-gray-800">Notifikasi</span>
+                    {unreadCount > 0 && (
+                      <span className="px-1.5 py-0.5 rounded-full bg-sky-100 text-sky-700 text-[10px] font-semibold">
+                        {unreadCount} baru
+                      </span>
+                    )}
+                  </div>
+                  {unreadCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleMarkAllAsRead}
+                      className="text-[11px] font-medium text-sky-600 hover:text-sky-700 flex items-center gap-1 transition-colors"
+                    >
+                      <CheckCheck size={13} />
+                      Tandai semua dibaca
+                    </button>
+                  )}
+                </div>
+
+                {/* List Notifikasi */}
+                <div className="max-h-[360px] overflow-y-auto divide-y divide-gray-50">
+                  {notifications.length === 0 ? (
+                    <div className="py-8 text-center text-xs text-gray-400">
+                      Tidak ada notifikasi
+                    </div>
+                  ) : (
+                    notifications.map((item) => (
+                      <div
+                        key={item.id}
+                        onClick={() => handleNotificationClick(item.id)}
+                        className={`p-3.5 transition-colors cursor-pointer flex items-start gap-3 text-left ${
+                          item.unread
+                            ? 'bg-slate-50 hover:bg-slate-100/80'
+                            : 'bg-white hover:bg-slate-50'
+                        }`}
+                      >
+                        {/* Indikator Belum Dibaca */}
+                        <div className="pt-1 shrink-0">
+                          <span
+                            className={`block w-2 h-2 rounded-full transition-colors ${
+                              item.unread ? 'bg-sky-500 ring-2 ring-sky-100' : 'bg-transparent'
+                            }`}
+                          />
+                        </div>
+
+                        {/* Konten Notifikasi */}
+                        <div className="min-w-0 flex-1">
+                          <p
+                            className={`text-xs leading-snug break-words ${
+                              item.unread
+                                ? 'font-bold text-gray-900'
+                                : 'font-medium text-gray-700'
+                            }`}
+                          >
+                            {item.title}
+                          </p>
+                          <p className="text-[11.5px] leading-relaxed text-gray-500 mt-1 line-clamp-2 break-words">
+                            {item.description}
+                          </p>
+                          <span className="inline-block text-[10px] font-medium text-gray-400 mt-1.5">
+                            {item.time}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* Footer Dropdown Notifikasi */}
+                <div className="px-4 py-2 border-t border-gray-100 bg-gray-50/50 text-center">
+                  <span className="text-[11px] text-gray-400">
+                    Aktivitas Akun & Kemitraan
+                  </span>
+                </div>
+              </div>
             )}
-          </button>
+          </div>
         )}
 
         {/* User profile dropdown (Shopee-style) */}
