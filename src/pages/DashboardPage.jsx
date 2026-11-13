@@ -475,6 +475,9 @@ export default function DashboardPage({ onNavigate }) {
         <Topbar 
           activeNav={activeNav} 
           setSidebarOpen={setSidebarOpen} 
+          user={user}
+          setActiveNav={handleNav}
+          onNavigate={onNavigate}
         />
 
         <main className="flex-1 overflow-y-auto p-5 lg:p-6">

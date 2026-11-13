@@ -56,7 +56,7 @@ export default function FormPageBannerPage({ pageType = 'about' }) {
   const currentRole =
     (typeof user?.role === 'object' ? user?.role?.name : user?.role) ||
     role ||
-    'guest'
+    ''
   const isAdmin = currentRole === 'admin' || currentRole === 'super_admin'
 
   const meta = PAGE_META[pageType] || {

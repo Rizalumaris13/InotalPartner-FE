@@ -93,7 +93,7 @@ function formatDate(iso) {
 
   try {
     return new Date(iso).toLocaleDateString(
-      'id-ID',
+      'en-US',
       {
         day: 'numeric',
         month: 'long',
@@ -120,7 +120,7 @@ function formatTime(dateString) {
 
   try {
     return new Date(dateString).toLocaleTimeString(
-      'id-ID',
+      'en-US',
       {
         hour: '2-digit',
         minute: '2-digit',
@@ -138,12 +138,12 @@ function formatTime(dateString) {
  * Format angka view
  *
  * Contoh:
- * 1200 => 1.200
+ * 1200 => 1,200
  */
 function formatViewCount(value) {
   const number = Number(value || 0)
 
-  return number.toLocaleString('id-ID')
+  return number.toLocaleString('en-US')
 }
 
 
@@ -502,7 +502,7 @@ export default function BeritaPage({ onNavigate }) {
 
       {/*PAGE HEADER*/}
 
-      <PublicPageBanner pageKey="berita" breadcrumb="Berita" onNavigate={onNavigate} />
+      <PublicPageBanner pageKey="berita" breadcrumb="News" onNavigate={onNavigate} />
 
 
       {/* CONTENT */}
@@ -542,7 +542,7 @@ export default function BeritaPage({ onNavigate }) {
 
                     setPage(1)
                   }}
-                  placeholder="Cari judul, isi, atau kategori..."
+                  placeholder="Search title, content, or category..."
                   className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 bg-white text-[14px] placeholder:text-gray-400 focus:outline-none focus:border-[#0284c7] focus:ring-2 focus:ring-[#0284c7]/15 transition-all"
                 />
 
@@ -560,9 +560,9 @@ export default function BeritaPage({ onNavigate }) {
                     className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-semibold text-[#064C73] shadow-sm transition hover:border-[#008ACB] hover:shadow-md"
                   >
                     <span>
-                      {sortBy === 'terbaru' && 'Terbaru'}
-                      {sortBy === 'terlama' && 'Terlama'}
-                      {sortBy === 'terpopuler' && 'Terpopuler'}
+                      {sortBy === 'terbaru' && 'Latest'}
+                      {sortBy === 'terlama' && 'Oldest'}
+                      {sortBy === 'terpopuler' && 'Most Popular'}
                     </span>
 
                     <ChevronDown
@@ -576,9 +576,9 @@ export default function BeritaPage({ onNavigate }) {
                   {sortOpen && (
                     <div className="absolute right-0 z-50 mt-2 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl">
                       {[
-                        { value: 'terbaru', label: 'Terbaru' },
-                        { value: 'terlama', label: 'Terlama' },
-                        { value: 'terpopuler', label: 'Terpopuler' },
+                        { value: 'terbaru', label: 'Latest' },
+                        { value: 'terlama', label: 'Oldest' },
+                        { value: 'terpopuler', label: 'Most Popular' },
                       ].map((option) => (
                         <button
                           key={option.value}
@@ -626,7 +626,7 @@ export default function BeritaPage({ onNavigate }) {
                   }`}
                 >
 
-                  {c.name}
+                  {c.name === 'Semua' ? 'All' : c.name}
 
                   <span
                     className={`ml-1.5 text-[11px] ${
@@ -653,16 +653,16 @@ export default function BeritaPage({ onNavigate }) {
 
                 {category === 'Semua'
                   ? sortBy === 'terbaru'
-                    ? 'Berita Terbaru'
+                    ? 'Latest News'
                     : sortBy === 'terlama'
-                      ? 'Berita Terlama'
-                      : 'Berita Terpopuler'
+                      ? 'Oldest News'
+                      : 'Most Popular News'
                   : category}
 
               </h2>
 
               <span className="text-[12px] text-gray-400">
-                {filtered.length} news
+                {filtered.length} {filtered.length === 1 ? 'article' : 'articles'}
               </span>
 
             </div>
@@ -677,7 +677,7 @@ export default function BeritaPage({ onNavigate }) {
                 <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-[#0284c7]" />
 
                 <p className="text-sm text-gray-400">
-                  Memuat berita...
+                  Loading news...
                 </p>
 
               </div>
@@ -689,7 +689,7 @@ export default function BeritaPage({ onNavigate }) {
               <div className="py-20 text-center border border-dashed border-red-200 rounded-2xl">
 
                 <p className="text-red-500 font-bold text-lg mb-2">
-                  Gagal memuat berita
+                  Failed to load news
                 </p>
 
                 <p className="text-sm text-gray-400 mb-5">
@@ -702,7 +702,7 @@ export default function BeritaPage({ onNavigate }) {
                   }
                   className="text-[13.5px] font-bold text-[#0284c7] hover:text-[#0c4a6e]"
                 >
-                  Coba lagi
+                  Try again
                 </button>
 
               </div>
@@ -714,11 +714,11 @@ export default function BeritaPage({ onNavigate }) {
               <div className="text-center py-20 border border-dashed border-gray-200 rounded-2xl">
 
                 <p className="text-[#0c4a6e] font-bold text-lg mb-2">
-                  Nggak ada hasilnya
+                  No results found
                 </p>
 
                 <p className="text-[14px] text-[#364e52] mb-6">
-                  Coba kata kunci lain atau ganti kategorinya.
+                  Try other keywords or select a different category.
                 </p>
 
                 <button
@@ -730,7 +730,7 @@ export default function BeritaPage({ onNavigate }) {
                   }}
                   className="text-[13.5px] font-bold text-[#0284c7] hover:text-[#0c4a6e] transition-colors"
                 >
-                  Reset semua filter
+                  Reset all filters
                 </button>
 
               </div>
@@ -788,7 +788,7 @@ export default function BeritaPage({ onNavigate }) {
                           <div className="w-full h-64 bg-[#F0F4F8] flex items-center justify-center">
 
                             <span className="text-sm text-gray-400">
-                              Tidak ada gambar
+                              No image available
                             </span>
 
                           </div>
@@ -859,7 +859,7 @@ export default function BeritaPage({ onNavigate }) {
 
                           <span className="inline-flex items-center gap-1.5 text-[12px] font-bold text-[#0284c7]">
 
-                            Baca
+                            Read More
 
                             <ArrowRight
                               size={13}
@@ -981,7 +981,7 @@ export default function BeritaPage({ onNavigate }) {
                 />
 
                 <h3 className="text-white font-extrabold text-[13px] tracking-[0.12em] uppercase">
-                  Paling Populer
+                  Most Popular
                 </h3>
 
               </div>
@@ -992,7 +992,7 @@ export default function BeritaPage({ onNavigate }) {
                 {popularNews.length === 0 ? (
 
                   <div className="p-5 text-sm text-gray-400">
-                    Belum ada berita populer.
+                    No popular news yet.
                   </div>
 
                 ) : (
@@ -1079,7 +1079,7 @@ export default function BeritaPage({ onNavigate }) {
               <div className="bg-[#0c4a6e] px-5 py-3.5 flex items-center gap-2">
 
                 <span className="text-white font-extrabold text-[13px] tracking-[0.12em] uppercase">
-                  Kategori
+                  Categories
                 </span>
 
               </div>
@@ -1133,11 +1133,11 @@ export default function BeritaPage({ onNavigate }) {
               <div className="relative p-6">
 
                 <h3 className="font-extrabold text-lg mb-2">
-                  Butuh Info Lebih?
+                  Need More Info?
                 </h3>
 
                 <p className="text-[13px] text-white/80 leading-relaxed mb-5">
-                  Tim kami bisa bantu jawab pertanyaan soal program kemitraan.
+                  Our team is ready to answer any questions about our partnership programs.
                 </p>
 
                 <button
@@ -1149,7 +1149,7 @@ export default function BeritaPage({ onNavigate }) {
                   className="inline-flex items-center gap-2 bg-white text-[#0284c7] font-bold text-[13px] px-4 py-2.5 rounded-lg transition-transform hover:translate-y-[-1px]"
                 >
 
-                  Hubungi Kami
+                  Contact Us
 
                   <ArrowRight
                     size={14}

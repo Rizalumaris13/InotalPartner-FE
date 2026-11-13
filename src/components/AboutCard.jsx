@@ -31,7 +31,7 @@ export default function AboutCard({ card, onNavigate, preview = false }) {
           ? {
               href: target.href,
               onClick: navigate,
-              'aria-label': `Selengkapnya: ${card.title}`,
+              'aria-label': `Learn more: ${card.title}`,
               ...(target.kind === 'external'
                 ? { target: '_blank', rel: 'noopener noreferrer' }
                 : {}),
@@ -58,7 +58,7 @@ export default function AboutCard({ card, onNavigate, preview = false }) {
           {card.description}
         </p>
         <span className="relative inline-flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.14em] text-[#0284c7]">
-          Selengkapnya
+          Learn More
           <ArrowRight
             size={14}
             aria-hidden="true"

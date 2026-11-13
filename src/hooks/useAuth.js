@@ -105,7 +105,7 @@ export function useAuth() {
 
   return {
     user,
-    role: user?.role || 'guest', // Expose role langsung, default ke guest jika belum login
+    role: (typeof user?.role === 'object' ? user?.role?.name : user?.role) || '', // Role pengguna yang login; kosong jika belum login/tidak tersedia
     token,
     loading,
     error,

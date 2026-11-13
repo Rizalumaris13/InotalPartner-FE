@@ -1,11 +1,9 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import {
   LayoutDashboard,
   Building2,
   Users,
   Settings,
-  LogOut,
-  Key,
   Pin,
   ChevronDown,
   House,
@@ -33,7 +31,7 @@ export const navItems = [
       { key: 'listPost',   label: 'List Post' },
     ],
   },
-  { key: 'contact',   label: 'Kontak',        icon: MessageSquare,   roles: ['super_admin','admin','operator'] },
+  { key: 'contact',   label: 'Contact',       icon: MessageSquare,   roles: ['super_admin','admin','operator'] },
   { 
     key: 'slider',      
     label: 'Home Page',        
@@ -50,10 +48,10 @@ export const navItems = [
       },
       {
         key: 'homeTestimonialGroup',
-        label: 'Testimoni',
+        label: 'Testimonials',
         items: [
-          { key: 'createTestimonial', label: 'Create Testimoni' },
-          { key: 'listTestimonial',   label: 'List Testimoni' },
+          { key: 'createTestimonial', label: 'Create Testimonial' },
+          { key: 'listTestimonial',   label: 'List Testimonials' },
         ],
       },
       JOIN_SECTION_NAV_GROUP,
@@ -81,36 +79,36 @@ export const navItems = [
       },
       {
         key: 'aboutVideoGroup',
-        label: 'Video Profil',
+        label: 'Profile Video',
         items: [
           { key: 'createVideo', label: 'Create Video' },
-          { key: 'listVideo',   label: 'List Video' },
-          { key: 'videoSetting', label: 'Deskripsi Video' },
+          { key: 'listVideo',   label: 'List Videos' },
+          { key: 'videoSetting', label: 'Video Description' },
           {
             key: 'aboutHighlightGroup',
-            label: 'Poin Video',
+            label: 'Video Highlights',
             isSubGroup: true,
             items: [
-              { key: 'createVideoHighlight', label: 'Tambah Poin Video' },
-              { key: 'listVideoHighlight',   label: 'Daftar Poin Video' },
+              { key: 'createVideoHighlight', label: 'Add Video Highlight' },
+              { key: 'listVideoHighlight',   label: 'List Video Highlights' },
             ],
           },
         ],
       },
       {
         key: 'aboutStatisticGroup',
-        label: 'Statistik',
+        label: 'Statistics',
         items: [
-          { key: 'createStatistic', label: 'Tambah Statistik' },
-          { key: 'listStatistic',   label: 'List Statistik' },
+          { key: 'createStatistic', label: 'Add Statistic' },
+          { key: 'listStatistic',   label: 'List Statistics' },
         ],
       },
       {
         key: 'aboutSettingsGroup',
-        label: 'Tim Kami',
+        label: 'Our Team',
         items: [
-          { key: 'createAbout', label: 'Tambah Tim Kami' },
-          { key: 'listAbout',   label: 'List Tim Kami' },
+          { key: 'createAbout', label: 'Add Team Member' },
+          { key: 'listAbout',   label: 'List Team Members' },
         ],
       },
       {
@@ -123,30 +121,30 @@ export const navItems = [
       },
       {
         key: 'aboutJoinInvitationGroup',
-        label: 'Ajakan Bergabung',
+        label: 'Join Invitation',
         items: [
-          { key: 'createJoinInvitation', label: 'Tambah Ajakan Bergabung' },
-          { key: 'listJoinInvitation',   label: 'Daftar Ajakan Bergabung' },
+          { key: 'createJoinInvitation', label: 'Add Join Invitation' },
+          { key: 'listJoinInvitation',   label: 'List Join Invitations' },
         ],
       },
     ],
   },
   {
     key: 'partners',
-    label: 'Kemitraan',
+    label: 'Partnership',
     icon: Handshake,
     roles: ['super_admin', 'admin'],
   },
   {
     key: 'aboutCards',
-    label: 'Kartu Tentang',
+    label: 'About Cards',
     icon: LayoutList,
     roles: ['super_admin', 'admin'],
   },
   { key: 'users',     label: 'Users',         icon: Users,           roles: ['super_admin','admin'] },
   {
     key: 'pageBanners',
-    label: 'Banner Halaman',
+    label: 'Page Banners',
     icon: PanelsTopLeft,
     roles: PAGE_BANNER_ROLES,
     subItems: PAGE_BANNER_PAGES.map((page) => ({
@@ -158,19 +156,7 @@ export const navItems = [
 ]
 
 export default function Sidebar({ user, activeNav, setActiveNav, sidebarOpen, setSidebarOpen, onNavigate }) {
-  const [showUserMenu, setShowUserMenu] = useState(false)
-  const [openDropdowns, setOpenDropdowns] = useState({}) 
-  const menuRef = useRef(null)
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setShowUserMenu(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+  const [openDropdowns, setOpenDropdowns] = useState({})
 
   useEffect(() => {
     navItems.forEach(item => {
@@ -222,18 +208,11 @@ export default function Sidebar({ user, activeNav, setActiveNav, sidebarOpen, se
     })
   }, [activeNav])
 
-  const handleLogout = () => {
-    localStorage.removeItem('inotal_token')
-    localStorage.removeItem('inotal_user')
-    onNavigate?.('login')
-  }
-
   const toggleDropdown = (key) => {
     setOpenDropdowns(prev => ({ ...prev, [key]: !prev[key] }))
   }
 
-  const initials = user?.full_name?.slice(0, 2).toUpperCase() || '??'
-  const currentRole = (typeof user?.role === 'object' ? user?.role?.name : user?.role) || 'guest'
+  const currentRole = (typeof user?.role === 'object' ? user?.role?.name : user?.role) || ''
   const allowedNavItems = navItems.filter(item => item.roles.includes(currentRole))
 
   return (
@@ -456,50 +435,6 @@ export default function Sidebar({ user, activeNav, setActiveNav, sidebarOpen, se
             )
           })}
         </nav>
-
-        {/* User pill + Logout */}
-        <div className="px-3 py-4 border-t border-sky-100 shrink-0 space-y-2 relative" ref={menuRef}>
-          {showUserMenu && (
-            <div className="absolute bottom-[110px] left-3 w-52 bg-white border border-gray-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] rounded-xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-200">
-              <button
-                onClick={() => {
-                  setActiveNav('changePassword')
-                  setShowUserMenu(false)
-                  setSidebarOpen(false)
-                }}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-sky-50 hover:text-sky-600 transition-colors"
-              >
-                <Key size={16} />
-                Change Password
-              </button>
-            </div>
-          )}
-
-          <div 
-            onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-sky-50 cursor-pointer hover:bg-sky-100 transition-colors"
-          >
-            <div className="w-8 h-8 rounded-full bg-sky-500 flex items-center justify-center shrink-0">
-              <span className="text-white text-xs font-bold">{initials}</span>
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold text-gray-800 truncate" title={user?.full_name}>
-                {user?.full_name || 'Guest User'}
-              </p>
-              <p className="text-[10px] text-gray-400 truncate" title={user?.email}>
-                {user?.email || 'No email available'}
-              </p>
-            </div>
-          </div>
-
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 hover:text-red-600 transition-all"
-          >
-            <LogOut size={17} />
-            Log Out
-          </button>
-        </div>
       </aside>
     </>
   )

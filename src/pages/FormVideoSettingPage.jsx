@@ -18,7 +18,7 @@ export default function FormVideoSettingPage() {
   const currentRole =
     (typeof user?.role === 'object' ? user?.role?.name : user?.role) ||
     role ||
-    'guest'
+    ''
   const isAdmin = currentRole === 'admin' || currentRole === 'super_admin'
 
   // Form states

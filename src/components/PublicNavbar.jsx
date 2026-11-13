@@ -5,14 +5,14 @@ export default function PublicNavbar({ onNavigate, activePage, scrolled }) {
   const [menuOpen, setMenuOpen] = useState(false)
 
   const navLinks = [
-    { label: 'Beranda',     page: 'landing'      },
-    { label: 'Tentang',     page: 'tentang'      },
-    { label: 'Program',     page: 'program'      },
-    { label: 'Event',       page: 'event'        },
-    { label: 'Berita',      page: 'berita'       },
-    { label: 'Artikel',     page: 'artikel'      },
+    { label: 'Home',        page: 'landing'      },
+    { label: 'About',       page: 'tentang'      },
+    { label: 'Programs',    page: 'program'      },
+    { label: 'Events',      page: 'event'        },
+    { label: 'News',        page: 'berita'       },
+    { label: 'Articles',    page: 'artikel'      },
     { label: 'Partnership', page: 'partnership'  },
-    { label: 'Kontak',      page: 'kontak'       },
+    { label: 'Contact',     page: 'kontak'       },
   ]
 
   const handleNav = (page) => {
@@ -78,13 +78,13 @@ export default function PublicNavbar({ onNavigate, activePage, scrolled }) {
                 : 'text-gray-600 border-gray-200 hover:text-sky-500 hover:border-sky-300'
             }`}
           >
-            Masuk
+            Sign In
           </button>
           <button
             onClick={() => handleNav('register')}
             className="text-sm bg-sky-500 hover:bg-sky-600 text-white px-5 py-2.5 rounded-lg transition-colors font-semibold"
           >
-            Gabung
+            Join Us
           </button>
         </div>
 
@@ -117,13 +117,13 @@ export default function PublicNavbar({ onNavigate, activePage, scrolled }) {
             onClick={() => handleNav('login')}
             className="text-left text-gray-700 font-medium"
           >
-            Masuk
+            Sign In
           </button>
           <button
             onClick={() => handleNav('register')}
             className="bg-sky-500 text-white px-4 py-2 rounded-lg w-fit font-semibold text-sm"
           >
-            Gabung
+            Join Us
           </button>
         </div>
       )}

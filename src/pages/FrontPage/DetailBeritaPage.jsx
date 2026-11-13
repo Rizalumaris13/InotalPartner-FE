@@ -21,7 +21,7 @@ function formatDate(iso) {
 
   try {
     return new Date(iso).toLocaleDateString(
-      'id-ID',
+      'en-US',
       {
         day: 'numeric',
         month: 'long',
@@ -40,7 +40,7 @@ function formatTime(iso) {
 
   try {
     return new Date(iso).toLocaleTimeString(
-      'id-ID',
+      'en-US',
       {
         hour: '2-digit',
         minute: '2-digit',
@@ -55,7 +55,7 @@ function formatTime(iso) {
 
 
 function formatViewCount(value) {
-  return Number(value || 0).toLocaleString('id-ID')
+  return Number(value || 0).toLocaleString('en-US')
 }
 
 
@@ -112,7 +112,7 @@ export default function DetailBeritaPage({
 
         if (!slug) {
           setNews(null)
-          setError('Slug berita tidak valid.')
+          setError('Invalid news URL.')
           return
         }
 
@@ -130,10 +130,10 @@ export default function DetailBeritaPage({
           setNews(null)
           setError(
             detailError?.response?.status === 404
-              ? 'Berita yang Anda cari tidak ditemukan.'
+              ? 'The news article you are looking for was not found.'
               : detailError?.response?.data?.message ||
                 detailError?.message ||
-                'Gagal mengambil berita.'
+                'Failed to load news.'
           )
           setAllNews([])
           return
@@ -144,7 +144,7 @@ export default function DetailBeritaPage({
 
         if (!found || typeof found !== 'object' || Array.isArray(found)) {
           setNews(null)
-          setError('Format data detail berita tidak sesuai.')
+          setError('Invalid news detail data format.')
           setAllNews([])
           return
         }
@@ -436,7 +436,7 @@ export default function DetailBeritaPage({
           <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-[#0284c7]" />
 
           <p className="text-sm text-gray-400">
-            Memuat berita...
+            Loading news...
           </p>
         </div>
       </div>
@@ -467,7 +467,7 @@ export default function DetailBeritaPage({
 
         <div className="max-w-4xl mx-auto px-6 py-24 text-center">
           <h1 className="text-3xl font-extrabold mb-4">
-            Berita Tidak Ditemukan
+            News Not Found
           </h1>
 
           <p className="text-gray-500 mb-8">
@@ -482,7 +482,7 @@ export default function DetailBeritaPage({
           >
             <ArrowLeft size={16} />
 
-            Kembali ke Berita
+            Back to News
           </button>
         </div>
       </div>
@@ -551,7 +551,7 @@ export default function DetailBeritaPage({
                 className="inline-flex items-center gap-2 text-[#0c4a6e]/70 hover:text-[#0284c7] text-sm font-semibold mb-6 transition"
             >
                 <ArrowLeft size={16} />
-                Kembali ke Berita
+                Back to News
             </button>
 
            
@@ -701,14 +701,14 @@ export default function DetailBeritaPage({
                     Related Posts
                 </h2>
                 <p className="text-white/60 text-xs mt-1">
-                    Artikel lain yang mungkin menarik
+                    Other articles you might find interesting
                 </p>
                 </div>
 
                 <div>
                 {relatedPosts.length === 0 ? (
                     <div className="p-5 text-sm text-gray-400">
-                    Belum ada artikel terkait.
+                    No related articles yet.
                     </div>
                 ) : (
                     relatedPosts.map((post) => {

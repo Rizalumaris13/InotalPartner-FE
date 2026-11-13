@@ -6,17 +6,17 @@ export default function PartnershipPage({ onNavigate }) {
         <PublicNavbar onNavigate={onNavigate} activePage="partnership" />
         <div className="mx-3 mt-6 flex flex-col items-center rounded-2xl border border-sky-100 bg-sky-50/40 px-6 py-12 text-center md:mx-4">
             <p className="text-sky-500 text-xs font-bold tracking-[0.2em] uppercase mb-3">
-                Halaman
+                Page
             </p>
             <h1 className="text-4xl font-extrabold text-gray-900 mb-4">Partnership</h1>
             <p className="text-gray-400 text-base max-w-sm">
-                Halaman ini sedang dalam pengembangan.
+                This page is currently under development.
             </p>
             <button
                 onClick={() => onNavigate?.('landing')}
                 className="mt-8 text-sm text-sky-500 hover:text-sky-600 font-semibold transition-colors"
             >
-                ← Kembali ke Beranda
+                ← Back to Home
             </button>
         </div>
     </div>

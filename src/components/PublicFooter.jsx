@@ -1,13 +1,18 @@
 import { MapPin } from 'lucide-react'
 import { socialLinks } from '../data/socialLinks'
 
-const footerProfil = ['Tentang', 'Visi Misi', 'Kemitraan', 'Event']
+const footerProfil = [
+  { label: 'About', target: 'tentang' },
+  { label: 'Vision & Mission', target: 'tentang' },
+  { label: 'Partnership', target: 'partnership' },
+  { label: 'Events', target: 'event' },
+]
 
 const footerPartnership = [
-  'Bergabung Sekarang',
-  'InotalHub Tech',
-  'Group & Div',
-  'Kontak',
+  { label: 'Join Now', target: 'register' },
+  { label: 'InotalHub Tech', target: 'partnership' },
+  { label: 'Group & Div', target: 'partnership' },
+  { label: 'Contact', target: 'kontak' },
 ]
 
 export default function PublicFooter({ onNavigate }) {
@@ -31,7 +36,7 @@ export default function PublicFooter({ onNavigate }) {
             </div>
 
             <p className="text-sm leading-relaxed text-gray-400 mb-5">
-              Menyatukan potensi bangsa tuk kebangkitan emas 2045
+              Empowering the nation's potential for the 2045 golden generation.
             </p>
 
             <div className="flex items-start gap-2 text-sm text-gray-500 mb-2">
@@ -40,7 +45,7 @@ export default function PublicFooter({ onNavigate }) {
                 className="mt-0.5 flex-shrink-0 text-sky-500"
               />
               <span>
-                Jl. Placeholder No. 123, Jakarta Selatan,
+                Jl. Placeholder No. 123, South Jakarta,
                 DKI Jakarta 12345
               </span>
             </div>
@@ -49,21 +54,21 @@ export default function PublicFooter({ onNavigate }) {
           {/* Navigasi profil */}
           <div>
             <h4 className="text-white font-semibold text-sm mb-5 tracking-wider uppercase">
-              Profil
+              Profile
             </h4>
 
             <ul className="space-y-3">
               {footerProfil.map((item) => (
-                <li key={item}>
+                <li key={item.label}>
                   <a
                     href="#"
                     onClick={(e) => {
                       e.preventDefault()
-                      onNavigate?.(item)
+                      onNavigate?.(item.target)
                     }}
                     className="text-sm text-gray-500 hover:text-sky-400 transition-colors"
                   >
-                    {item}
+                    {item.label}
                   </a>
                 </li>
               ))}
@@ -78,16 +83,16 @@ export default function PublicFooter({ onNavigate }) {
 
             <ul className="space-y-3">
               {footerPartnership.map((item) => (
-                <li key={item}>
+                <li key={item.label}>
                   <a
                     href="#"
                     onClick={(e) => {
                       e.preventDefault()
-                      onNavigate?.(item)
+                      onNavigate?.(item.target)
                     }}
                     className="text-sm text-gray-500 hover:text-sky-400 transition-colors"
                   >
-                    {item}
+                    {item.label}
                   </a>
                 </li>
               ))}
@@ -149,7 +154,7 @@ export default function PublicFooter({ onNavigate }) {
               href="#"
               className="hover:text-sky-400 transition-colors"
             >
-              Kebijakan Privasi
+              Privacy Policy
             </a>
 
             <span>|</span>
@@ -158,7 +163,7 @@ export default function PublicFooter({ onNavigate }) {
               href="#"
               className="hover:text-sky-400 transition-colors"
             >
-              Kebijakan Pengguna
+              Terms of Service
             </a>
           </div>
 

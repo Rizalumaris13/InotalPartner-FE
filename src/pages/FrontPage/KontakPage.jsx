@@ -13,28 +13,28 @@ import PublicFooter from '../../components/PublicFooter'
 const contactInfo = [
   {
     icon: MapPin,
-    title: 'Alamat',
-    lines: ['Bandung, Jawa Barat', 'Indonesia'],
+    title: 'Address',
+    lines: ['Bandung, West Java', 'Indonesia'],
   },
   {
     icon: Phone,
-    title: 'Telepon',
-    lines: ['(022) 1234 5678', 'Senin – Jumat, 08.30 – 17.00 WIB'],
+    title: 'Phone',
+    lines: ['(022) 1234 5678', 'Monday – Friday, 08:30 – 17:00 WIB'],
   },
   {
     icon: Mail,
     title: 'Email',
-    lines: ['halo@inotalpartner.id', 'Dibalas dalam 1×24 jam kerja'],
+    lines: ['halo@inotalpartner.id', 'Responded within 1×24 business hours'],
   },
 ]
 
 // Pilihan topik pesan (menggantikan "department" di referensi Sandbox)
 const topics = [
-  'Kemitraan & Partnership',
-  'Program & Kolaborasi',
-  'Event & Komunitas',
-  'Media & Publikasi',
-  'Lainnya',
+  'Partnership & Collaboration',
+  'Programs & Initiatives',
+  'Events & Community',
+  'Media & Press',
+  'General Inquiry',
 ]
 
 // Peta Bandung (OpenStreetMap, tanpa API key)
@@ -45,9 +45,9 @@ const MAP_EMBED_URL =
 
 // Angka sementara — ganti dengan data resmi INOTAL kalau sudah ada
 const stats = [
-  { value: '120+', label: 'Mitra terdaftar' },
-  { value: '24', label: 'Program kolaborasi' },
-  { value: '15+', label: 'Kota di Indonesia' },
+  { value: '120+', label: 'Registered Partners' },
+  { value: '24', label: 'Collaborative Programs' },
+  { value: '15+', label: 'Cities in Indonesia' },
 ]
 
 const initialForm = { firstName: '', lastName: '', email: '', topic: '', message: '' }
@@ -56,11 +56,11 @@ const initialForm = { firstName: '', lastName: '', email: '', topic: '', message
 // buat kontrak API, aturan panjang mengikuti SubmitContactRequest di BE.
 function validate(form) {
   const errors = {}
-  if (form.firstName.trim().length < 2) errors.firstName = 'Nama depan minimal 2 karakter'
-  if (form.lastName.trim().length < 2) errors.lastName = 'Nama belakang minimal 2 karakter'
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) errors.email = 'Format email tidak valid'
-  if (!form.topic) errors.topic = 'Pilih topik pesan'
-  if (form.message.trim().length < 10) errors.message = 'Pesan minimal 10 karakter'
+  if (form.firstName.trim().length < 2) errors.firstName = 'First name must be at least 2 characters'
+  if (form.lastName.trim().length < 2) errors.lastName = 'Last name must be at least 2 characters'
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) errors.email = 'Invalid email address'
+  if (!form.topic) errors.topic = 'Please select a topic'
+  if (form.message.trim().length < 10) errors.message = 'Message must be at least 10 characters'
   return errors
 }
 
@@ -150,7 +150,7 @@ export default function KontakPage({ onNavigate }) {
     } catch (err) {
       setStatus('error')
       const msg = err.response?.data?.message
-      setServerError(msg || 'Gagal mengirim pesan. Coba lagi sebentar lagi.')
+      setServerError(msg || 'Failed to send message. Please try again shortly.')
     }
   }
 
@@ -162,14 +162,14 @@ export default function KontakPage({ onNavigate }) {
       </div>
 
       {/* Page header */}
-      <PublicPageBanner pageKey="kontak" breadcrumb="Hubungi Kami" onNavigate={onNavigate} />
+      <PublicPageBanner pageKey="kontak" breadcrumb="Contact Us" onNavigate={onNavigate} />
 
       {/* Kartu: peta (kiri) + info kontak (kanan) */}
       <section className="relative z-10 max-w-7xl mx-auto px-6 mt-6">
         <div className="rounded-2xl overflow-hidden shadow-xl shadow-[#0c4a6e]/10 border border-sky-100 bg-white grid md:grid-cols-2">
           <div className="min-h-[280px] md:min-h-[440px]">
             <iframe
-              title="Peta lokasi INOTAL Partner — Bandung"
+              title="INOTAL Partner location map — Bandung"
               src={MAP_EMBED_URL}
               className="w-full h-full block"
               loading="lazy"
@@ -198,10 +198,10 @@ export default function KontakPage({ onNavigate }) {
         <div className="max-w-3xl mx-auto">
           <Reveal>
             <h2 className="text-3xl md:text-[42px] font-extrabold tracking-tight text-center mb-3">
-              Tinggalkan Pesan
+              Drop Us a Line
             </h2>
             <p className="text-[15px] text-gray-500 text-center mb-12">
-              Isi formulir di bawah dan tim kami akan segera menghubungi kamu kembali.
+              Fill out the form below and our team will get in touch with you shortly.
             </p>
           </Reveal>
 
@@ -211,17 +211,17 @@ export default function KontakPage({ onNavigate }) {
                 <span className="inline-flex w-16 h-16 rounded-full bg-green-50 text-green-500 items-center justify-center mb-5">
                   <CheckCircle2 size={32} />
                 </span>
-                <h3 className="text-2xl font-extrabold mb-2">Pesan terkirim!</h3>
+                <h3 className="text-2xl font-extrabold mb-2">Message sent!</h3>
                 <p className="text-[14.5px] text-gray-500 leading-relaxed max-w-sm mx-auto mb-7">
-                  Terima kasih sudah menghubungi kami. Tim INOTAL Partner
-                  akan membalas dalam 1×24 jam kerja.
+                  Thank you for reaching out. The INOTAL Partner team
+                  will respond within 1×24 business hours.
                 </p>
                 <button
                   onClick={() => setStatus('idle')}
                   className="inline-flex items-center gap-2 rounded-full bg-sky-500 hover:bg-sky-600 text-white text-sm font-semibold px-6 py-3 transition-colors"
                 >
                   <MessageSquare size={16} />
-                  Kirim pesan lain
+                  Send another message
                 </button>
               </div>
             ) : (
@@ -237,28 +237,28 @@ export default function KontakPage({ onNavigate }) {
                   <div className="grid md:grid-cols-2 gap-5">
                     <div>
                       <label htmlFor="firstName" className="block text-[13px] font-semibold mb-1.5">
-                        Nama Depan <span className="text-red-400">*</span>
+                        First Name <span className="text-red-400">*</span>
                       </label>
                       <input
                         id="firstName"
                         type="text"
                         value={form.firstName}
                         onChange={update('firstName')}
-                        placeholder="Nama depan kamu"
+                        placeholder="Your first name"
                         className={`${inputClass} ${errors.firstName ? 'border-red-300' : 'border-sky-100'}`}
                       />
                       {errors.firstName && <p className="text-[12.5px] text-red-500 mt-1.5">{errors.firstName}</p>}
                     </div>
                     <div>
                       <label htmlFor="lastName" className="block text-[13px] font-semibold mb-1.5">
-                        Nama Belakang <span className="text-red-400">*</span>
+                        Last Name <span className="text-red-400">*</span>
                       </label>
                       <input
                         id="lastName"
                         type="text"
                         value={form.lastName}
                         onChange={update('lastName')}
-                        placeholder="Nama belakang kamu"
+                        placeholder="Your last name"
                         className={`${inputClass} ${errors.lastName ? 'border-red-300' : 'border-sky-100'}`}
                       />
                       {errors.lastName && <p className="text-[12.5px] text-red-500 mt-1.5">{errors.lastName}</p>}
@@ -275,14 +275,14 @@ export default function KontakPage({ onNavigate }) {
                         type="email"
                         value={form.email}
                         onChange={update('email')}
-                        placeholder="nama@email.com"
+                        placeholder="name@email.com"
                         className={`${inputClass} ${errors.email ? 'border-red-300' : 'border-sky-100'}`}
                       />
                       {errors.email && <p className="text-[12.5px] text-red-500 mt-1.5">{errors.email}</p>}
                     </div>
                     <div>
                       <label htmlFor="topic" className="block text-[13px] font-semibold mb-1.5">
-                        Topik <span className="text-red-400">*</span>
+                        Topic <span className="text-red-400">*</span>
                       </label>
                       <select
                         id="topic"
@@ -290,7 +290,7 @@ export default function KontakPage({ onNavigate }) {
                         onChange={update('topic')}
                         className={`${inputClass} appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:18px] bg-[right_0.9rem_center] bg-no-repeat pr-10 ${errors.topic ? 'border-red-300' : 'border-sky-100'}`}
                       >
-                        <option value="">Pilih topik pesan</option>
+                        <option value="">Select a topic</option>
                         {topics.map((t) => <option key={t} value={t}>{t}</option>)}
                       </select>
                       {errors.topic && <p className="text-[12.5px] text-red-500 mt-1.5">{errors.topic}</p>}
@@ -299,14 +299,14 @@ export default function KontakPage({ onNavigate }) {
 
                   <div>
                     <label htmlFor="message" className="block text-[13px] font-semibold mb-1.5">
-                      Pesan <span className="text-red-400">*</span>
+                      Message <span className="text-red-400">*</span>
                     </label>
                     <textarea
                       id="message"
                       rows={5}
                       value={form.message}
                       onChange={update('message')}
-                      placeholder="Ceritakan kebutuhan atau pertanyaan kamu..."
+                      placeholder="Tell us about your needs or questions..."
                       className={`${inputClass} resize-y ${errors.message ? 'border-red-300' : 'border-sky-100'}`}
                     />
                     {errors.message && <p className="text-[12.5px] text-red-500 mt-1.5">{errors.message}</p>}
@@ -321,17 +321,17 @@ export default function KontakPage({ onNavigate }) {
                       {status === 'submitting' ? (
                         <>
                           <Loader2 size={17} className="animate-spin" />
-                          Mengirim...
+                          Sending...
                         </>
                       ) : (
                         <>
                           <Send size={16} />
-                          Kirim Pesan
+                          Send Message
                         </>
                       )}
                     </button>
                     <p className="text-[12.5px] text-gray-400 mt-4">
-                      <span className="text-red-400">*</span> kolom wajib diisi. Data kamu hanya dipakai untuk membalas pesan ini.
+                      <span className="text-red-400">*</span> required fields. Your information will only be used to respond to this inquiry.
                     </p>
                   </div>
                 </form>
@@ -345,8 +345,8 @@ export default function KontakPage({ onNavigate }) {
       <section className="border-y border-sky-100 bg-[#F8FAFC]">
         <div className="max-w-7xl mx-auto px-6 py-14 md:py-16 text-center">
           <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight mb-10">
-            Sudah dipercaya 120+ mitra.{' '}
-            <span className="text-[#0284c7]">Bergabunglah dan kembangkan bisnismu.</span>
+            Trusted by 120+ partners.{' '}
+            <span className="text-[#0284c7]">Join us and accelerate your growth.</span>
           </h2>
           <div className="grid grid-cols-3 gap-6 max-w-2xl mx-auto">
             {stats.map(({ value, label }) => (

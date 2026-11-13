@@ -6,17 +6,17 @@ export default function InformasiPage({ onNavigate }) {
         <PublicNavbar onNavigate={onNavigate} activePage="informasi" />
         <div className="flex flex-col items-center justify-center min-h-screen text-center px-6">
             <p className="text-sky-500 text-xs font-bold tracking-[0.2em] uppercase mb-3">
-                Halaman
+                Page
             </p>
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-4">Informasi</h1>
+            <h1 className="text-4xl font-extrabold text-gray-900 mb-4">Information</h1>
             <p className="text-gray-400 text-base max-w-sm">
-                Halaman ini sedang dalam pengembangan.
+                This page is currently under development.
             </p>
             <button
                 onClick={() => onNavigate?.('landing')}
                 className="mt-8 text-sm text-sky-500 hover:text-sky-600 font-semibold transition-colors"
             >
-                ← Kembali ke Beranda
+                ← Back to Home
             </button>
         </div>
     </div>

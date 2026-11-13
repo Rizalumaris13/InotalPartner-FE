@@ -32,7 +32,7 @@ export default function PublicAboutCards({ onNavigate }) {
             status: 'preview',
             cards: previewAboutCards,
             message:
-              'Pratinjau kartu lama — endpoint /api/public/about/cards belum tersedia. Isi dan URL contoh belum dikelola admin.',
+              'About cards preview — /api/public/about/cards endpoint is not yet available.',
           })
         } else {
           setResult({
@@ -40,7 +40,7 @@ export default function PublicAboutCards({ onNavigate }) {
             cards: [],
             message: getAboutCardErrorMessage(
               error,
-              'Kartu Tentang belum dapat dimuat. Coba lagi nanti.',
+              'Failed to load About cards. Please try again later.',
             ),
           })
         }
@@ -53,7 +53,7 @@ export default function PublicAboutCards({ onNavigate }) {
   if (result.status === 'loading')
     return (
       <p role="status" className="py-12 text-center text-sm text-gray-500">
-        Memuat kartu Tentang...
+        Loading About cards...
       </p>
     )
   if (result.status === 'error')
@@ -70,7 +70,7 @@ export default function PublicAboutCards({ onNavigate }) {
           }}
           className="mt-4 rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700"
         >
-          Coba Lagi
+          Try Again
         </button>
       </div>
     )
@@ -93,7 +93,7 @@ export default function PublicAboutCards({ onNavigate }) {
         </div>
       ) : (
         <p className="py-12 text-center text-sm text-gray-500">
-          Belum ada kartu pada bagian ini.
+          No cards available in this section.
         </p>
       )}
     </>

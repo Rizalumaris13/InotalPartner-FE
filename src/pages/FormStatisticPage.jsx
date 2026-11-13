@@ -197,13 +197,9 @@ export default function FormStatisticPage({
             <ChevronRight size={12} />
             <span className="text-gray-900 font-semibold">{isEditing ? 'Edit Statistik' : 'Tambah Statistik'}</span>
           </div>
-          <h1 className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-            <BarChart3 className="text-sky-600" size={24} />
-            {isEditing ? 'Edit Statistik Beranda' : 'Tambah Statistik Beranda'}
+          <h1 className="text-xl font-bold text-gray-900 tracking-tight">
+            Tambah Statistik Beranda
           </h1>
-          <p className="text-xs text-gray-500 mt-1">
-            Atur angka, label, dan ikon statistik yang muncul mengambang pada hero Beranda publik.
-          </p>
         </div>
 
         <button
@@ -249,246 +245,275 @@ export default function FormStatisticPage({
         </div>
       )}
 
-      {/* Form Card */}
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden"
-      >
-        <div className="p-6 sm:p-8 space-y-6">
-          {loadingDetail ? (
-            <div className="py-12 text-center text-gray-400 text-sm">
-              Memuat detail statistik...
-            </div>
-          ) : (
-            <>
-              {/* Pratinjau Tampilan Floating Card */}
-              <div className="p-5 rounded-2xl bg-slate-900 text-white flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-sky-400 flex items-center gap-1.5 mb-1">
-                    <BarChart3 size={14} />
-                    Pratinjau Kartu Hero
-                  </span>
-                  <p className="text-xs text-gray-300">
-                    Bentuk kartu mengambang yang akan dilihat oleh pengunjung di landing page.
-                  </p>
+      {/* Form & Preview Content */}
+      <form onSubmit={handleSubmit}>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+          {/* KOLOM KIRI: FORM INPUT */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col justify-between">
+            <div className="p-6 sm:p-8 space-y-6">
+              {loadingDetail ? (
+                <div className="py-12 text-center text-gray-400 text-sm">
+                  Memuat detail statistik...
                 </div>
-                <div className="flex flex-col items-center bg-white rounded-2xl shadow-xl px-6 py-4 min-w-[130px] border border-white/20">
-                  <span className="text-sky-500 text-3xl font-extrabold leading-none flex items-baseline">
-                    {statisticValue || '0'}
-                    {statisticSuffix && (
-                      <span className="text-sky-400 text-2xl font-bold ml-0.5">{statisticSuffix}</span>
-                    )}
-                  </span>
-                  <span className="text-gray-600 text-xs font-semibold tracking-wide mt-2 text-center flex items-center gap-1.5">
-                    <DynamicStatisticIcon name={icon} size={13} className="text-sky-500" />
-                    {title ? title.toUpperCase() : 'LABEL STATISTIK'}
-                  </span>
-                </div>
-              </div>
+              ) : (
+                <>
+                  {/* Grid Baris 1: Judul & Ikon */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">
+                        Judul / Label Statistik <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder="Contoh: ALUMNI, PARTNERSHIP, TAHUN BERDIRI"
+                        maxLength={150}
+                        required
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none transition"
+                      />
+                      <p className="text-[11px] text-gray-400 mt-1.5">
+                        Label singkat yang mendeskripsikan angka (maksimal 150 karakter).
+                      </p>
+                    </div>
 
-              {/* Grid Baris 1: Judul & Ikon */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">
-                    Judul / Label Statistik <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Contoh: ALUMNI, PARTNERSHIP, TAHUN BERDIRI"
-                    maxLength={150}
-                    required
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none transition"
-                  />
-                  <p className="text-[11px] text-gray-400 mt-1.5">
-                    Label singkat yang mendeskripsikan angka (maksimal 150 karakter).
-                  </p>
-                </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">
+                        Pilihan Ikon Lucide <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative" ref={iconDropdownRef}>
+                        <button
+                          type="button"
+                          onClick={() => setIsIconDropdownOpen((prev) => !prev)}
+                          className={`w-full flex items-center justify-between pl-3 pr-4 py-2.5 rounded-xl border bg-white text-left transition focus:ring-2 focus:ring-sky-100 outline-none ${
+                            isIconDropdownOpen ? 'border-sky-500 ring-2 ring-sky-100' : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3 overflow-hidden">
+                            <div className="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
+                              <DynamicStatisticIcon name={icon} size={18} />
+                            </div>
+                            <span className="text-sm font-medium text-gray-800 truncate">
+                              {STATISTIC_ICON_OPTIONS.find((opt) => opt.value === icon)?.label || icon}
+                            </span>
+                          </div>
+                          <ChevronDown
+                            size={16}
+                            className={`text-gray-400 shrink-0 ml-2 transition-transform duration-200 ${
+                              isIconDropdownOpen ? 'rotate-180 text-sky-600' : ''
+                            }`}
+                          />
+                        </button>
 
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">
-                    Pilihan Ikon Lucide <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative" ref={iconDropdownRef}>
-                    <button
-                      type="button"
-                      onClick={() => setIsIconDropdownOpen((prev) => !prev)}
-                      className={`w-full flex items-center justify-between pl-3 pr-4 py-2.5 rounded-xl border bg-white text-left transition focus:ring-2 focus:ring-sky-100 outline-none ${
-                        isIconDropdownOpen ? 'border-sky-500 ring-2 ring-sky-100' : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 overflow-hidden">
-                        <div className="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
-                          <DynamicStatisticIcon name={icon} size={18} />
-                        </div>
-                        <span className="text-sm font-medium text-gray-800 truncate">
-                          {STATISTIC_ICON_OPTIONS.find((opt) => opt.value === icon)?.label || icon}
+                        {isIconDropdownOpen && (
+                          <div className="absolute z-30 left-0 right-0 mt-1.5 max-h-64 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-xl py-1 animate-in fade-in zoom-in-95 duration-100">
+                            {STATISTIC_ICON_OPTIONS.map((opt) => {
+                              const isSelected = opt.value === icon
+                              return (
+                                <button
+                                  key={opt.value}
+                                  type="button"
+                                  onClick={() => {
+                                    setIcon(opt.value)
+                                    setIsIconDropdownOpen(false)
+                                  }}
+                                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-left text-sm transition ${
+                                    isSelected
+                                      ? 'bg-sky-50/80 text-sky-900 font-semibold'
+                                      : 'text-gray-700 hover:bg-gray-50'
+                                  }`}
+                                >
+                                  <div
+                                    className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                                      isSelected
+                                        ? 'bg-sky-500 text-white shadow-xs'
+                                        : 'bg-gray-100 text-gray-600'
+                                    }`}
+                                  >
+                                    <DynamicStatisticIcon name={opt.value} size={17} />
+                                  </div>
+                                  <span className="truncate">{opt.label}</span>
+                                </button>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-gray-400 mt-1.5">
+                        Pilih ikon dari daftar ikon Lucide yang mewakili statistik ini.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Grid Baris 2: Nilai Angka & Suffix */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">
+                        Nilai / Angka Statistik <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={statisticValue}
+                        onChange={(e) => setStatisticValue(e.target.value)}
+                        placeholder="Contoh: 2021, 95, 7, 19, 25.5"
+                        maxLength={30}
+                        required
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-semibold text-gray-800 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none transition"
+                      />
+                      <p className="text-[11px] text-gray-400 mt-1.5">
+                        Angka utama yang ditampilkan berukuran besar.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">
+                        Suffix / Satuan (Opsional)
+                      </label>
+                      <input
+                        type="text"
+                        value={statisticSuffix}
+                        onChange={(e) => setStatisticSuffix(e.target.value)}
+                        placeholder="Contoh: +, %, K, Thn (kosongkan jika tidak ada)"
+                        maxLength={20}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-semibold text-gray-800 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none transition"
+                      />
+                      <p className="text-[11px] text-gray-400 mt-1.5">
+                        Karakter yang melekat setelah angka (misal tanda '+' pada '95+').
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Baris 3: Deskripsi / Catatan Tambahan */}
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">
+                      Keterangan / Deskripsi (Opsional)
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Catatan atau rincian tambahan terkait pencapaian ini..."
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none transition resize-y"
+                    />
+                  </div>
+
+                  {/* Grid Baris 4: Urutan & Status */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-gray-100">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">
+                        Urutan Tampilan (Display Order)
+                      </label>
+                      <input
+                        type="number"
+                        value={displayOrder}
+                        onChange={(e) => setDisplayOrder(e.target.value)}
+                        min={0}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none transition"
+                      />
+                      <p className="text-[11px] text-gray-400 mt-1.5">
+                        Angka lebih kecil tampil lebih dulu (0, 1, 2, ...).
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">
+                        Status Publikasi
+                      </label>
+                      <div className="flex items-center gap-3 mt-3">
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isActive}
+                            onChange={(e) => setIsActive(e.target.checked)}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500" />
+                        </label>
+                        <span className="text-sm font-semibold text-gray-700">
+                          {isActive ? 'Aktif (Tampil di Publik)' : 'Nonaktif (Disembunyikan)'}
                         </span>
                       </div>
-                      <ChevronDown
-                        size={16}
-                        className={`text-gray-400 shrink-0 ml-2 transition-transform duration-200 ${
-                          isIconDropdownOpen ? 'rotate-180 text-sky-600' : ''
-                        }`}
-                      />
-                    </button>
+                      <p className="text-[11px] text-gray-400 mt-1.5">
+                        Hanya data dengan status aktif yang akan ditampilkan di halaman publik Beranda.
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
 
-                    {isIconDropdownOpen && (
-                      <div className="absolute z-30 left-0 right-0 mt-1.5 max-h-64 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-xl py-1 animate-in fade-in zoom-in-95 duration-100">
-                        {STATISTIC_ICON_OPTIONS.map((opt) => {
-                          const isSelected = opt.value === icon
-                          return (
-                            <button
-                              key={opt.value}
-                              type="button"
-                              onClick={() => {
-                                setIcon(opt.value)
-                                setIsIconDropdownOpen(false)
-                              }}
-                              className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-left text-sm transition ${
-                                isSelected
-                                  ? 'bg-sky-50/80 text-sky-900 font-semibold'
-                                  : 'text-gray-700 hover:bg-gray-50'
-                              }`}
-                            >
-                              <div
-                                className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                                  isSelected
-                                    ? 'bg-sky-500 text-white shadow-xs'
-                                    : 'bg-gray-100 text-gray-600'
-                                }`}
-                              >
-                                <DynamicStatisticIcon name={opt.value} size={17} />
-                              </div>
-                              <span className="truncate">{opt.label}</span>
-                            </button>
-                          )
-                        })}
-                      </div>
+            {/* Form Actions Footer */}
+            <div className="px-6 md:px-8 py-4 bg-gray-50/80 border-t border-gray-100 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={onOpenList}
+                disabled={saving}
+                className="px-5 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 text-sm font-semibold hover:bg-gray-50 transition shadow-sm disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                disabled={saving || loadingDetail || !isAdmin}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#0284c7] text-white text-sm font-bold hover:bg-[#0369a1] transition shadow-md shadow-sky-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Save size={16} />
+                {saving ? 'Menyimpan...' : isEditing ? 'Simpan Perubahan' : 'Buat Statistik'}
+              </button>
+            </div>
+          </div>
+
+          {/* KOLOM KANAN: PRATINJAU KARTU STATISTIK (SESUAI HALAMAN TENTANG) */}
+          <aside className="space-y-4">
+            <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+              <div className="mb-4">
+                <span className="text-xs font-bold uppercase tracking-wider text-sky-600 flex items-center gap-1.5">
+                  <BarChart3 size={15} />
+                  Pratinjau Kartu Statistik
+                </span>
+                <p className="text-xs text-gray-500 mt-1">
+                  Bentuk kartu statistik yang tampil pada halaman publik Tentang Kami.
+                </p>
+              </div>
+
+              {/* Area pratinjau kartu statistik publik */}
+              <div className="p-4 sm:p-6 rounded-2xl bg-[#F8FAFC] border border-gray-200/80 flex items-center justify-center">
+                <div className="w-full max-w-[340px]">
+                  <div className="group relative h-full bg-white border border-gray-200/80 rounded-xl px-7 py-8 overflow-hidden shadow-sm hover:border-[#0284c7]/50 transition-colors duration-300">
+                    <span className="absolute left-0 top-0 h-full w-1 bg-sky-500 origin-top scale-y-0 transition-transform duration-500 group-hover:scale-y-100" />
+                    
+                    {/* Header kartu: Ikon di kiri, display order dua digit di kanan */}
+                    <div className="flex items-start justify-between gap-4 mb-6">
+                      <span className="inline-flex w-12 h-12 rounded-lg bg-[#F0F4F8] text-[#0284c7] items-center justify-center transition-colors duration-500 group-hover:bg-[#0284c7] group-hover:text-white">
+                        <DynamicStatisticIcon name={icon} size={23} />
+                      </span>
+                      <span className="text-[11px] font-bold tracking-[0.14em] text-gray-400 select-none">
+                        {String(Math.max(0, parseInt(displayOrder, 10) || 0)).padStart(2, '0')}
+                      </span>
+                    </div>
+
+                    {/* Angka & suffix */}
+                    <p className="text-[34px] leading-none font-extrabold tracking-tight tabular-nums mb-2 text-gray-900 break-words">
+                      {statisticValue !== '' ? statisticValue : '0'}
+                      {statisticSuffix && <span className="text-[#0284c7]">{statisticSuffix}</span>}
+                    </p>
+
+                    {/* Label statistik */}
+                    <p className="font-bold text-[14.5px] mb-2 text-gray-900 break-words">
+                      {title.trim() ? title : 'Label Statistik'}
+                    </p>
+
+                    {/* Deskripsi (sembunyikan jika kosong) */}
+                    {description && description.trim() && (
+                      <p className="text-[12.5px] leading-relaxed text-[#364e52] break-words">
+                        {description}
+                      </p>
                     )}
                   </div>
-                  <p className="text-[11px] text-gray-400 mt-1.5">
-                    Pilih ikon dari daftar ikon Lucide yang mewakili statistik ini.
-                  </p>
                 </div>
               </div>
-
-              {/* Grid Baris 2: Nilai Angka & Suffix */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">
-                    Nilai / Angka Statistik <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={statisticValue}
-                    onChange={(e) => setStatisticValue(e.target.value)}
-                    placeholder="Contoh: 2021, 95, 7, 19, 25.5"
-                    maxLength={30}
-                    required
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-semibold text-gray-800 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none transition"
-                  />
-                  <p className="text-[11px] text-gray-400 mt-1.5">
-                    Angka utama yang ditampilkan berukuran besar.
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">
-                    Suffix / Satuan (Opsional)
-                  </label>
-                  <input
-                    type="text"
-                    value={statisticSuffix}
-                    onChange={(e) => setStatisticSuffix(e.target.value)}
-                    placeholder="Contoh: +, %, K, Thn (kosongkan jika tidak ada)"
-                    maxLength={20}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-semibold text-gray-800 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none transition"
-                  />
-                  <p className="text-[11px] text-gray-400 mt-1.5">
-                    Karakter yang melekat setelah angka (misal tanda '+' pada '95+').
-                  </p>
-                </div>
-              </div>
-
-              {/* Baris 3: Deskripsi / Catatan Tambahan */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">
-                  Keterangan / Deskripsi (Opsional)
-                </label>
-                <textarea
-                  rows={3}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Catatan atau rincian tambahan terkait pencapaian ini..."
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none transition resize-y"
-                />
-              </div>
-
-              {/* Grid Baris 4: Urutan & Status */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-gray-100">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">
-                    Urutan Tampilan (Display Order)
-                  </label>
-                  <input
-                    type="number"
-                    value={displayOrder}
-                    onChange={(e) => setDisplayOrder(e.target.value)}
-                    min={0}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none transition"
-                  />
-                  <p className="text-[11px] text-gray-400 mt-1.5">
-                    Angka lebih kecil tampil lebih dulu (0, 1, 2, ...).
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">
-                    Status Publikasi
-                  </label>
-                  <div className="flex items-center gap-3 mt-3">
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={isActive}
-                        onChange={(e) => setIsActive(e.target.checked)}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500" />
-                    </label>
-                    <span className="text-sm font-semibold text-gray-700">
-                      {isActive ? 'Aktif (Tampil di Publik)' : 'Nonaktif (Disembunyikan)'}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-gray-400 mt-1.5">
-                    Hanya data dengan status aktif yang akan ditampilkan di halaman publik Beranda.
-                  </p>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Form Actions Footer */}
-        <div className="px-6 md:px-8 py-4 bg-gray-50/80 border-t border-gray-100 flex items-center justify-end gap-3">
-          <button
-            type="button"
-            onClick={onOpenList}
-            disabled={saving}
-            className="px-5 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 text-sm font-semibold hover:bg-gray-50 transition shadow-sm disabled:opacity-50"
-          >
-            Batal
-          </button>
-          <button
-            type="submit"
-            disabled={saving || loadingDetail || !isAdmin}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#0284c7] text-white text-sm font-bold hover:bg-[#0369a1] transition shadow-md shadow-sky-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Save size={16} />
-            {saving ? 'Menyimpan...' : isEditing ? 'Simpan Perubahan' : 'Buat Statistik'}
-          </button>
+            </section>
+          </aside>
         </div>
       </form>
     </div>

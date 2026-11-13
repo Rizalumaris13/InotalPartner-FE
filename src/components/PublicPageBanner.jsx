@@ -54,7 +54,7 @@ export default function PublicPageBanner({ pageKey, breadcrumb, onNavigate }) {
                 onClick={() => onNavigate?.('landing')}
                 className="text-white/80 hover:text-white transition-colors"
               >
-                Beranda
+                Home
               </button>
               <ChevronRight size={14} className="text-white/40" />
               <span className="text-sky-400 font-semibold">{breadcrumb}</span>

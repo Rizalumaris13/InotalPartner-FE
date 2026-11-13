@@ -41,7 +41,7 @@ function Reveal({ children, delay = 0, className = '' }) {
 }
 
 function formatDate(iso) {
-  return new Date(iso).toLocaleDateString('id-ID', {
+  return new Date(iso).toLocaleDateString('en-US', {
     day: 'numeric', month: 'long', year: 'numeric',
   })
 }
@@ -121,7 +121,7 @@ export default function ArtikelPage({ onNavigate }) {
       </div>
 
       {/* ============ PAGE HEADER ============ */}
-      <PublicPageBanner pageKey="artikel" breadcrumb="Artikel" onNavigate={onNavigate} />
+      <PublicPageBanner pageKey="artikel" breadcrumb="Articles" onNavigate={onNavigate} />
 
       {/* ============ CONTENT ============ */}
       <section className="max-w-7xl mx-auto px-6 py-16 md:py-20">
@@ -138,7 +138,7 @@ export default function ArtikelPage({ onNavigate }) {
                   type="text"
                   value={query}
                   onChange={(e) => { setQuery(e.target.value); setPage(1) }}
-                  placeholder="Cari judul, isi, tag, atau penulis..."
+                  placeholder="Search title, content, tag, or author..."
                   className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 bg-white text-[14px] placeholder:text-gray-400 focus:outline-none focus:border-[#0284c7] focus:ring-2 focus:ring-[#0284c7]/15 transition-all"
                 />
               </div>
@@ -146,7 +146,7 @@ export default function ArtikelPage({ onNavigate }) {
                 onClick={() => setSortNewest(v => !v)}
                 className="shrink-0 inline-flex items-center gap-2 px-4 py-3.5 rounded-xl border border-gray-200 bg-white text-[13.5px] font-semibold text-[#0c4a6e] hover:border-[#0284c7]/50 transition-colors"
               >
-                {sortNewest ? 'Terbaru' : 'Terlama'}
+                {sortNewest ? 'Latest' : 'Oldest'}
                 <ChevronDown size={15} className={sortNewest ? 'rotate-180 transition-transform' : 'transition-transform'} />
               </button>
             </div>
@@ -163,7 +163,7 @@ export default function ArtikelPage({ onNavigate }) {
                       : 'bg-[#F0F4F8] text-[#0c4a6e] hover:bg-[#0284c7]/10'
                   }`}
                 >
-                  {c.name}
+                  {c.name === 'Semua' ? 'All' : c.name}
                   <span className={`ml-1.5 text-[11px] ${category === c.name ? 'text-white/70' : 'text-gray-400'}`}>
                     {c.count}
                   </span>
@@ -174,22 +174,22 @@ export default function ArtikelPage({ onNavigate }) {
             {/* section header */}
             <div className="flex items-baseline justify-between mb-8">
               <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">
-                {category === 'Semua' ? 'Artikel Terbaru' : category}
+                {category === 'Semua' ? 'Latest Articles' : category}
               </h2>
-              <span className="text-[12px] text-gray-400">{filtered.length} tulisan</span>
+              <span className="text-[12px] text-gray-400">{filtered.length} {filtered.length === 1 ? 'article' : 'articles'}</span>
             </div>
 
             {visible.length === 0 ? (
               <div className="text-center py-20 border border-dashed border-gray-200 rounded-2xl">
-                <p className="text-[#0c4a6e] font-bold text-lg mb-2">Nggak ada hasilnya</p>
+                <p className="text-[#0c4a6e] font-bold text-lg mb-2">No results found</p>
                 <p className="text-[14px] text-[#364e52] mb-6">
-                  Coba kata kunci lain atau ganti kategorinya.
+                  Try other keywords or choose a different category.
                 </p>
                 <button
                   onClick={() => { setQuery(''); setCategory('Semua'); setPage(1) }}
                   className="text-[13.5px] font-bold text-[#0284c7] hover:text-[#0c4a6e] transition-colors"
                 >
-                  Reset semua filter
+                  Reset all filters
                 </button>
               </div>
             ) : (
@@ -216,12 +216,12 @@ export default function ArtikelPage({ onNavigate }) {
                           <span className="w-1 h-1 rounded-full bg-gray-300" />
                           <span className="inline-flex items-center gap-1">
                             <Clock size={12} />
-                            {a.readTime} menit
+                            {a.readTime} min read
                           </span>
                           <span className="w-1 h-1 rounded-full bg-gray-300" />
                           <span className="inline-flex items-center gap-1">
                             <Eye size={12} />
-                            {a.views.toLocaleString('id-ID')}
+                            {a.views.toLocaleString('en-US')}
                           </span>
                         </div>
                         <h3 className="text-[19px] md:text-[21px] font-extrabold leading-[1.3] mb-3 group-hover:text-[#0284c7] transition-colors line-clamp-2">
@@ -238,7 +238,7 @@ export default function ArtikelPage({ onNavigate }) {
                         <div className="mt-auto flex items-center justify-between">
                           <span className="text-[12.5px] font-semibold text-gray-400">{a.author}</span>
                           <span className="inline-flex items-center gap-1.5 text-[12.5px] font-bold text-[#0284c7]">
-                            Baca
+                            Read More
                             <ArrowRight size={13} className="transition-transform duration-300 group-hover:translate-x-1" />
                           </span>
                         </div>
@@ -290,7 +290,7 @@ export default function ArtikelPage({ onNavigate }) {
               <div className="bg-[#0c4a6e] px-5 py-3.5 flex items-center gap-2">
                 <TrendingUp size={16} className="text-sky-400" />
                 <h3 className="text-white font-extrabold text-[13px] tracking-[0.12em] uppercase">
-                  TrENDING
+                  Trending
                 </h3>
               </div>
               <div className="divide-y divide-gray-100">
@@ -306,10 +306,10 @@ export default function ArtikelPage({ onNavigate }) {
                       <div className="flex items-center gap-2 text-[11px] text-gray-400 mt-1.5">
                         <span className="inline-flex items-center gap-1">
                           <Eye size={11} />
-                          {a.views.toLocaleString('id-ID')}
+                          {a.views.toLocaleString('en-US')}
                         </span>
                         <span className="w-1 h-1 rounded-full bg-gray-300" />
-                        <span>{a.readTime} mnt</span>
+                        <span>{a.readTime} min read</span>
                       </div>
                     </div>
                   </div>
@@ -321,7 +321,7 @@ export default function ArtikelPage({ onNavigate }) {
             <div className="bg-white border border-gray-200/80 rounded-xl overflow-hidden">
               <div className="bg-[#0c4a6e] px-5 py-3.5 flex items-center gap-2">
                 <span className="text-white font-extrabold text-[13px] tracking-[0.12em] uppercase">
-                  Kategori
+                  Categories
                 </span>
               </div>
               <div className="p-5 space-y-3">
@@ -343,7 +343,7 @@ export default function ArtikelPage({ onNavigate }) {
               <div className="bg-[#0c4a6e] px-5 py-3.5 flex items-center gap-2">
                 <Tag size={16} className="text-sky-400" />
                 <h3 className="text-white font-extrabold text-[13px] tracking-[0.12em] uppercase">
-                  Tag Populer
+                  Popular Tags
                 </h3>
               </div>
               <div className="p-5 flex flex-wrap gap-2">
@@ -364,15 +364,15 @@ export default function ArtikelPage({ onNavigate }) {
             <div className="bg-[#0284c7] text-white rounded-xl overflow-hidden relative">
               <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
               <div className="relative p-6">
-                <h3 className="font-extrabold text-lg mb-2">Mau Diskusi Bersama Kami?</h3>
+                <h3 className="font-extrabold text-lg mb-2">Want to Discuss with Us?</h3>
                 <p className="text-[13px] text-white/80 leading-relaxed mb-5">
-                  Punya topik yang menarik untuk dibahas? Kirim ide lo ke tim kami.
+                  Have an interesting topic to share? Send your ideas to our team.
                 </p>
                 <button
                   onClick={() => onNavigate?.('partnership')}
                   className="inline-flex items-center gap-2 bg-white text-[#0284c7] font-bold text-[13px] px-4 py-2.5 rounded-lg transition-transform hover:translateY(-1px)"
                 >
-                  Kirim Usulan
+                  Submit Proposal
                   <ArrowRight size={14} />
                 </button>
               </div>

@@ -202,7 +202,7 @@ function VideoProfile({ video, loading }) {
       <div className="relative rounded-2xl overflow-hidden bg-[#0c4a6e]/90 aspect-[16/10] w-full flex items-center justify-center">
         <div className="text-center text-white/80 space-y-3">
           <div className="w-8 h-8 border-2 border-sky-400 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs font-medium tracking-wide">Memuat video profil...</p>
+          <p className="text-xs font-medium tracking-wide">Loading profile video...</p>
         </div>
       </div>
     )
@@ -224,9 +224,9 @@ function VideoProfile({ video, loading }) {
               <line x1="17" y1="7" x2="22" y2="7" />
             </svg>
           </div>
-          <p className="text-sm font-semibold text-white">Video Profil Belum Tersedia</p>
+          <p className="text-sm font-semibold text-white">Profile Video Unavailable</p>
           <p className="text-xs text-white/60">
-            Video profil resmi sedang dalam proses pembaruan oleh tim kami.
+            The official profile video is currently being updated by our team.
           </p>
         </div>
       </div>
@@ -247,7 +247,7 @@ function VideoProfile({ video, loading }) {
             <iframe
               className="absolute inset-0 h-full w-full border-0"
               src={`https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1`}
-              title={video.title || 'Video Profil'}
+              title={video.title || 'Profile Video'}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
@@ -256,7 +256,7 @@ function VideoProfile({ video, loading }) {
               {poster ? (
                 <img
                   src={poster}
-                  alt={video.title || 'Video Profil'}
+                  alt={video.title || 'Profile Video'}
                   className="absolute inset-0 h-full w-full object-cover"
                   loading="lazy"
                 />
@@ -268,7 +268,7 @@ function VideoProfile({ video, loading }) {
               {ytId ? (
                 <button
                   onClick={() => setPlaying(true)}
-                  aria-label={`Putar video: ${video.title || 'Video Profil'}`}
+                  aria-label={`Play video: ${video.title || 'Profile Video'}`}
                   className="group absolute inset-0 flex items-center justify-center cursor-pointer"
                 >
                   <span className="absolute w-[104px] h-[104px] rounded-full border border-white/25 transition-transform duration-500 group-hover:scale-110" />
@@ -300,7 +300,7 @@ function VideoProfile({ video, loading }) {
                     {video.title}
                   </p>
                   <p className="text-white/70 text-[12.5px] mt-1 line-clamp-1">
-                    {video.description || 'Profil resmi INOTAL Partner'}
+                    {video.description || 'Official INOTAL Partner Profile'}
                   </p>
                 </div>
               </div>
@@ -313,10 +313,10 @@ function VideoProfile({ video, loading }) {
 }
 
 const impactStats = [
-  { icon: 'layers', value: 25.5, decimals: 1, suffix: 'K', label: 'Kolaborasi Dituntaskan', note: 'Proyek bersama mitra yang sampai tahap serah terima' },
-  { icon: 'users', value: 11.5, decimals: 1, suffix: 'K', label: 'Kepuasan Mitra', note: 'Dinilai tiap kuartal bersama mitra, bukan angka tebakan' },
-  { icon: 'award', value: 1.5, decimals: 1, suffix: 'K', label: 'Penghargaan', note: 'Pengakuan industri dan komunitas teknologi' },
-  { icon: 'link', value: 4.5, decimals: 1, suffix: 'K', label: 'Mitra Strategis', note: 'Perusahaan, komunitas kampus, dan talenta digital' },
+  { icon: 'layers', value: 25.5, decimals: 1, suffix: 'K', label: 'Completed Collaborations', note: 'Joint projects delivered successfully with partners' },
+  { icon: 'users', value: 11.5, decimals: 1, suffix: 'K', label: 'Partner Satisfaction', note: 'Evaluated quarterly with partners, not guessed figures' },
+  { icon: 'award', value: 1.5, decimals: 1, suffix: 'K', label: 'Awards & Honors', note: 'Recognition from industry leaders and tech communities' },
+  { icon: 'link', value: 4.5, decimals: 1, suffix: 'K', label: 'Strategic Partners', note: 'Enterprises, campus ecosystems, and digital talents' },
 ]
 
 function useCountUp(target, decimals, active) {
@@ -397,7 +397,7 @@ export default function TentangPage({ onNavigate }) {
   const intro = useAboutIntro()
 
   // ─── DATA DINAMIS DARI BACKEND ─────────────────────────────────────────────
-  const [teamSectionTitle, setTeamSectionTitle] = useState('Orang-orang di Balik Ekosistem Ini.')
+  const [teamSectionTitle, setTeamSectionTitle] = useState('The Minds Behind This Ecosystem.')
   const [teamMembers, setTeamMembers] = useState([])
   const [teamLoading, setTeamLoading] = useState(true)
 
@@ -412,18 +412,18 @@ export default function TentangPage({ onNavigate }) {
   const [profileVideo, setProfileVideo] = useState(null)
   const [videoLoading, setVideoLoading] = useState(true)
   const [videoSetting, setVideoSetting] = useState({
-    section_label: 'Video Profil',
-    section_title: 'Lihat sendiri bagaimana kolaborasi bekerja.',
+    section_label: 'Profile Video',
+    section_title: 'See How Collaboration Really Works.',
     section_description:
-      'Keripitannya kami tampilkan apa adanya: obrolan panjang, request yang berubah, sampai proses panjang yang berakhir sesuai rencana. Video ini rekaman, bukan brosur.',
+      'We show things as they are: in-depth discussions, evolving requests, and the journey that leads to success as planned. This video is our real story, not a brochure.',
   })
   const [videoHighlightsList, setVideoHighlightsList] = useState([])
 
   // CTA State (Dinamis dari GET /api/public/home/cta)
   const defaultCTA = {
-    section_label: 'Kesempatan Terbuka',
-    title: 'Bangun masa depan bersama kami.',
-    button_text: 'Mulai Sekarang',
+    section_label: 'Open Opportunities',
+    title: 'Build the future together with us.',
+    button_text: 'Get Started',
     button_url: '/register',
   }
   const [ctaData, setCtaData] = useState(defaultCTA)
@@ -482,7 +482,7 @@ export default function TentangPage({ onNavigate }) {
             setFaqError(
               faqRes.reason?.response?.data?.message ||
               faqRes.reason?.message ||
-              'Gagal memuat pertanyaan FAQ saat ini.'
+              'Failed to load FAQ items at this time.'
             )
           }
 
@@ -573,7 +573,7 @@ export default function TentangPage({ onNavigate }) {
         console.error('Gagal mengambil data Tentang Kami:', err)
         if (isMounted) {
           setTeamMembers(team)
-          setFaqError('Gagal memuat pertanyaan FAQ saat ini.')
+          setFaqError('Failed to load FAQ items at this time.')
         }
       } finally {
         if (isMounted) {
@@ -625,14 +625,14 @@ export default function TentangPage({ onNavigate }) {
       <div className="h-[68px]">
         <PublicNavbar onNavigate={onNavigate} activePage="tentang" scrolled={scrolled} />
       </div>
-      <PublicPageBanner pageKey="tentang" breadcrumb="Tentang Kami" onNavigate={onNavigate} />
+      <PublicPageBanner pageKey="tentang" breadcrumb="About Us" onNavigate={onNavigate} />
       <section className="max-w-7xl mx-auto px-6 py-20 md:py-28">
         <div className="mb-14">
           <Reveal>
-            <SubTitle>Pilih yang Terbaik</SubTitle>
+            <SubTitle>Choose the Best</SubTitle>
             <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight leading-[1.15] max-w-2xl">
-              Memberdayakan Bisnis dengan{' '}
-              <span className="text-[#0284c7]">Keahlian.</span>
+              Empowering Businesses with{' '}
+              <span className="text-[#0284c7]">Expertise.</span>
             </h2>
           </Reveal>
         </div>
@@ -647,9 +647,9 @@ export default function TentangPage({ onNavigate }) {
 
           <div className="pt-6 lg:pt-0">
             <Reveal>
-              <SubTitle>{videoSetting.section_label || 'Video Profil'}</SubTitle>
+              <SubTitle>{videoSetting.section_label || 'Profile Video'}</SubTitle>
               <h2 className="text-3xl md:text-[42px] font-extrabold tracking-tight leading-[1.18] mb-6">
-                {renderTeamHeading(videoSetting.section_title || 'Lihat sendiri bagaimana kolaborasi bekerja.')}
+                {renderTeamHeading(videoSetting.section_title || 'See How Collaboration Really Works.')}
               </h2>
               {videoSetting.section_description && (
                 <p className="text-[14.5px] leading-relaxed text-[#364e52] max-w-lg whitespace-pre-line">
@@ -688,7 +688,7 @@ export default function TentangPage({ onNavigate }) {
       <AboutIntroSection intro={intro} onNavigate={onNavigate} />
       <section className="max-w-7xl mx-auto px-6 py-20 md:py-28">
         <Reveal className="text-center max-w-xl mx-auto mb-14">
-          <SubTitle>Tim Kami</SubTitle>
+          <SubTitle>Our Team</SubTitle>
           <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight leading-[1.15]">
             {renderTeamHeading(teamSectionTitle)}
           </h2>
@@ -742,32 +742,32 @@ export default function TentangPage({ onNavigate }) {
         <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-[0.85fr_1.4fr] gap-12 lg:gap-16 items-start">
 
           <Reveal>
-            <SubTitle>Pertanyaan Umum</SubTitle>
+            <SubTitle>Frequently Asked Questions</SubTitle>
             <h2 className="text-3xl md:text-[42px] font-extrabold tracking-tight leading-[1.18] mb-5">
-              Butuh Bantuan? <span className="text-[#0284c7]">Mulai di Sini.</span>
+              Need Help? <span className="text-[#0284c7]">Start Here.</span>
             </h2>
             <p className="text-[14.5px] leading-relaxed text-[#364e52] mb-8 max-w-sm">
-              Tidak menemukan jawabanmu? Kirim pertanyaan lewat halaman Partnership —
-              kami balas satu per satu, tanpa template.
+              Didn't find what you were looking for? Send your question via our Partnership page —
+              we reply personally to each inquiry.
             </p>
-            <PillButton onClick={() => onNavigate?.('partnership')}>Ajukan Pertanyaan</PillButton>
+            <PillButton onClick={() => onNavigate?.('partnership')}>Ask a Question</PillButton>
           </Reveal>
 
           <div className="space-y-4">
             {faqLoading ? (
               <div className="p-8 text-center bg-white/60 border border-gray-200/80 rounded-xl text-gray-500">
                 <div className="w-7 h-7 border-2 border-[#0284c7] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-                <p className="text-[13.5px] font-medium text-[#364e52]">Memuat pertanyaan umum...</p>
+                <p className="text-[13.5px] font-medium text-[#364e52]">Loading FAQs...</p>
               </div>
             ) : faqError ? (
               <div className="p-6 text-center bg-white/80 border border-red-200/80 rounded-xl text-red-600">
                 <p className="text-[13.5px] font-medium mb-1">{faqError}</p>
-                <p className="text-[12px] text-gray-500">Silakan muat ulang halaman beberapa saat lagi.</p>
+                <p className="text-[12px] text-gray-500">Please reload the page in a moment.</p>
               </div>
             ) : faqList.length === 0 ? (
               <div className="p-8 text-center bg-white/60 border border-gray-200/80 rounded-xl text-gray-500">
-                <p className="text-[14px] font-medium text-[#364e52]">Belum ada pertanyaan yang tersedia saat ini.</p>
-                <p className="text-[12.5px] text-gray-400 mt-1">Gunakan tombol di samping untuk mengajukan pertanyaan Anda.</p>
+                <p className="text-[14px] font-medium text-[#364e52]">No questions available at this time.</p>
+                <p className="text-[12.5px] text-gray-400 mt-1">Use the button on the left to submit your question.</p>
               </div>
             ) : (
               faqList.map((f, i) => {

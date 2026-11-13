@@ -24,7 +24,7 @@ export default function FormTeamMemberPage({
   onOpenList,
 }) {
   const { role, user } = useAuth()
-  const currentRole = (typeof user?.role === 'object' ? user?.role?.name : user?.role) || role || 'guest'
+  const currentRole = (typeof user?.role === 'object' ? user?.role?.name : user?.role) || role || ''
   const isAdmin = currentRole === 'admin' || currentRole === 'super_admin'
 
   const isEditing = !!editingMember

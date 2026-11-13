@@ -702,7 +702,7 @@ export default function LandingPage({ onNavigate }) {
               <button
                 onClick={heroPrev}
                 className="absolute left-4 md:left-10 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white/10 hover:bg-white/25 border border-white/20 flex items-center justify-center transition-all"
-                aria-label="Sebelumnya"
+                aria-label="Previous"
               >
                 <ChevronLeft size={22} className="text-white" />
               </button>
@@ -754,7 +754,7 @@ export default function LandingPage({ onNavigate }) {
               <button
                 onClick={heroNext}
                 className="absolute right-4 md:right-10 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white/10 hover:bg-white/25 border border-white/20 flex items-center justify-center transition-all"
-                aria-label="Berikutnya"
+                aria-label="Next"
               >
                 <ChevronRight size={22} className="text-white" />
               </button>
@@ -764,14 +764,14 @@ export default function LandingPage({ onNavigate }) {
 
         {heroLoading && (
           <div className="relative z-10 text-white/80 text-lg">
-            Memuat slider...
+            Loading slider...
           </div>
         )}
 
         {!heroLoading && heroSlides.length === 0 && (
           <div className="relative z-10 max-w-xl px-6 text-center">
             <h1 className="text-4xl md:text-6xl font-extrabold text-white leading-tight drop-shadow-lg">
-              {heroError ? 'Slider belum tersedia' : 'Selamat Datang'}
+              {heroError ? 'Slider unavailable' : 'Welcome'}
             </h1>
             {heroError && (
               <p className="mt-4 text-white/70">{heroError}</p>
@@ -794,7 +794,7 @@ export default function LandingPage({ onNavigate }) {
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-10">
             <h2 className="text-3xl font-extrabold text-gray-900">
-              Event Update
+              Event Updates
             </h2>
 
             <div className="flex gap-2">
@@ -818,7 +818,7 @@ export default function LandingPage({ onNavigate }) {
 
           {eventsLoading && (
             <div className="flex items-center justify-center py-20">
-              <p className="text-gray-400">Memuat event...</p>
+              <p className="text-gray-400">Loading events...</p>
             </div>
           )}
 
@@ -830,7 +830,7 @@ export default function LandingPage({ onNavigate }) {
 
           {!eventsLoading && !eventsError && eventItems.length === 0 && (
             <div className="flex items-center justify-center py-20">
-              <p className="text-gray-400">Belum ada event yang dipublikasikan.</p>
+              <p className="text-gray-400">No events published yet.</p>
             </div>
           )}
 
@@ -855,7 +855,7 @@ export default function LandingPage({ onNavigate }) {
                       />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">
-                        Tidak ada gambar
+                        No image available
                       </div>
                     )}
 
@@ -885,7 +885,7 @@ export default function LandingPage({ onNavigate }) {
                     </div>
 
                     <button className="absolute bottom-6 right-6 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold px-6 py-2.5 rounded-full transition-colors duration-300 shadow-md">
-                      Lihat
+                      View
                     </button>
                   </div>
                 ))}
@@ -901,7 +901,7 @@ export default function LandingPage({ onNavigate }) {
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-10">
             <h2 className="text-3xl font-extrabold text-gray-900">
-              Article
+              Articles
             </h2>
 
             <div className="flex gap-2">
@@ -925,7 +925,7 @@ export default function LandingPage({ onNavigate }) {
 
           {articlesLoading && (
             <div className="flex items-center justify-center py-20">
-              <p className="text-gray-400">Memuat artikel...</p>
+              <p className="text-gray-400">Loading articles...</p>
             </div>
           )}
 
@@ -937,7 +937,7 @@ export default function LandingPage({ onNavigate }) {
 
           {!articlesLoading && !articlesError && articleItems.length === 0 && (
             <div className="flex items-center justify-center py-20">
-              <p className="text-gray-400">Belum ada artikel yang dipublikasikan.</p>
+              <p className="text-gray-400">No articles published yet.</p>
             </div>
           )}
 
@@ -963,7 +963,7 @@ export default function LandingPage({ onNavigate }) {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
-                          Tidak ada gambar
+                          No image available
                         </div>
                       )}
                     </div>
@@ -997,15 +997,15 @@ export default function LandingPage({ onNavigate }) {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl lg:text-[40px] font-bold text-[#1a202c] leading-tight max-w-3xl mx-auto">
-              Ratusan partner di seluruh Indonesia,
+              Hundreds of partners across Indonesia,
               <br />
-              tumbuh bersama dengan penuh kepercayaan
+              growing together with full trust
             </h2>
           </div>
 
           {testiLoading && (
             <div className="flex items-center justify-center py-20">
-              <p className="text-gray-400">Memuat testimoni...</p>
+              <p className="text-gray-400">Loading testimonials...</p>
             </div>
           )}
 
@@ -1017,7 +1017,7 @@ export default function LandingPage({ onNavigate }) {
 
           {!testiLoading && !testiError && testimonials.length === 0 && (
             <div className="flex items-center justify-center py-20">
-              <p className="text-gray-400">Belum ada testimoni yang ditampilkan.</p>
+              <p className="text-gray-400">No testimonials available yet.</p>
             </div>
           )}
 
@@ -1093,7 +1093,7 @@ export default function LandingPage({ onNavigate }) {
                   <button
                     type="button"
                     onClick={handleTestiPrev}
-                    aria-label="Testimonial sebelumnya"
+                    aria-label="Previous testimonial"
                     className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-sky-400 hover:text-sky-500 hover:bg-sky-50 transition-all focus:outline-none focus:ring-2 focus:ring-sky-400"
                   >
                     <ChevronLeft size={18} />
@@ -1110,7 +1110,7 @@ export default function LandingPage({ onNavigate }) {
                             ? 'w-3.5 h-3.5 bg-[#6366f1]'
                             : 'w-3.5 h-3.5 bg-gray-200 hover:bg-gray-300'
                         }`}
-                        aria-label={`Ke slide ${i + 1}`}
+                        aria-label={`Go to slide ${i + 1}`}
                       />
                     ))}
                   </div>
@@ -1118,7 +1118,7 @@ export default function LandingPage({ onNavigate }) {
                   <button
                     type="button"
                     onClick={handleTestiNext}
-                    aria-label="Testimonial berikutnya"
+                    aria-label="Next testimonial"
                     className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-sky-400 hover:text-sky-500 hover:bg-sky-50 transition-all focus:outline-none focus:ring-2 focus:ring-sky-400"
                   >
                     <ChevronRight size={18} />
@@ -1164,15 +1164,15 @@ export default function LandingPage({ onNavigate }) {
         <div className="relative z-10 max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <p className="text-sky-500 text-sm font-bold tracking-[0.2em] uppercase mb-4">
-              Mengapa Bergabung
+              Why Join Us
             </p>
 
             <h2 className="text-4xl md:text-5xl font-extrabold text-[#0f172a] mb-5">
-              Saatnya Bersama Beraksi
+              Time to Take Action Together
             </h2>
 
             <p className="text-gray-500 text-lg max-w-2xl mx-auto">
-              Indonesia butuh pemuda generasi masa depan emas 2045.
+              Empowering the next generation for the 2045 golden future.
             </p>
           </div>
 
@@ -1205,7 +1205,7 @@ export default function LandingPage({ onNavigate }) {
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 pb-4 border-b border-gray-200 gap-4">
             <div>
               <h2 className="text-3xl md:text-4xl font-extrabold text-[#0f172a]">
-                Informasi & Berita
+                News & Updates
               </h2>
             </div>
 
@@ -1213,7 +1213,7 @@ export default function LandingPage({ onNavigate }) {
               href="#"
               className="flex items-center gap-1 text-sky-500 font-semibold hover:text-sky-600 transition-colors"
             >
-              Lihat semua
+              View all
               <ChevronRight size={18} />
             </a>
           </div>
@@ -1222,7 +1222,7 @@ export default function LandingPage({ onNavigate }) {
           {newsLoading && (
             <div className="flex items-center justify-center py-20">
               <p className="text-gray-400">
-                Memuat berita...
+                Loading news...
               </p>
             </div>
           )}
@@ -1242,7 +1242,7 @@ export default function LandingPage({ onNavigate }) {
             newsItems.length === 0 && (
               <div className="flex items-center justify-center py-20">
                 <p className="text-gray-400">
-                  Belum ada berita yang dipublikasikan.
+                  No news published yet.
                 </p>
               </div>
             )}
@@ -1263,7 +1263,7 @@ export default function LandingPage({ onNavigate }) {
                       />
                     ) : (
                       <div className="w-full aspect-[4/3] md:aspect-[16/9] lg:aspect-[4/3] flex items-center justify-center bg-gray-200 text-gray-400">
-                        Tidak ada gambar
+                        No image available
                       </div>
                     )}
                   </div>
@@ -1301,7 +1301,7 @@ export default function LandingPage({ onNavigate }) {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400 text-xs text-center px-2">
-                            Tidak ada gambar
+                            No image available
                           </div>
                         )}
                       </div>
@@ -1342,18 +1342,18 @@ export default function LandingPage({ onNavigate }) {
         <div className="relative z-10 max-w-6xl mx-auto bg-white rounded-[2rem] shadow-2xl border border-gray-100 flex flex-col md:flex-row items-center justify-between p-10 md:p-16 lg:p-20 gap-10">
           <div className="w-full md:w-3/5 flex flex-col items-center md:items-start text-center md:text-left">
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#0f172a] leading-tight mb-5">
-              SIAP Menjadi Bagian INOTAL Partner?
+              READY to Be Part of INOTAL Partner?
             </h2>
 
             <p className="text-gray-500 text-base md:text-lg leading-relaxed mb-8 max-w-lg">
-              Bergabunglah dengan X stakeholder dalam program digital dan transformasi masa depan
+              Join stakeholders across industries in our digital programs and future transformation initiatives.
             </p>
 
             <button
               onClick={() => onNavigate?.('register')}
               className="bg-sky-500 hover:bg-sky-600 text-white font-bold px-10 py-3.5 rounded-xl transition-all shadow-lg shadow-sky-500/30 text-sm tracking-wide"
             >
-              GABUNG SEKARANG
+              JOIN NOW
             </button>
           </div>
 

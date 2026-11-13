@@ -42,14 +42,14 @@ function Reveal({ children, delay = 0, className = '' }) {
 }
 
 const MONTHS = [
-  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
 ]
-const DAYS = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 function formatDate(iso) {
   const d = new Date(iso)
-  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`
 }
 function formatDay(iso) {
   return DAYS[new Date(iso).getDay()]
@@ -59,7 +59,7 @@ function isoParts(iso) {
   return { day: d.getDate(), month: MONTHS[d.getMonth()], weekday: formatDay(iso) }
 }
 
-const STATUS_LABEL = { open: 'Pendaftaran dibuka', full: 'Kuota penuh', past: 'Sudah lewat' }
+const STATUS_LABEL = { open: 'Registration Open', full: 'Quota Full', past: 'Past Event' }
 
 export default function EventPage({ onNavigate }) {
   const [scrolled, setScrolled] = useState(false)
@@ -127,7 +127,7 @@ export default function EventPage({ onNavigate }) {
       </div>
 
       {/* ============ PAGE HEADER ============ */}
-      <PublicPageBanner pageKey="event" breadcrumb="Event" onNavigate={onNavigate} />
+      <PublicPageBanner pageKey="event" breadcrumb="Events" onNavigate={onNavigate} />
 
       {/* ============ NEXT EVENT BANNER ============ */}
       {bannerEvent && (
@@ -157,7 +157,7 @@ export default function EventPage({ onNavigate }) {
                   <div className="hidden sm:block">
                     <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-sky-200 bg-white/10 rounded-full px-3 py-1.5">
                       <Sparkles size={12} />
-                      Event Berikutnya
+                      Next Event
                     </span>
                   </div>
                 </div>
@@ -176,7 +176,7 @@ export default function EventPage({ onNavigate }) {
                     </span>
                     <span className="inline-flex items-center gap-1.5">
                       <Users size={14} />
-                      {spotsLeft(bannerEvent)} kursi tersisa
+                      {spotsLeft(bannerEvent)} spots left
                     </span>
                   </div>
                 </div>
@@ -188,7 +188,7 @@ export default function EventPage({ onNavigate }) {
                       : 'bg-white text-[#0284c7] hover:shadow-lg hover:shadow-sky-900/20'
                   }`}
                 >
-                  {registered.has(bannerEvent.id) ? 'Terdaftar ✓' : 'Daftar Sekarang'}
+                  {registered.has(bannerEvent.id) ? 'Registered ✓' : 'Register Now'}
                   {!registered.has(bannerEvent.id) && <ArrowRight size={15} />}
                 </button>
               </div>
@@ -214,7 +214,7 @@ export default function EventPage({ onNavigate }) {
                       : 'bg-[#F0F4F8] text-[#0c4a6e] hover:bg-[#0284c7]/10'
                   }`}
                 >
-                  {c.name}
+                  {c.name === 'Semua' ? 'All' : c.name}
                   <span className={`ml-1.5 text-[11px] ${type === c.name ? 'text-white/70' : 'text-gray-400'}`}>
                     {c.count}
                   </span>
@@ -229,19 +229,19 @@ export default function EventPage({ onNavigate }) {
                 }`}
               >
                 <CalendarDays size={13} />
-                {showPast ? 'Menampilkan semua' : 'Lihat event lewat'}
+                {showPast ? 'Showing All' : 'Show Past Events'}
               </button>
             </div>
 
             {pool.length === 0 ? (
               <div className="text-center py-20 border border-dashed border-gray-200 rounded-2xl">
-                <p className="text-[#0c4a6e] font-bold text-lg mb-2">Belum ada event di kategori ini</p>
-                <p className="text-[14px] text-[#364e52] mb-6">Coba lihat kategori lain atau cek lagi nanti.</p>
+                <p className="text-[#0c4a6e] font-bold text-lg mb-2">No events in this category</p>
+                <p className="text-[14px] text-[#364e52] mb-6">Check other categories or come back later.</p>
                 <button
                   onClick={() => pick('Semua')}
                   className="text-[13.5px] font-bold text-[#0284c7] hover:text-[#0c4a6e] transition-colors"
                 >
-                  Lihat semua event
+                  View all events
                 </button>
               </div>
             ) : (
@@ -285,7 +285,7 @@ export default function EventPage({ onNavigate }) {
                             </span>
                             <span className="inline-flex items-center gap-1.5">
                               <Users size={14} />
-                              {featured.registered}/{featured.quota} peserta
+                              {featured.registered}/{featured.quota} attendees
                             </span>
                           </div>
                           <p className="text-[14.5px] leading-relaxed text-[#364e52] mb-6 line-clamp-3">
@@ -301,9 +301,9 @@ export default function EventPage({ onNavigate }) {
                                   : 'bg-[#0284c7] text-white hover:bg-[#0c4a6e]'
                               }`}
                             >
-                              {featured.status === 'past' ? 'Event sudah lewat'
-                                : registered.has(featured.id) ? 'Terdaftar ✓'
-                                : featured.status === 'full' ? 'Kuota penuh' : 'Daftar Sekarang'}
+                              {featured.status === 'past' ? 'Past event'
+                                : registered.has(featured.id) ? 'Registered ✓'
+                                : featured.status === 'full' ? 'Quota Full' : 'Register Now'}
                             </button>
                             <span className="text-[13px] font-bold text-[#0c4a6e]">
                               {featured.price}
@@ -338,12 +338,12 @@ export default function EventPage({ onNavigate }) {
                               </span>
                               {e.status === 'past' && (
                                 <span className="bg-gray-100 text-gray-500 text-[11px] font-bold uppercase tracking-[0.1em] px-2.5 py-1 rounded">
-                                  Selesai
+                                  Completed
                                 </span>
                               )}
                               {e.status === 'full' && !showPast && (
                                 <span className="bg-amber-50 text-amber-700 text-[11px] font-bold uppercase tracking-[0.1em] px-2.5 py-1 rounded">
-                                  Kuota penuh
+                                  Quota Full
                                 </span>
                               )}
                             </div>
@@ -384,10 +384,10 @@ export default function EventPage({ onNavigate }) {
                                     : 'bg-[#0284c7] text-white hover:bg-[#0c4a6e]'
                                 }`}
                               >
-                                {e.status === 'past' ? 'Sudah lewat'
-                                  : registered.has(e.id) ? 'Terdaftar ✓'
-                                  : e.status === 'full' ? 'Kuota penuh'
-                                  : 'Daftar'}
+                                {e.status === 'past' ? 'Past Event'
+                                  : registered.has(e.id) ? 'Registered ✓'
+                                  : e.status === 'full' ? 'Quota Full'
+                                  : 'Register'}
                               </button>
                               {e.status !== 'past' && (
                                 <span className="text-[12.5px] font-bold text-[#0c4a6e]">{e.price}</span>
@@ -404,7 +404,7 @@ export default function EventPage({ onNavigate }) {
                             />
                             {e.status !== 'past' && (
                               <span className="absolute bottom-2.5 right-2.5 bg-white/95 backdrop-blur rounded-md px-2 py-1 text-[11px] font-bold text-[#0c4a6e]">
-                                {spotsLeft(e)} kursi
+                                {spotsLeft(e)} spots
                               </span>
                             )}
                           </div>
@@ -444,7 +444,7 @@ export default function EventPage({ onNavigate }) {
                       <ChevronRight size={16} />
                     </button>
                     <span className="ml-3 text-[12.5px] text-gray-400">
-                      Halaman {currentPage} dari {totalPages}
+                      Page {currentPage} of {totalPages}
                     </span>
                   </div>
                 )}
@@ -460,7 +460,7 @@ export default function EventPage({ onNavigate }) {
               <div className="bg-[#0c4a6e] px-5 py-3.5 flex items-center gap-2">
                 <CalendarDays size={16} className="text-sky-400" />
                 <h3 className="text-white font-extrabold text-[13px] tracking-[0.12em] uppercase">
-                  Event Mendatang
+                  Upcoming Events
                 </h3>
               </div>
               <div className="divide-y divide-gray-100">
@@ -503,7 +503,7 @@ export default function EventPage({ onNavigate }) {
               <div className="bg-[#0c4a6e] px-5 py-3.5 flex items-center gap-2">
                 <Users size={16} className="text-sky-400" />
                 <h3 className="text-white font-extrabold text-[13px] tracking-[0.12em] uppercase">
-                  Yang Makin Penuh
+                  Filling Up Fast
                 </h3>
               </div>
               <div className="p-5 space-y-5">
@@ -532,7 +532,7 @@ export default function EventPage({ onNavigate }) {
                           />
                         </div>
                         <div className="flex items-center gap-1.5 text-[11px] text-gray-400 mt-1.5">
-                          {e.registered}/{e.quota} peserta
+                          {e.registered}/{e.quota} attendees
                         </div>
                       </div>
                     )
@@ -545,15 +545,15 @@ export default function EventPage({ onNavigate }) {
               <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
               <div className="relative p-6">
                 <Ticket size={22} className="mb-3 text-sky-200" />
-                <h3 className="font-extrabold text-lg mb-2">Mau Held di Tempat Lo?</h3>
+                <h3 className="font-extrabold text-lg mb-2">Host an Event with Us?</h3>
                 <p className="text-[13px] text-white/80 leading-relaxed mb-5">
-                  Kami buka slot workshop dan meetup untuk komunitas yang punya agenda sendiri.
+                  We offer workshop and meetup slots for communities with their own agenda.
                 </p>
                 <button
                   onClick={() => onNavigate?.('partnership')}
                   className="inline-flex items-center gap-2 bg-white text-[#0284c7] font-bold text-[13px] px-4 py-2.5 rounded-lg transition-transform hover:translateY(-1px)"
                 >
-                  Ajukan Kolaborasi
+                  Propose Collaboration
                   <ArrowRight size={14} />
                 </button>
               </div>

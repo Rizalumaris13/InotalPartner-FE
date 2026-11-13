@@ -18,7 +18,7 @@ function ServiceCard({ service }) {
 export default function HomepageServicesSection({ services = DEFAULT_HOMEPAGE_SERVICES, preview = false }) {
   const [first, second, third, fourth] = services.services
   return (
-    <section aria-label="Layanan Kami" className={`px-6 bg-white overflow-hidden ${preview ? 'py-28' : 'py-20 md:py-28'}`}>
+    <section aria-label="Our Services" className={`px-6 bg-white overflow-hidden ${preview ? 'py-28' : 'py-20 md:py-28'}`}>
       <div className={`max-w-6xl mx-auto grid items-center ${preview ? 'grid-cols-2 gap-20' : 'grid-cols-1 gap-16 lg:grid-cols-2 lg:gap-20'}`}>
         <div className={`relative mx-auto w-full h-[420px] sm:h-[480px] ${preview ? 'order-1 max-w-none' : 'order-2 lg:order-1 max-w-sm lg:max-w-none'}`}>
           <div

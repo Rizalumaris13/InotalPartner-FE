@@ -54,31 +54,31 @@ export default function PublicPartnerSection() {
           id="homepage-partners-title"
           className="text-3xl md:text-5xl font-bold text-[#1a202c]"
         >
-          Bergabunglah dengan Ekosistem Kami, Akselerasi Kemitraan Anda!
+          Join Our Ecosystem, Accelerate Your Partnerships!
         </h2>
       </div>
       <div className="max-w-5xl mx-auto px-4">
         {state.status === 'loading' ? (
           <p role="status" className="py-10 text-center text-sm text-gray-500">
-            Memuat daftar mitra...
+            Loading partners list...
           </p>
         ) : state.status === 'error' ? (
           <div
             role="status"
             className="py-10 text-center text-sm text-gray-500"
           >
-            <p>Daftar mitra belum dapat dimuat.</p>
+            <p>Unable to load partners list.</p>
             <button
               type="button"
               onClick={reload}
               className="mt-3 rounded-xl bg-sky-50 px-4 py-2 font-semibold text-sky-700 hover:bg-sky-100"
             >
-              Coba Lagi
+              Try Again
             </button>
           </div>
         ) : state.partners.length === 0 ? (
           <p role="status" className="py-10 text-center text-sm text-gray-500">
-            Belum ada mitra yang ditampilkan.
+            No partners to display at this time.
           </p>
         ) : (
           <>
@@ -87,8 +87,7 @@ export default function PublicPartnerSection() {
                 role="status"
                 className="mb-5 text-center text-xs text-gray-500"
               >
-                Pratinjau mitra contoh. Data resmi akan tampil setelah API
-                kemitraan tersedia.
+                Sample partner preview. Official data will appear once the partnership API is connected.
               </p>
             )}
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 md:gap-5">

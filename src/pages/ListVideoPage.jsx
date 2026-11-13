@@ -32,7 +32,7 @@ export default function ListVideoPage({ onAddNew, onEdit }) {
   const currentRole =
     (typeof user?.role === 'object' ? user?.role?.name : user?.role) ||
     role ||
-    'guest'
+    ''
   const isAdmin = currentRole === 'admin' || currentRole === 'super_admin'
 
   const [videos, setVideos] = useState([])

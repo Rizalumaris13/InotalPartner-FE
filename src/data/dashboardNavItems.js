@@ -37,7 +37,7 @@ export const navItems = [
   },
   {
     key: 'contact',
-    label: 'Kontak',
+    label: 'Contact',
     icon: MessageSquare,
     roles: ['super_admin', 'admin', 'operator'],
   },
@@ -53,13 +53,13 @@ export const navItems = [
   },
   {
     key: 'partners',
-    label: 'Kemitraan',
+    label: 'Partnership',
     icon: Handshake,
     roles: ['super_admin', 'admin'],
   },
   {
     key: 'aboutCards',
-    label: 'Kartu Tentang',
+    label: 'About Cards',
     icon: LayoutList,
     roles: ['super_admin', 'admin'],
   },
@@ -71,7 +71,7 @@ export const navItems = [
   },
   {
     key: 'pageBanners',
-    label: 'Banner Halaman',
+    label: 'Page Banners',
     icon: PanelsTopLeft,
     roles: PAGE_BANNER_ROLES,
     subItems: PAGE_BANNER_PAGES.map((page) => ({
