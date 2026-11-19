@@ -96,6 +96,15 @@ export function useAuth() {
     }
   }, [])
 
+  // ── Update Local User Session ─────────────────────────────────
+  const updateSessionUser = useCallback((updatedUserData) => {
+    setUser((prevUser) => {
+      const newUser = { ...prevUser, ...updatedUserData }
+      localStorage.setItem(USER_KEY, JSON.stringify(newUser))
+      return newUser
+    })
+  }, [])
+
   // ── Logout ────────────────────────────────────────────────────
   const logout = useCallback(() => {
     clearSession()
@@ -114,6 +123,7 @@ export function useAuth() {
     register,
     googleLogin,
     changePassword,
+    updateSessionUser,
     logout,
     setError,
   }

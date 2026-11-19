@@ -6,6 +6,7 @@ import ServiceDistributionChart from '../components/ServiceDistributionChart'
 import ActivePartnersList from '../components/ActivePartnersList'
 import CollaborationProjectsList from '../components/CollaborationProjectsList'
 import PlaceholderPage from '../components/PlaceholderPage'
+import ProfilePage from './ProfilePage'
 import ChangePasswordPage from './ChangePasswordPage'
 import UserPage from './UserPage'
 import CreatePost from './CreatePost'
@@ -191,6 +192,8 @@ export default function DashboardPage({ onNavigate }) {
             </div>
           </>
         )
+      case 'profile':
+        return <ProfilePage />
       case 'changePassword':
         return <ChangePasswordPage />
       case 'users':
