@@ -38,6 +38,7 @@ import HomepageJoinImagesPage from './HomepageJoinImagesPage'
 import HomepageJoinCardsPage from './HomepageJoinCardsPage'
 import HomepageServicesPage from './HomepageServicesPage'
 import { PAGE_BANNER_PAGES } from '../data/pageBanners'
+import CompanyInputPage from './CompanyInputPage'
 
 import { useAuth } from '../hooks/useAuth'
 
@@ -129,6 +130,13 @@ export default function DashboardPage({ onNavigate }) {
         )
       case 'changePassword':
         return <ChangePasswordPage />
+      case 'company':
+      case 'companyInternships':
+      case 'companyInvestments':
+      case 'companyJobs':
+      case 'companyCollaborations':
+      case 'companyProjects':
+        return <CompanyInputPage activeNav={activeNav === 'company' ? 'companyInternships' : activeNav} role={user?.role} />
       case 'users':
         return <UserPage />
 

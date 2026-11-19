@@ -7,10 +7,14 @@ import { JOIN_SECTION_NAV_GROUP } from './homepageJoinSection'
 import { ABOUT_INTRO_NAV } from './aboutIntro'
 import { HOMEPAGE_SERVICES_NAV } from './homepageServices'
 import { ABOUT_EMPOWERING_NAV } from './aboutEmpowering'
+import { COMPANY_MENUS, COMPANY_ROLES } from './companyInputs'
 
 export const navItems = [
   { key: 'dashboard', label: 'Dashboard',     icon: LayoutDashboard, roles: ['super_admin','admin','operator','guest'] },
-  { key: 'company',   label: 'Input Company', icon: Building2,       roles: ['super_admin','admin','operator'] },
+  {
+    key: 'company', label: 'Input Company', icon: Building2, roles: COMPANY_ROLES,
+    subItems: COMPANY_MENUS.map(({ key, label }) => ({ key, label })),
+  },
   {
     key: 'post',
     label: 'Post',
