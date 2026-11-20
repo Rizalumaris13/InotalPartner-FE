@@ -37,7 +37,8 @@ async function openCards(list = initialCards, role = 'admin') {
   )
   render(<DashboardPage onNavigate={() => {}} />)
   const user = userEvent.setup()
-  await user.click(screen.getByRole('button', { name: 'Kartu Tentang' }))
+  await user.click(screen.getByRole('button', { name: 'Memberdayakan Bisnis', exact: true }))
+  await user.click(screen.getByRole('button', { name: 'Kelola Kartu', exact: true }))
   return user
 }
 

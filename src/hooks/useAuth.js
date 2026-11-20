@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react'
 import { loginApi, registerApi, loginWithGoogle } from '../api/auth'
-// Tambahkan import dari api/users
 import { changePasswordApi } from '../api/users' 
 
 // Key untuk localStorage
@@ -49,7 +48,7 @@ export function useAuth() {
     } catch (err) {
       const msg = err.response?.data?.message || 'Login gagal, coba lagi'
       setError(msg)
-      throw new Error(msg)
+      throw new Error(msg, { cause: err })
     } finally {
       setLoading(false)
     }
@@ -68,7 +67,7 @@ export function useAuth() {
     } catch (err) {
       const msg = err.response?.data?.message || 'Registrasi gagal, coba lagi'
       setError(msg)
-      throw new Error(msg)
+      throw new Error(msg, { cause: err })
     } finally {
       setLoading(false)
     }
@@ -90,7 +89,7 @@ export function useAuth() {
     } catch (err) {
       const msg = err.response?.data?.message || 'Gagal mengubah password'
       setError(msg)
-      throw new Error(msg)
+      throw new Error(msg, { cause: err })
     } finally {
       setLoading(false)
     }

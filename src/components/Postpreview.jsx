@@ -1,4 +1,3 @@
-import React from "react";
 import { CalendarDays, Clock, MapPin, ImagePlus } from "lucide-react";
 
 // Komponen preview bersama: dipakai di CreatePost dan PostListPage

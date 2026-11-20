@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
@@ -61,11 +61,15 @@ function getRouteFromHash() {
   return { page: 'landing', slug: null }
 }
 
+function requiresLogin(page) {
+  const token = localStorage.getItem('inotal_token')
+  return PROTECTED_PAGES.includes(page) && !token
+}
+
 function getInitialRoute() {
   const route = getRouteFromHash()
-  const token = localStorage.getItem('inotal_token')
 
-  if (PROTECTED_PAGES.includes(route.page) && !token) {
+  if (requiresLogin(route.page)) {
     window.location.hash = 'login'
     return { page: 'login', slug: null }
   }
@@ -79,9 +83,8 @@ function App() {
   const navigate = useCallback((target) => {
     const safeTarget = String(target || 'landing').replace(/^#/, '')
     const [targetPage] = safeTarget.split('/')
-    const token = localStorage.getItem('inotal_token')
 
-    if (PROTECTED_PAGES.includes(targetPage) && !token) {
+    if (requiresLogin(targetPage)) {
       window.location.hash = 'login'
       setRoute({ page: 'login', slug: null })
       return
@@ -99,6 +102,24 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'auto' })
   }, [])
 
+  // Pasang listener dulu: callback OAuth juga mengganti hash.
+  useEffect(() => {
+    const handleHashChange = () => {
+      const nextRoute = getRouteFromHash()
+
+      if (requiresLogin(nextRoute.page)) {
+        window.location.hash = 'login'
+        setRoute({ page: 'login', slug: null })
+        return
+      }
+
+      setRoute(nextRoute)
+    }
+
+    window.addEventListener('hashchange', handleHashChange)
+    return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [])
+
   // Tangani callback Google OAuth.
   useEffect(() => {
     if (window.location.pathname !== '/auth/callback') return
@@ -110,30 +131,9 @@ function App() {
       localStorage.setItem('inotal_token', token)
       window.history.replaceState({}, '', '/')
       window.location.hash = 'dashboard'
-      setRoute({ page: 'dashboard', slug: null })
     } else {
       window.location.hash = 'login'
-      setRoute({ page: 'login', slug: null })
     }
-  }, [])
-
-  // Sinkronkan state ketika hash berubah, termasuk Back/Forward.
-  useEffect(() => {
-    const handleHashChange = () => {
-      const nextRoute = getRouteFromHash()
-      const token = localStorage.getItem('inotal_token')
-
-      if (PROTECTED_PAGES.includes(nextRoute.page) && !token) {
-        window.location.hash = 'login'
-        setRoute({ page: 'login', slug: null })
-        return
-      }
-
-      setRoute(nextRoute)
-    }
-
-    window.addEventListener('hashchange', handleHashChange)
-    return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
 
   const { page, slug } = route

@@ -10,10 +10,11 @@ import {
   Bell,
   CheckCheck,
 } from 'lucide-react'
-import { navItems } from './Sidebar'
+import { navItems } from '../data/sidebarNavItems'
 import { JOIN_SECTION_NAV_GROUP } from '../data/homepageJoinSection'
 import { ABOUT_INTRO_NAV } from '../data/aboutIntro'
 import { HOMEPAGE_SERVICES_NAV } from '../data/homepageServices'
+import { ABOUT_EMPOWERING_NAV } from '../data/aboutEmpowering'
 import { useAuth } from '../hooks/useAuth'
 
 // Data dummy awal notifikasi (aktivitas akun & kemitraan)
@@ -125,9 +126,12 @@ export default function Topbar({
   const getActiveLabel = () => {
     if (activeNav === 'dashboard') return 'Dashboard'
     if (activeNav === 'profile') return 'Profil'
-    if (activeNav === 'changePassword') return 'Ubah Password'
+    if (activeNav === 'changePassword') return 'Change Password'
     if (activeNav === 'settings') return 'Pengaturan Aplikasi'
     if (activeNav === 'formAboutMember') return 'About / Form Member'
+
+    const empoweringItem = ABOUT_EMPOWERING_NAV.subItems.find((item) => item.key === activeNav)
+    if (empoweringItem) return `${ABOUT_EMPOWERING_NAV.label} / ${empoweringItem.label}`
 
     const joinItem = JOIN_SECTION_NAV_GROUP.items.find((item) => item.key === activeNav)
     if (joinItem) return `Home Page / ${JOIN_SECTION_NAV_GROUP.label} / ${joinItem.label}`
@@ -204,13 +208,13 @@ export default function Topbar({
             </button>
 
             {notifOpen && (
-              <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white border border-gray-100 rounded-xl shadow-[0_4px_24px_-4px_rgba(0,0,0,0.12)] z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-                {/* Header Dropdown Notifikasi */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-white">
+              <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white border border-gray-100 rounded-2xl shadow-[0_4px_24px_-4px_rgba(0,0,0,0.12)] py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                {/* Header Notifikasi */}
+                <div className="px-4 py-2.5 border-b border-gray-100 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-gray-800">Notifikasi</span>
+                    <h3 className="text-xs font-bold text-gray-800">Notifikasi</h3>
                     {unreadCount > 0 && (
-                      <span className="px-1.5 py-0.5 rounded-full bg-sky-100 text-sky-700 text-[10px] font-semibold">
+                      <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-600">
                         {unreadCount} baru
                       </span>
                     )}
@@ -221,42 +225,35 @@ export default function Topbar({
                       onClick={handleMarkAllAsRead}
                       className="text-[11px] font-medium text-sky-600 hover:text-sky-700 flex items-center gap-1 transition-colors"
                     >
-                      <CheckCheck size={13} />
-                      Tandai semua dibaca
+                      <CheckCheck size={14} />
+                      <span>Tandai dibaca</span>
                     </button>
                   )}
                 </div>
 
                 {/* List Notifikasi */}
-                <div className="max-h-[360px] overflow-y-auto divide-y divide-gray-50">
+                <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
                   {notifications.length === 0 ? (
-                    <div className="py-8 text-center text-xs text-gray-400">
-                      Tidak ada notifikasi
+                    <div className="py-8 text-center text-gray-400 text-xs">
+                      Tidak ada notifikasi saat ini
                     </div>
                   ) : (
                     notifications.map((item) => (
                       <div
                         key={item.id}
                         onClick={() => handleNotificationClick(item.id)}
-                        className={`p-3.5 transition-colors cursor-pointer flex items-start gap-3 text-left ${
-                          item.unread
-                            ? 'bg-slate-50 hover:bg-slate-100/80'
-                            : 'bg-white hover:bg-slate-50'
+                        className={`p-3.5 flex items-start gap-3 hover:bg-slate-50 transition-colors cursor-pointer ${
+                          item.unread ? 'bg-sky-50/40' : ''
                         }`}
                       >
-                        {/* Indikator Belum Dibaca */}
-                        <div className="pt-1 shrink-0">
-                          <span
-                            className={`block w-2 h-2 rounded-full transition-colors ${
-                              item.unread ? 'bg-sky-500 ring-2 ring-sky-100' : 'bg-transparent'
-                            }`}
-                          />
-                        </div>
-
-                        {/* Konten Notifikasi */}
-                        <div className="min-w-0 flex-1">
+                        <div
+                          className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
+                            item.unread ? 'bg-sky-500' : 'bg-transparent'
+                          }`}
+                        />
+                        <div className="flex-1 min-w-0">
                           <p
-                            className={`text-xs leading-snug break-words ${
+                            className={`text-xs ${
                               item.unread
                                 ? 'font-bold text-gray-900'
                                 : 'font-medium text-gray-700'

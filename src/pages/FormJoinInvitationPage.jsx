@@ -1,11 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Save,
   List,
   AlertCircle,
   ShieldAlert,
-  ChevronRight,
-  Megaphone,
 } from 'lucide-react'
 import {
   createJoinInvitationApi,
@@ -13,6 +11,16 @@ import {
   updateJoinInvitationApi,
 } from '../api/joinInvitation'
 import { useAuth } from '../hooks/useAuth'
+
+function toJoinInvitationDraft(data) {
+  return {
+    sectionLabel: typeof data?.section_label === 'string' ? data.section_label : '',
+    title: typeof data?.title === 'string' ? data.title : '',
+    buttonText: typeof data?.button_text === 'string' ? data.button_text : '',
+    buttonURL: typeof data?.button_url === 'string' ? data.button_url : '',
+    isActive: data?.is_active !== false,
+  }
+}
 
 export default function FormJoinInvitationPage({
   editingCTA = null,
@@ -28,43 +36,32 @@ export default function FormJoinInvitationPage({
 
   const isEditing = !!editingCTA
 
-  // Form states
-  const [sectionLabel, setSectionLabel] = useState('')
-  const [title, setTitle] = useState('')
-  const [buttonText, setButtonText] = useState('')
-  const [buttonURL, setButtonURL] = useState('')
-  const [isActive, setIsActive] = useState(true)
+  const [source, setSource] = useState(editingCTA)
+  const [draft, setDraft] = useState(() => toJoinInvitationDraft(editingCTA))
+  const { sectionLabel, title, buttonText, buttonURL, isActive } = draft
 
-  const [loadingDetail, setLoadingDetail] = useState(isEditing)
+  const [loadingDetail, setLoadingDetail] = useState(!!editingCTA?.id)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  if (source !== editingCTA) {
+    setSource(editingCTA)
+    setDraft(toJoinInvitationDraft(editingCTA))
+    setLoadingDetail(!!editingCTA?.id)
+    setError('')
+  }
+  const updateDraft = (changes) => setDraft((previous) => ({ ...previous, ...changes }))
+
   // Inisialisasi data
   useEffect(() => {
+    if (!editingCTA?.id) return
     let isMounted = true
 
-    if (!isEditing) {
-      setSectionLabel('')
-      setTitle('')
-      setButtonText('')
-      setButtonURL('')
-      setIsActive(true)
-      setError('')
-      setLoadingDetail(false)
-      return
-    }
-
     const loadDetail = async () => {
-      setLoadingDetail(true)
-      setError('')
       try {
         const data = await getJoinInvitationByIdApi(editingCTA.id)
         if (isMounted && data) {
-          setSectionLabel(data.section_label || '')
-          setTitle(data.title || '')
-          setButtonText(data.button_text || '')
-          setButtonURL(data.button_url || '')
-          setIsActive(data.is_active ?? true)
+          setDraft(toJoinInvitationDraft(data))
         }
       } catch (err) {
         if (isMounted) {
@@ -86,7 +83,7 @@ export default function FormJoinInvitationPage({
     return () => {
       isMounted = false
     }
-  }, [editingCTA, isEditing])
+  }, [editingCTA])
 
   // Submit Handler
   const handleSubmit = async (e) => {
@@ -205,7 +202,7 @@ export default function FormJoinInvitationPage({
                 type="text"
                 placeholder="Contoh: KESEMPATAN TERBUKA"
                 value={sectionLabel}
-                onChange={(e) => setSectionLabel(e.target.value)}
+                onChange={(e) => updateDraft({ sectionLabel: e.target.value })}
                 maxLength={100}
                 required
                 className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
@@ -224,7 +221,7 @@ export default function FormJoinInvitationPage({
                 rows={3}
                 placeholder="Contoh: Bangun masa depan bersama kami."
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => updateDraft({ title: e.target.value })}
                 required
                 className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
               />
@@ -243,7 +240,7 @@ export default function FormJoinInvitationPage({
                   type="text"
                   placeholder="Contoh: Mulai Sekarang"
                   value={buttonText}
-                  onChange={(e) => setButtonText(e.target.value)}
+                  onChange={(e) => updateDraft({ buttonText: e.target.value })}
                   maxLength={100}
                   required
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
@@ -261,7 +258,7 @@ export default function FormJoinInvitationPage({
                   type="text"
                   placeholder="Contoh: /register atau https://example.com"
                   value={buttonURL}
-                  onChange={(e) => setButtonURL(e.target.value)}
+                  onChange={(e) => updateDraft({ buttonURL: e.target.value })}
                   maxLength={255}
                   required
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
@@ -279,7 +276,7 @@ export default function FormJoinInvitationPage({
               </label>
               <select
                 value={isActive ? 'true' : 'false'}
-                onChange={(e) => setIsActive(e.target.value === 'true')}
+                onChange={(e) => updateDraft({ isActive: e.target.value === 'true' })}
                 className="w-full sm:w-64 px-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
               >
                 <option value="true">Aktif (Tampilkan di Halaman)</option>
@@ -314,4 +311,3 @@ export default function FormJoinInvitationPage({
     </div>
   )
 }
-

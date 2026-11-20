@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import PartnerDialog from './PartnerDialog'
 import { deleteAboutCardApi, listAboutCardsApi } from '../api/aboutCards'
@@ -6,31 +6,40 @@ import { getAboutCardErrorMessage } from '../utils/aboutCards'
 
 export default function AboutCardDeleteModal({ card, onClose, onDeleted }) {
   const cancelRef = useRef(null)
-  const operationRef = useRef(false)
+  const operationRef = useRef(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [accepted, setAccepted] = useState(false)
+
+  useEffect(() => () => {
+    operationRef.current?.abort()
+  }, [])
+
   const close = () => {
     if (!operationRef.current) onClose(accepted)
   }
 
   const remove = async () => {
     if (operationRef.current) return
-    operationRef.current = true
+    const controller = new AbortController()
+    operationRef.current = controller
     setBusy(true)
     setError('')
     let deleted = accepted
     try {
       if (!deleted) {
         await deleteAboutCardApi(card.id)
+        if (controller.signal.aborted) return
         deleted = true
         setAccepted(true)
       }
-      const cards = await listAboutCardsApi()
+      const cards = await listAboutCardsApi({ signal: controller.signal })
+      if (controller.signal.aborted) return
       if (cards.some((item) => item.id === card.id))
         throw new Error('Kartu masih ada pada daftar backend.')
       onDeleted(cards)
     } catch (err) {
+      if (controller.signal.aborted) return
       const message = getAboutCardErrorMessage(
         err,
         'Gagal menghapus kartu. Periksa koneksi backend.',
@@ -41,8 +50,8 @@ export default function AboutCardDeleteModal({ card, onClose, onDeleted }) {
           : message,
       )
     } finally {
-      operationRef.current = false
-      setBusy(false)
+      if (operationRef.current === controller) operationRef.current = null
+      if (!controller.signal.aborted) setBusy(false)
     }
   }
 

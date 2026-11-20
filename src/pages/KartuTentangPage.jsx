@@ -20,7 +20,8 @@ import {
 const PAGE_SIZE = 10
 
 export default function KartuTentangPage({ role }) {
-  const canManage = ['admin', 'super_admin'].includes(role)
+  const currentRole = typeof role === 'object' ? role?.name : role
+  const canManage = ['admin', 'super_admin'].includes(currentRole)
   const [result, setResult] = useState({
     status: 'loading',
     cards: [],

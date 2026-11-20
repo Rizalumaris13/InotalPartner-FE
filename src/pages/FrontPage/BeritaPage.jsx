@@ -1,4 +1,6 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { formatDate, formatTime, formatViewCount } from '../../utils/newsFormat'
+import Reveal from '../../components/Reveal'
 
 import PublicNavbar from '../../components/PublicNavbar'
 import PublicPageBanner from '../../components/PublicPageBanner'
@@ -21,134 +23,7 @@ import {
 } from 'lucide-react'
 import PublicFooter from '../../components/PublicFooter'
 
-
-function useInView({ threshold = 0.1, fallbackMs = 700 } = {}) {
-  const ref = useRef(null)
-  const [seen, setSeen] = useState(false)
-
-  useEffect(() => {
-    const el = ref.current
-
-    if (!el) return
-
-    const io = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) {
-          setSeen(true)
-          io.disconnect()
-        }
-      },
-      { threshold }
-    )
-
-    io.observe(el)
-
-    const t = setTimeout(() => setSeen(true), fallbackMs)
-
-    return () => {
-      io.disconnect()
-      clearTimeout(t)
-    }
-  }, [threshold, fallbackMs])
-
-  return [ref, seen]
-}
-
-
-function Reveal({
-  children,
-  delay = 0,
-  className = '',
-}) {
-  const [ref, seen] = useInView()
-
-  return (
-    <div
-      ref={ref}
-      className={`h-full transition-all duration-700 ease-out ${
-        seen
-          ? 'opacity-100 translate-y-0'
-          : 'opacity-0 translate-y-6'
-      } ${className}`}
-      style={{
-        transitionDelay: `${delay}ms`,
-      }}
-    >
-      {children}
-    </div>
-  )
-}
-
-
-/**
- * Format tanggal publikasi
- *
- * Contoh:
- * 2026-09-29T10:53:17+07:00
- * =>
- * 29 September 2026
- */
-function formatDate(iso) {
-  if (!iso) return '-'
-
-  try {
-    return new Date(iso).toLocaleDateString(
-      'en-US',
-      {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-        timeZone: 'Asia/Jakarta',
-      }
-    )
-  } catch {
-    return '-'
-  }
-}
-
-
-/**
- * Format waktu publikasi
- *
- * Contoh:
- * 2026-09-29T20:00:17+07:00
- * =>
- * 20:00
- */
-function formatTime(dateString) {
-  if (!dateString) return '--:--'
-
-  try {
-    return new Date(dateString).toLocaleTimeString(
-      'en-US',
-      {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-        timeZone: 'Asia/Jakarta',
-      }
-    )
-  } catch {
-    return '--:--'
-  }
-}
-
-
-/**
- * Format angka view
- *
- * Contoh:
- * 1200 => 1,200
- */
-function formatViewCount(value) {
-  const number = Number(value || 0)
-
-  return number.toLocaleString('en-US')
-}
-
-
 export default function BeritaPage({ onNavigate }) {
-  const [scrolled, setScrolled] = useState(false)
 
   const [page, setPage] = useState(1)
 
@@ -157,40 +32,12 @@ export default function BeritaPage({ onNavigate }) {
   const [sortBy, setSortBy] = useState('terbaru')
   const [sortOpen, setSortOpen] = useState(false)
 
-  // Data berita
   const [newsItems, setNewsItems] = useState([])
   const [popularItems, setPopularItems] = useState([])
 
   const [newsLoading, setNewsLoading] = useState(true)
 
   const [newsError, setNewsError] = useState('')
-
-
-  /* NAVBAR SCROLL */
-
-  useEffect(() => {
-    const onScroll = () => {
-      setScrolled(window.scrollY > 24)
-    }
-
-    onScroll()
-
-    window.addEventListener(
-      'scroll',
-      onScroll,
-      { passive: true }
-    )
-
-    return () => {
-      window.removeEventListener(
-        'scroll',
-        onScroll
-      )
-    }
-  }, [])
-
-
-  /*  FETCH BERITA DARI BACKEND */
 
   useEffect(() => {
     let isMounted = true
@@ -201,11 +48,7 @@ export default function BeritaPage({ onNavigate }) {
 
         setNewsError('')
 
-        /**
-         * Ambil berita publik.
-         *
-         * Untuk sekarang mengambil maksimal 100 berita.
-         */
+        // Daftar dibatasi 100 berita; pagination berikutnya tetap di sisi klien.
         const [newsResult, popularResult] = await Promise.allSettled([
           getPublicNewsApi(1, 100),
           getPublicPopularNewsApi(50),
@@ -228,7 +71,6 @@ export default function BeritaPage({ onNavigate }) {
           return []
         }
 
-        /** Ubah struktur API ke struktur yang digunakan halaman. */
         const formatNews = (newsData) => newsData.map((news) => ({
           id: news.id,
           title: news.title || '',
@@ -282,18 +124,13 @@ export default function BeritaPage({ onNavigate }) {
       }
     }
 
-
     fetchNews()
-
 
     return () => {
       isMounted = false
     }
 
   }, [])
-
-
-  /* FILTER + SORT */
 
   const filtered = useMemo(() => {
     const q = query
@@ -304,25 +141,12 @@ export default function BeritaPage({ onNavigate }) {
       ? (popularItems.length ? popularItems : newsItems)
       : newsItems)]
 
-
-    /**
-     * FILTER KATEGORI
-     */
     if (category !== 'Semua') {
       list = list.filter(
         (news) => news.categories.includes(category)
       )
     }
 
-
-    /**
-     * SEARCH
-     *
-     * Mencari berdasarkan:
-     * - title
-     * - excerpt
-     * - category
-     */
     if (q) {
       list = list.filter((news) => {
         const title =
@@ -342,12 +166,7 @@ export default function BeritaPage({ onNavigate }) {
       })
     }
 
-
-    /**
-     * SORTING */
     return list.sort((a, b) => {
-
-      /* TERBARU */
 
       if (sortBy === 'terbaru') {
         return (
@@ -356,9 +175,6 @@ export default function BeritaPage({ onNavigate }) {
         )
       }
 
-
-      /* TERLAMA */
-
       if (sortBy === 'terlama') {
         return (
           new Date(a.publishedAt) -
@@ -366,16 +182,12 @@ export default function BeritaPage({ onNavigate }) {
         )
       }
 
-
-      /* TERPOPULER */
-
       if (sortBy === 'terpopuler') {
         return (
           b.viewCount -
           a.viewCount
         )
       }
-
 
       return 0
     })
@@ -387,9 +199,6 @@ export default function BeritaPage({ onNavigate }) {
     query,
     sortBy,
   ])
-
-
-  /* CATEGORY LIST */
 
   const categories = useMemo(() => {
     const counts = {}
@@ -416,9 +225,6 @@ export default function BeritaPage({ onNavigate }) {
     ]
   }, [newsItems])
 
-
-  /* PAGINATION */
-
   const POSTS_PER_PAGE = 10
 
   const totalPages = Math.max(
@@ -441,7 +247,6 @@ export default function BeritaPage({ onNavigate }) {
     currentPage *
       POSTS_PER_PAGE
   )
-
 
   useEffect(() => {
     if (page > totalPages) {
@@ -479,7 +284,6 @@ export default function BeritaPage({ onNavigate }) {
     })
   }
 
-
   return (
     <div
       className="min-h-screen bg-white text-[#0c4a6e]"
@@ -489,41 +293,25 @@ export default function BeritaPage({ onNavigate }) {
       }}
     >
 
-      {/* NAVBAR */}
-
       <div className="h-[68px]">
         <PublicNavbar
           onNavigate={onNavigate}
           activePage="berita"
-          scrolled={scrolled}
         />
       </div>
 
+      <PublicPageBanner pageKey="berita" breadcrumb="Berita" onNavigate={onNavigate} />
 
-      {/*PAGE HEADER*/}
+      <section className="max-w-7xl mx-auto px-6 py-12 md:py-16">
 
-      <PublicPageBanner pageKey="berita" breadcrumb="News" onNavigate={onNavigate} />
-
-
-      {/* CONTENT */}
-
-      <section className="max-w-7xl mx-auto px-6 py-16 md:py-20">
-
-        <div className="grid lg:grid-cols-[1fr_320px] gap-10 lg:gap-12">
-
-
-          {/* KOLOM KIRI */}
+        <div className="grid xl:grid-cols-[minmax(0,1fr)_320px] gap-8 xl:gap-10">
 
           <div
             id="daftar-berita"
             className="scroll-mt-24 min-w-0"
           >
 
-            {/* SEARCH + SORT */}
-
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
-
-              {/* SEARCH */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
 
               <div className="relative flex-1">
 
@@ -542,27 +330,24 @@ export default function BeritaPage({ onNavigate }) {
 
                     setPage(1)
                   }}
-                  placeholder="Search title, content, or category..."
+                  placeholder="Cari judul, isi, atau kategori..."
                   className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 bg-white text-[14px] placeholder:text-gray-400 focus:outline-none focus:border-[#0284c7] focus:ring-2 focus:ring-[#0284c7]/15 transition-all"
                 />
 
               </div>
 
-
-              {/* SORT DROPDOWN */}
-
               <div className="relative shrink-0">
 
-                <div className="relative w-[190px]">
+                <div className="relative w-full sm:w-[190px]">
                   <button
                     type="button"
                     onClick={() => setSortOpen((prev) => !prev)}
                     className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-semibold text-[#064C73] shadow-sm transition hover:border-[#008ACB] hover:shadow-md"
                   >
                     <span>
-                      {sortBy === 'terbaru' && 'Latest'}
-                      {sortBy === 'terlama' && 'Oldest'}
-                      {sortBy === 'terpopuler' && 'Most Popular'}
+                      {sortBy === 'terbaru' && 'Terbaru'}
+                      {sortBy === 'terlama' && 'Terlama'}
+                      {sortBy === 'terpopuler' && 'Terpopuler'}
                     </span>
 
                     <ChevronDown
@@ -576,9 +361,9 @@ export default function BeritaPage({ onNavigate }) {
                   {sortOpen && (
                     <div className="absolute right-0 z-50 mt-2 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl">
                       {[
-                        { value: 'terbaru', label: 'Latest' },
-                        { value: 'terlama', label: 'Oldest' },
-                        { value: 'terpopuler', label: 'Most Popular' },
+                        { value: 'terbaru', label: 'Terbaru' },
+                        { value: 'terlama', label: 'Terlama' },
+                        { value: 'terpopuler', label: 'Terpopuler' },
                       ].map((option) => (
                         <button
                           key={option.value}
@@ -603,10 +388,7 @@ export default function BeritaPage({ onNavigate }) {
 
             </div>
 
-
-            {/* CATEGORY PILLS */}
-
-            <div className="flex flex-wrap gap-2 mb-10">
+            <div className="flex flex-wrap gap-2 mb-6 md:mb-8">
 
               {categories.map((c) => (
 
@@ -626,7 +408,7 @@ export default function BeritaPage({ onNavigate }) {
                   }`}
                 >
 
-                  {c.name === 'Semua' ? 'All' : c.name}
+                  {c.name}
 
                   <span
                     className={`ml-1.5 text-[11px] ${
@@ -644,52 +426,44 @@ export default function BeritaPage({ onNavigate }) {
 
             </div>
 
-
-            {/*SECTION HEADER */}
-
-            <div className="flex items-baseline justify-between mb-8">
+            <div className="flex flex-wrap items-baseline justify-between gap-2 mb-6">
 
               <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">
 
                 {category === 'Semua'
                   ? sortBy === 'terbaru'
-                    ? 'Latest News'
+                    ? 'Berita Terbaru'
                     : sortBy === 'terlama'
-                      ? 'Oldest News'
-                      : 'Most Popular News'
+                      ? 'Berita Terlama'
+                      : 'Berita Terpopuler'
                   : category}
 
               </h2>
 
               <span className="text-[12px] text-gray-400">
-                {filtered.length} {filtered.length === 1 ? 'article' : 'articles'}
+                {filtered.length} news
               </span>
 
             </div>
 
-
-            {/* LOADING */}
-
             {newsLoading ? (
 
-              <div className="py-20 text-center">
+              <div className="px-6 py-10 text-center">
 
                 <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-[#0284c7]" />
 
                 <p className="text-sm text-gray-400">
-                  Loading news...
+                  Memuat berita...
                 </p>
 
               </div>
 
             ) : newsError ? (
 
-              /* ERROR */
-
-              <div className="py-20 text-center border border-dashed border-red-200 rounded-2xl">
+              <div className="px-6 py-10 text-center border border-dashed border-red-200 rounded-2xl">
 
                 <p className="text-red-500 font-bold text-lg mb-2">
-                  Failed to load news
+                  Gagal memuat berita
                 </p>
 
                 <p className="text-sm text-gray-400 mb-5">
@@ -702,23 +476,21 @@ export default function BeritaPage({ onNavigate }) {
                   }
                   className="text-[13.5px] font-bold text-[#0284c7] hover:text-[#0c4a6e]"
                 >
-                  Try again
+                  Coba lagi
                 </button>
 
               </div>
 
             ) : visible.length === 0 ? (
 
-              /* EMPTY */
-
-              <div className="text-center py-20 border border-dashed border-gray-200 rounded-2xl">
+              <div className="text-center px-6 py-10 border border-dashed border-gray-200 rounded-2xl">
 
                 <p className="text-[#0c4a6e] font-bold text-lg mb-2">
-                  No results found
+                  Nggak ada hasilnya
                 </p>
 
                 <p className="text-[14px] text-[#364e52] mb-6">
-                  Try other keywords or select a different category.
+                  Coba kata kunci lain atau ganti kategorinya.
                 </p>
 
                 <button
@@ -730,16 +502,14 @@ export default function BeritaPage({ onNavigate }) {
                   }}
                   className="text-[13.5px] font-bold text-[#0284c7] hover:text-[#0c4a6e] transition-colors"
                 >
-                  Reset all filters
+                  Reset semua filter
                 </button>
 
               </div>
 
             ) : (
 
-              /*  NEWS GRID */
-
-              <div className="grid sm:grid-cols-2 gap-6 items-stretch">
+              <div className={`grid gap-6 items-stretch ${visible.length > 1 ? 'sm:grid-cols-2' : ''}`}>
 
                 {visible.map((p, i) => (
 
@@ -750,18 +520,8 @@ export default function BeritaPage({ onNavigate }) {
                   >
 
                     <article
-                      className="group h-full bg-white border border-gray-200/80 rounded-xl overflow-hidden hover:border-[#0284c7]/50 transition-colors flex flex-col cursor-pointer"
+                      className={`group h-full min-w-0 bg-white border border-gray-200/80 rounded-xl overflow-hidden hover:border-[#0284c7]/50 transition-colors flex flex-col cursor-pointer ${visible.length === 1 ? 'md:flex-row' : ''}`}
                       onClick={() => {
-                        /**
-                         * Nanti arahkan ke:
-                         *
-                         * /berita/{slug}
-                         *
-                         * sesuai routing project kamu.
-                         *
-                         * Untuk sementara menggunakan
-                         * onNavigate.
-                         */
                         if (p.slug) {
                           onNavigate?.(
                             `berita/${p.slug}`
@@ -770,34 +530,30 @@ export default function BeritaPage({ onNavigate }) {
                       }}
                     >
 
-                      {/* IMAGE */}
-
-                      <div className="relative overflow-hidden">
+                      <div className={`relative aspect-[16/10] overflow-hidden ${visible.length === 1 ? 'md:w-2/5 md:shrink-0 md:aspect-auto' : ''}`}>
 
                         {p.image ? (
 
                           <img
                             src={p.image}
                             alt={p.title}
-                            className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-105"
+                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                             loading="lazy"
                           />
 
                         ) : (
 
-                          <div className="w-full h-64 bg-[#F0F4F8] flex items-center justify-center">
+                          <div className="absolute inset-0 w-full h-full bg-[#F0F4F8] flex items-center justify-center">
 
                             <span className="text-sm text-gray-400">
-                              No image available
+                              Tidak ada gambar
                             </span>
 
                           </div>
 
                         )}
 
-
-                        {/* CATEGORY */}
-                          <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
+                          <div className="absolute left-3 right-3 top-3 flex flex-wrap gap-1.5">
                             {p.categories.map((name) => (
                               <span
                                 key={name}
@@ -809,24 +565,16 @@ export default function BeritaPage({ onNavigate }) {
                           </div>
                       </div>
 
-
-                      {/* CONTENT */}
-
-                      <div className="pl-6 pr-6 py-4 pt-4 flex flex-col flex-1">
-
-                        
-                        {/* DATE + TIME */}
+                      <div className="p-5 flex flex-col flex-1 min-w-0">
 
                         <div className="flex flex-wrap items-center gap-2 text-[12px] text-gray-400 mb-3">
 
-                          {/* DATE */}
                           <span>
                             {formatDate(p.publishedAt)}
                           </span>
 
                           <span>•</span>
 
-                          {/* TIME */}
                           <div className="flex items-center gap-1.5">
                             <Clock size={13} />
 
@@ -837,29 +585,19 @@ export default function BeritaPage({ onNavigate }) {
 
                         </div>
 
-
-
-                        {/* TITLE */}
-
                         <h3 className="text-[17px] font-bold leading-[1.35] mb-3 group-hover:text-[#0284c7] transition-colors line-clamp-2 min-h-[2.7em]">
                           {p.title}
                         </h3>
-
-
-                        {/* EXCERPT */}
 
                         <p className="text-[13.5px] leading-relaxed text-[#364e52] mb-5 line-clamp-3">
                           {p.excerpt}
                         </p>
 
-
-                        {/* READ */}
-
                         <div className="mt-auto flex justify-end">
 
                           <span className="inline-flex items-center gap-1.5 text-[12px] font-bold text-[#0284c7]">
 
-                            Read More
+                            Baca
 
                             <ArrowRight
                               size={13}
@@ -882,14 +620,11 @@ export default function BeritaPage({ onNavigate }) {
 
             )}
 
-
-            {/* PAGINATION */}
-
             {!newsLoading &&
               !newsError &&
               totalPages > 1 && (
 
-                <div className="mt-14 flex items-center justify-center gap-2">
+                <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
 
                   <button
                     onClick={() =>
@@ -909,7 +644,6 @@ export default function BeritaPage({ onNavigate }) {
                       size={16}
                     />
                   </button>
-
 
                   {Array.from(
                     {
@@ -935,7 +669,6 @@ export default function BeritaPage({ onNavigate }) {
                     </button>
 
                   ))}
-
 
                   <button
                     onClick={() =>
@@ -963,13 +696,7 @@ export default function BeritaPage({ onNavigate }) {
 
           </div>
 
-
-          {/* SIDEBAR KANAN */}
-
-          <aside className="space-y-8 lg:sticky lg:top-24 lg:self-start">
-
-
-            {/* PALING POPULER */}
+          <aside className="min-w-0 space-y-6 xl:sticky xl:top-24 xl:self-start">
 
             <div className="bg-white border border-gray-200/80 rounded-xl overflow-hidden">
 
@@ -981,18 +708,17 @@ export default function BeritaPage({ onNavigate }) {
                 />
 
                 <h3 className="text-white font-extrabold text-[13px] tracking-[0.12em] uppercase">
-                  Most Popular
+                  Paling Populer
                 </h3>
 
               </div>
-
 
               <div>
 
                 {popularNews.length === 0 ? (
 
                   <div className="p-5 text-sm text-gray-400">
-                    No popular news yet.
+                    Belum ada berita populer.
                   </div>
 
                 ) : (
@@ -1017,25 +743,17 @@ export default function BeritaPage({ onNavigate }) {
 
                         <div className="flex gap-3 items-start">
 
-                          {/* NUMBER */}
-
                           <span className="text-[20px] font-extrabold text-[#0284c7]/25 leading-none pt-0.5 w-6 shrink-0">
                             {String(
                               index + 1
                             ).padStart(2, '0')}
                           </span>
 
-
-                          {/* CONTENT */}
-
                           <div className="min-w-0 flex-1">
 
                             <h4 className="text-[13.5px] font-bold leading-[1.4] text-[#0c4a6e] line-clamp-2">
                               {news.title}
                             </h4>
-
-
-                            {/* VIEW COUNT */}
 
                             {news.viewCount > 0 && (
 
@@ -1071,19 +789,15 @@ export default function BeritaPage({ onNavigate }) {
 
             </div>
 
-
-            {/* KATEGORI */}
-
             <div className="bg-white border border-gray-200/80 rounded-xl overflow-hidden">
 
               <div className="bg-[#0c4a6e] px-5 py-3.5 flex items-center gap-2">
 
                 <span className="text-white font-extrabold text-[13px] tracking-[0.12em] uppercase">
-                  Categories
+                  Kategori
                 </span>
 
               </div>
-
 
               <div className="p-5 space-y-3">
 
@@ -1123,9 +837,6 @@ export default function BeritaPage({ onNavigate }) {
 
             </div>
 
-
-            {/* CTA SIDEBAR */}
-
             <div className="bg-[#0284c7] text-white rounded-xl overflow-hidden relative">
 
               <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
@@ -1133,11 +844,11 @@ export default function BeritaPage({ onNavigate }) {
               <div className="relative p-6">
 
                 <h3 className="font-extrabold text-lg mb-2">
-                  Need More Info?
+                  Butuh Info Lebih?
                 </h3>
 
                 <p className="text-[13px] text-white/80 leading-relaxed mb-5">
-                  Our team is ready to answer any questions about our partnership programs.
+                  Tim kami bisa bantu jawab pertanyaan soal program kemitraan.
                 </p>
 
                 <button
@@ -1149,7 +860,7 @@ export default function BeritaPage({ onNavigate }) {
                   className="inline-flex items-center gap-2 bg-white text-[#0284c7] font-bold text-[13px] px-4 py-2.5 rounded-lg transition-transform hover:translate-y-[-1px]"
                 >
 
-                  Contact Us
+                  Hubungi Kami
 
                   <ArrowRight
                     size={14}
@@ -1166,9 +877,6 @@ export default function BeritaPage({ onNavigate }) {
         </div>
 
       </section>
-
-
-      {/*  FOOTER */}
 
       <PublicFooter onNavigate={onNavigate} />
 

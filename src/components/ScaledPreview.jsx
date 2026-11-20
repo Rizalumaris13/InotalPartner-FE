@@ -27,7 +27,7 @@ export default function ScaledPreview({ children, width = PREVIEW_WIDTH }) {
   }, [width])
 
   return (
-    <div ref={outerRef} className="relative w-full overflow-hidden"
+    <div ref={outerRef} className="relative w-full overflow-clip"
       style={box.height ? { height: `${box.height}px` } : undefined}>
       <div ref={innerRef} style={{ width: `${width}px`, transform: `scale(${box.scale})`, transformOrigin: 'top left' }}>
         {children}

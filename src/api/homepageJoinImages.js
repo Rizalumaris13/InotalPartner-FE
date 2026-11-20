@@ -1,4 +1,6 @@
 import api from './axios'
+import { readNullableContent, requireContentAcknowledgement } from './contentResponse'
+import { withEndpointFallback } from './endpointFallback'
 import { isJoinImagesRecord, toJoinImagesPayload } from '../utils/homepageJoinImages'
 
 // Endpoint backend yang sebenarnya untuk pengaturan section & gambar Mengapa Bergabung:
@@ -6,98 +8,89 @@ import { isJoinImagesRecord, toJoinImagesPayload } from '../utils/homepageJoinIm
 // - Public: GET /api/public/homepage/reasons
 export const REASON_SETTINGS_PATH = '/homepage/reason-settings'
 export const PUBLIC_REASONS_PATH = '/public/homepage/reasons'
+export const JOIN_IMAGES_PATH = '/homepage/join-images'
 
-/**
- * Mengubah format dari backend model (image_one_url, image_two_url, image_three_url)
- * ke format frontend slot (top_left_url, bottom_right_url, center_url).
- * 
- * Sesuai dokumentasi dan desain tampilan:
- * - image_one_url   -> top_left_url     (kiri atas, tim diskusi)
- * - image_two_url   -> bottom_right_url (kanan bawah, kemitraan)
- * - image_three_url -> center_url       (tengah utama, kolaborasi)
- */
+const readResponse = ({ data: body }) => {
+  const record = readNullableContent(body, isJoinImagesRecord, 'Format data gambar kolase tidak sesuai kontrak.')
+  // Respons tervalidasi tetap dinormalisasi agar cocok dengan resolveImageUrl.
+  return record === null ? null : toJoinImagesPayload(record)
+}
+
+const DEFAULT_REASON_SETTING = {
+  section_label: 'MENGAPA BERGABUNG',
+  section_title: 'Saatnya Bersama Beraksi',
+  section_description: 'Indonesia butuh pemuda generasi masa depan emas 2045.',
+  is_active: true,
+}
+const CONTRACT_ERROR = 'Format data gambar kolase tidak sesuai kontrak.'
+
+// Backend slots one/two/three correspond to top-left/bottom-right/center.
 export const mapBackendSettingToImages = (data) => {
-  if (!data) return null
+  if (data === null) return null
   return {
-    top_left_url: data.image_one_url || '',
-    bottom_right_url: data.image_two_url || '',
-    center_url: data.image_three_url || '',
+    top_left_url: data?.image_one_url,
+    bottom_right_url: data?.image_two_url,
+    center_url: data?.image_three_url,
   }
 }
 
-/**
- * Mengubah format dari frontend slot ke payload PUT /api/homepage/reason-settings backend.
- */
 export const mapImagesToBackendPayload = (images, existingSetting = {}) => ({
-  section_label: existingSetting?.section_label || 'MENGAPA BERGABUNG',
-  section_title: existingSetting?.section_title || 'Saatnya Bersama Beraksi',
-  section_description: existingSetting?.section_description || 'Indonesia butuh pemuda generasi masa depan emas 2045.',
-  image_one_url: images.top_left_url || '',
-  image_two_url: images.bottom_right_url || '',
-  image_three_url: images.center_url || '',
-  is_active: existingSetting?.is_active ?? true,
+  section_label: existingSetting?.section_label ?? DEFAULT_REASON_SETTING.section_label,
+  section_title: existingSetting?.section_title ?? DEFAULT_REASON_SETTING.section_title,
+  section_description: existingSetting?.section_description ?? DEFAULT_REASON_SETTING.section_description,
+  image_one_url: images.top_left_url,
+  image_two_url: images.bottom_right_url,
+  image_three_url: images.center_url,
+  is_active: existingSetting?.is_active ?? DEFAULT_REASON_SETTING.is_active,
 })
 
+const isBackendSetting = (data) => Boolean(data && typeof data === 'object' && !Array.isArray(data)) &&
+  isJoinImagesRecord(mapBackendSettingToImages(data)) &&
+  ['section_label', 'section_title', 'section_description'].every((key) =>
+    !Object.hasOwn(data, key) || typeof data[key] === 'string') &&
+  (!Object.hasOwn(data, 'is_active') || typeof data.is_active === 'boolean')
+
+const readSetting = ({ data: body }) => readNullableContent(body, isBackendSetting, CONTRACT_ERROR)
+
 const readAdminResponse = ({ data: body }) => {
-  if (body?.success === false && typeof body.message === 'string' && body.message.trim()) {
-    throw new Error(body.message)
-  }
-  if (body?.success !== true) {
-    throw new Error('Format data gambar kolase tidak sesuai kontrak.')
-  }
-  if (!body.data) return null
-  const images = mapBackendSettingToImages(body.data)
-  return toJoinImagesPayload(images)
+  const setting = readSetting({ data: body })
+  return setting === null ? null : toJoinImagesPayload(mapBackendSettingToImages(setting))
 }
 
 const readPublicResponse = ({ data: body }) => {
-  if (body?.success === false && typeof body.message === 'string' && body.message.trim()) {
-    throw new Error(body.message)
-  }
-  if (body?.success !== true) {
-    throw new Error('Format data publik Mengapa Bergabung tidak sesuai kontrak.')
-  }
-  const setting = body.data?.setting
-  if (!setting) return null
-  const images = mapBackendSettingToImages(setting)
-  return toJoinImagesPayload(images)
+  const data = readNullableContent(body, (value) => Boolean(value && typeof value === 'object' &&
+    !Array.isArray(value) && Object.hasOwn(value, 'setting') &&
+    (value.setting === null || isBackendSetting(value.setting))), CONTRACT_ERROR)
+  return data === null || data.setting === null ? null : toJoinImagesPayload(mapBackendSettingToImages(data.setting))
 }
 
-// GET /api/public/homepage/reasons
 export const getPublicJoinImagesApi = (options = {}) =>
-  api.get(PUBLIC_REASONS_PATH, options).then(readPublicResponse)
+  withEndpointFallback(
+    api.get(`/public${JOIN_IMAGES_PATH}`, options).then(readResponse),
+    () => api.get(PUBLIC_REASONS_PATH, options).then(readPublicResponse),
+  )
 
-// GET /api/homepage/reason-settings
 export const getJoinImagesApi = (options = {}) =>
-  api.get(REASON_SETTINGS_PATH, options).then(readAdminResponse)
+  withEndpointFallback(
+    api.get(JOIN_IMAGES_PATH, options).then(readResponse),
+    () => api.get(REASON_SETTINGS_PATH, options).then(readAdminResponse),
+  )
 
-// PUT /api/homepage/reason-settings
-export const saveJoinImagesApi = async (form) => {
-  const imagesPayload = toJoinImagesPayload(form)
-  if (!isJoinImagesRecord(imagesPayload)) {
-    throw new Error('Ketiga URL gambar kolase harus valid.')
-  }
+export const saveJoinImagesApi = (form) => {
+  const payload = toJoinImagesPayload(form)
+  if (!isJoinImagesRecord(payload)) throw new Error('Ketiga URL gambar kolase harus valid.')
+  return withEndpointFallback(
+    api.put(JOIN_IMAGES_PATH, payload).then(({ data: body }) =>
+      requireContentAcknowledgement(body, 'Backend belum mengonfirmasi penerimaan gambar kolase.'),
+    ),
+    () => saveBackendSetting(payload),
+  )
+}
 
-  // Dapatkan setting saat ini agar section_label, title, description tidak tertimpa kosong
-  let currentSetting = null
-  try {
-    const res = await api.get(REASON_SETTINGS_PATH)
-    if (res.data?.success && res.data?.data) {
-      currentSetting = res.data.data
-    }
-  } catch {
-    // Gunakan fallback default jika get setting gagal
-  }
-
-  const payload = mapImagesToBackendPayload(imagesPayload, currentSetting)
-
+const saveBackendSetting = async (images) => {
+  // Preserve the section copy and publication state; a failed GET blocks PUT.
+  const currentSetting = await api.get(REASON_SETTINGS_PATH).then(readSetting)
+  const payload = mapImagesToBackendPayload(images, currentSetting)
   const { data: body } = await api.put(REASON_SETTINGS_PATH, payload)
-  if (body?.success !== true) {
-    throw new Error(
-      typeof body?.message === 'string' && body.message.trim()
-        ? body.message
-        : 'Backend belum mengonfirmasi penerimaan gambar kolase.'
-    )
-  }
-  return body.data
+  requireContentAcknowledgement(body, 'Backend belum mengonfirmasi penerimaan gambar kolase.')
 }

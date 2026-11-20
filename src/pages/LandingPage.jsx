@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
+import usePublicFeed from '../hooks/usePublicFeed'
 import PublicNavbar from '../components/PublicNavbar'
 import PublicFooter from '../components/PublicFooter'
 import PublicPartnerSection from '../components/PublicPartnerSection'
@@ -24,15 +25,10 @@ import { getPublicTestimonialsApi } from '../api/testimonials'
 import {
   ChevronLeft,
   ChevronRight,
-  Phone,
   MapPin,
-  Camera,
   Calendar,
-  Users,
   User,
 } from 'lucide-react'
-
-// ─── DATA ────────────────────────────────────────────────────────────────────
 
 const stats = [
   { value: '2021', label: 'TAHUN BERDIRI' },
@@ -40,17 +36,6 @@ const stats = [
   { value: '7', label: 'PARTNERSHIP' },
   { value: '19', label: 'PROGRAM' },
 ]
-
-const footerProfil = ['Tentang', 'Visi Misi', 'Kemitraan', 'Event']
-
-const footerPartnership = [
-  'Bergabung Sekarang',
-  'InotalHub Tech',
-  'Group & Div',
-  'Kontak',
-]
-
-// ─── SCROLL INDICATOR ────────────────────────────────────────────────────────
 
 function ScrollIndicator() {
   return (
@@ -65,8 +50,6 @@ function ScrollIndicator() {
     </div>
   )
 }
-
-// ─── FLOATING STAT CARD ──────────────────────────────────────────────────────
 
 function FloatingStat({
   value,
@@ -94,15 +77,34 @@ function FloatingStat({
   )
 }
 
-// ─── CAROUSEL HOOK ───────────────────────────────────────────────────────────
+const CAROUSEL_BREAKPOINTS = ['(min-width: 40rem)', '(min-width: 64rem)']
+
+function readCarouselColumns() {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return 1
+  return window.matchMedia(CAROUSEL_BREAKPOINTS[1]).matches ? 3
+    : window.matchMedia(CAROUSEL_BREAKPOINTS[0]).matches ? 2 : 1
+}
+
+function useCarouselColumns() {
+  const [columns, setColumns] = useState(readCarouselColumns)
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return undefined
+    const media = CAROUSEL_BREAKPOINTS.map((query) => window.matchMedia(query))
+    const update = () => setColumns(readCarouselColumns())
+    media.forEach((query) => query.addEventListener('change', update))
+    return () => media.forEach((query) => query.removeEventListener('change', update))
+  }, [])
+  return columns
+}
 
 function useCarousel(total, perView = 1) {
-  const [idx, setIdx] = useState(0)
+  const [position, setIdx] = useState(0)
 
   const maxIdx = Math.max(0, total - perView)
+  const idx = Math.min(position, maxIdx)
 
   const prev = () => {
-    setIdx((i) => Math.max(0, i - 1))
+    setIdx((i) => Math.max(0, Math.min(i, maxIdx) - 1))
   }
 
   const next = () => {
@@ -119,12 +121,78 @@ function useCarousel(total, perView = 1) {
   }
 }
 
-// ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
+const newsFeed = {
+  load: () => getPublicNewsApi(1, 5),
+  mapItem: (news) => ({
+    id: news.id,
+    category:
+      news.categories?.[0]?.name ||
+      news.category?.name ||
+      'Berita',
+    title: news.title,
+    excerpt: news.excerpt || '',
+    img: news.thumbnail_url
+      ? resolveImageUrl(news.thumbnail_url)
+      : '',
+    date: news.created_at
+      ? new Date(news.created_at).toLocaleDateString('id-ID', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })
+      : '',
+    slug: news.slug,
+  }),
+  errorMessage: 'Gagal mengambil berita',
+}
+
+const eventsFeed = {
+  load: () => getPublicEventsApi(1, 9),
+  mapItem: (ev) => ({
+    id: ev.id,
+    category:
+      ev.categories?.[0]?.name || ev.category?.name || 'Event',
+    title: ev.title,
+    img: ev.thumbnail_url ? resolveImageUrl(ev.thumbnail_url) : '',
+    date: ev.event_date
+      ? new Date(ev.event_date).toLocaleDateString('id-ID', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })
+      : '',
+    time: ev.event_time ? ev.event_time.slice(0, 5) : '',
+    location: ev.event_location || '',
+    slug: ev.slug,
+  }),
+  errorMessage: 'Gagal mengambil event',
+}
+
+const articlesFeed = {
+  load: () => getPublicArticlesApi(1, 9),
+  mapItem: (art) => ({
+    id: art.id,
+    category:
+      art.categories?.[0]?.name || art.category?.name || 'Article',
+    title: art.title,
+    excerpt: art.excerpt || '',
+    img: art.thumbnail_url ? resolveImageUrl(art.thumbnail_url) : '',
+    date: art.created_at
+      ? new Date(art.created_at).toLocaleDateString('id-ID', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })
+      : '',
+    slug: art.slug,
+  }),
+  errorMessage: 'Gagal mengambil artikel',
+}
 
 export default function LandingPage({ onNavigate }) {
+  const carouselColumns = useCarouselColumns()
   const actionBoxes = useHomepageJoinCards()
   const services = useHomepageServices()
-  // Navbar transparency on scroll
   const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
@@ -139,7 +207,6 @@ export default function LandingPage({ onNavigate }) {
     }
   }, [])
 
-  // Hero carousel dari database / public API
   const [heroSlides, setHeroSlides] = useState([])
   const [heroIdx, setHeroIdx] = useState(0)
   const [heroLoading, setHeroLoading] = useState(true)
@@ -182,6 +249,7 @@ export default function LandingPage({ onNavigate }) {
         console.error('Gagal mengambil slider Landing Page:', error)
         if (isMounted) {
           setHeroSlides([])
+          setHeroIdx(0)
           setHeroError(
             error.message || 'Gagal mengambil slider Landing Page.'
           )
@@ -208,13 +276,7 @@ export default function LandingPage({ onNavigate }) {
     return () => clearInterval(t)
   }, [heroSlides.length])
 
-  useEffect(() => {
-    if (heroSlides.length === 0) {
-      setHeroIdx(0)
-    } else if (heroIdx >= heroSlides.length) {
-      setHeroIdx(0)
-    }
-  }, [heroSlides.length, heroIdx])
+  const safeHeroIdx = heroIdx >= 0 && heroIdx < heroSlides.length ? heroIdx : 0
 
   const heroPrev = () => {
     if (heroSlides.length <= 1) return
@@ -226,239 +288,15 @@ export default function LandingPage({ onNavigate }) {
     setHeroIdx((i) => (i + 1) % heroSlides.length)
   }
 
-  // ─── BERITA DARI API PUBLIC ────────────────────────────────────────────────
+  const { items: newsItems, loading: newsLoading, error: newsError } = usePublicFeed(newsFeed)
+  const { items: eventItems, loading: eventsLoading, error: eventsError } = usePublicFeed(eventsFeed)
+  const { items: articleItems, loading: articlesLoading, error: articlesError } = usePublicFeed(articlesFeed)
 
-  const [newsItems, setNewsItems] = useState([])
-  const [newsLoading, setNewsLoading] = useState(true)
-  const [newsError, setNewsError] = useState('')
+  const eventPerView = Math.min(eventItems.length || 1, carouselColumns)
+  const eventC = useCarousel(eventItems.length, eventPerView)
 
-  useEffect(() => {
-    let isMounted = true
-
-    const fetchNews = async () => {
-      try {
-        setNewsLoading(true)
-        setNewsError('')
-
-        const response = await getPublicNewsApi(1, 5)
-
-        /*
-          Bentuk response backend (gin.H dibungkus 2 level):
-          {
-            success: true,
-            message: "...",
-            data: {              <- ArticleListResponse
-              data: [...],       <- array artikel yang sebenarnya
-              total, page, limit, total_pages
-            }
-          }
-
-          getPublicNewsApi() mengembalikan response.data (body JSON di atas),
-          sehingga array berita ada di response.data.data (dua level "data").
-        */
-        const newsData = response?.data?.data || []
-
-        const formattedNews = newsData.map((news) => ({
-          id: news.id,
-
-          category:
-            news.categories?.[0]?.name ||
-            news.category?.name ||
-            'Berita',
-
-          title: news.title,
-
-          excerpt: news.excerpt || '',
-
-          img: news.thumbnail_url
-            ? resolveImageUrl(news.thumbnail_url)
-            : '',
-
-          date: news.created_at
-            ? new Date(news.created_at).toLocaleDateString('id-ID', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              })
-            : '',
-
-          slug: news.slug,
-        }))
-
-        if (isMounted) {
-          setNewsItems(formattedNews)
-        }
-      } catch (error) {
-        console.error('Gagal mengambil berita:', error)
-
-        if (isMounted) {
-          setNewsError(
-            error.response?.data?.message ||
-              'Gagal mengambil berita'
-          )
-
-          setNewsItems([])
-        }
-      } finally {
-        if (isMounted) {
-          setNewsLoading(false)
-        }
-      }
-    }
-
-    fetchNews()
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
-
-  // ─── EVENT DARI API PUBLIC ──────────────────────────────────────────────────
-
-  const [eventItems, setEventItems] = useState([])
-  const [eventsLoading, setEventsLoading] = useState(true)
-  const [eventsError, setEventsError] = useState('')
-
-  useEffect(() => {
-    let isMounted = true
-
-    const fetchEvents = async () => {
-      try {
-        setEventsLoading(true)
-        setEventsError('')
-
-        const response = await getPublicEventsApi(1, 9)
-
-        // Sama seperti berita: array asli ada di response.data.data
-        const eventData = response?.data?.data || []
-
-        const formattedEvents = eventData.map((ev) => ({
-          id: ev.id,
-
-          category:
-            ev.categories?.[0]?.name || ev.category?.name || 'Event',
-
-          title: ev.title,
-
-          img: ev.thumbnail_url ? resolveImageUrl(ev.thumbnail_url) : '',
-
-          date: ev.event_date
-            ? new Date(ev.event_date).toLocaleDateString('id-ID', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              })
-            : '',
-
-          time: ev.event_time ? ev.event_time.slice(0, 5) : '',
-
-          location: ev.event_location || '',
-
-          slug: ev.slug,
-        }))
-
-        if (isMounted) {
-          setEventItems(formattedEvents)
-        }
-      } catch (error) {
-        console.error('Gagal mengambil event:', error)
-
-        if (isMounted) {
-          setEventsError(
-            error.response?.data?.message || 'Gagal mengambil event'
-          )
-          setEventItems([])
-        }
-      } finally {
-        if (isMounted) {
-          setEventsLoading(false)
-        }
-      }
-    }
-
-    fetchEvents()
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
-
-  // ─── ARTICLE DARI API PUBLIC ────────────────────────────────────────────────
-
-  const [articleItems, setArticleItems] = useState([])
-  const [articlesLoading, setArticlesLoading] = useState(true)
-  const [articlesError, setArticlesError] = useState('')
-
-  useEffect(() => {
-    let isMounted = true
-
-    const fetchArticles = async () => {
-      try {
-        setArticlesLoading(true)
-        setArticlesError('')
-
-        const response = await getPublicArticlesApi(1, 9)
-
-        const articleData = response?.data?.data || []
-
-        const formattedArticles = articleData.map((art) => ({
-          id: art.id,
-
-          category:
-            art.categories?.[0]?.name || art.category?.name || 'Article',
-
-          title: art.title,
-
-          excerpt: art.excerpt || '',
-
-          img: art.thumbnail_url ? resolveImageUrl(art.thumbnail_url) : '',
-
-          date: art.created_at
-            ? new Date(art.created_at).toLocaleDateString('id-ID', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              })
-            : '',
-
-          slug: art.slug,
-        }))
-
-        if (isMounted) {
-          setArticleItems(formattedArticles)
-        }
-      } catch (error) {
-        console.error('Gagal mengambil artikel:', error)
-
-        if (isMounted) {
-          setArticlesError(
-            error.response?.data?.message || 'Gagal mengambil artikel'
-          )
-          setArticleItems([])
-        }
-      } finally {
-        if (isMounted) {
-          setArticlesLoading(false)
-        }
-      }
-    }
-
-    fetchArticles()
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
-
-  // ─── EVENT CAROUSEL ────────────────────────────────────────────────────────
-
-  const eventC = useCarousel(eventItems.length, 3)
-
-  // ─── ARTICLE CAROUSEL ───────────────────────────────────────────────────────
-
-  const articleC = useCarousel(articleItems.length, 3)
-
-  // ─── TESTIMONIAL DARI API PUBLIC ───────────────────────────────────────────
+  const articlePerView = Math.min(articleItems.length || 1, carouselColumns)
+  const articleC = useCarousel(articleItems.length, articlePerView)
 
   const [testimonials, setTestimonials] = useState([])
   const [testiLoading, setTestiLoading] = useState(true)
@@ -502,25 +340,17 @@ export default function LandingPage({ onNavigate }) {
     }
   }, [])
 
-  // ─── TESTIMONIAL CAROUSEL ──────────────────────────────────────────────────
-
   const testiTotal = testimonials.length
-  const testiMaxIdx = Math.max(0, testiTotal > 2 ? testiTotal - 1 : 0)
-  const [testiIdx, setTestiIdx] = useState(0)
+  const testiPerView = Math.min(testiTotal || 1, carouselColumns === 3 ? 2 : 1)
+  const testiMaxIdx = Math.max(0, testiTotal - testiPerView)
+  const [testiPosition, setTestiIdx] = useState(0)
+  const testiIdx = Math.min(testiPosition, testiMaxIdx)
   const [testiTouchStart, setTestiTouchStart] = useState(null)
   const [testiTouchEnd, setTestiTouchEnd] = useState(null)
 
-  // Pastikan indeks selalu valid jika data berubah
-  useEffect(() => {
-    if (testiIdx > testiMaxIdx) {
-      setTestiIdx(0)
-    }
-  }, [testiMaxIdx, testiIdx])
-
-  // Navigasi manual melingkar (circular)
   const handleTestiPrev = () => {
     if (testiMaxIdx === 0) return
-    setTestiIdx((curr) => (curr <= 0 ? testiMaxIdx : curr - 1))
+    setTestiIdx((curr) => (Math.min(curr, testiMaxIdx) <= 0 ? testiMaxIdx : Math.min(curr, testiMaxIdx) - 1))
   }
 
   const handleTestiNext = () => {
@@ -532,7 +362,6 @@ export default function LandingPage({ onNavigate }) {
     setTestiIdx(targetIdx)
   }
 
-  // Touch handlers untuk swipe di mobile/touchscreen
   const handleTestiTouchStart = (e) => {
     setTestiTouchEnd(null)
     setTestiTouchStart(e.targetTouches[0].clientX)
@@ -557,7 +386,7 @@ export default function LandingPage({ onNavigate }) {
 
   // Auto-slide interval: berjalan normal dan timer di-restart setelah navigasi manual
   useEffect(() => {
-    if (testiTotal <= 2 || testiMaxIdx === 0) return
+    if (testiMaxIdx === 0) return
 
     const interval = setInterval(() => {
       setTestiIdx((curr) => (curr >= testiMaxIdx ? 0 : curr + 1))
@@ -578,16 +407,6 @@ export default function LandingPage({ onNavigate }) {
           50% {
             transform: translateY(8px);
             opacity: 0.3;
-          }
-        }
-
-        @keyframes marquee {
-          0% {
-            transform: translateX(0);
-          }
-
-          100% {
-            transform: translateX(-50%);
           }
         }
 
@@ -613,14 +432,6 @@ export default function LandingPage({ onNavigate }) {
           }
         }
 
-        .marquee-track {
-          animation: marquee 22s linear infinite;
-        }
-
-        .marquee-track:hover {
-          animation-play-state: paused;
-        }
-
         @keyframes blobMorph {
           0% {
             border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
@@ -639,22 +450,18 @@ export default function LandingPage({ onNavigate }) {
         }
       `}</style>
 
-      {/* ── 1. NAVBAR ── */}
-
       <PublicNavbar
         onNavigate={onNavigate}
         activePage="landing"
         scrolled={scrolled}
       />
 
-      {/* ── 2. HERO ── */}
-
       <section className="relative min-h-screen flex flex-col justify-center items-center text-center px-6 overflow-hidden">
         {heroSlides.map((slide, i) => (
           <div
             key={slide.id ?? i}
             className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out ${
-              i === heroIdx ? 'opacity-100' : 'opacity-0'
+              i === safeHeroIdx ? 'opacity-100' : 'opacity-0'
             }`}
             style={{
               backgroundImage: slide.image ? `url(${slide.image})` : undefined,
@@ -702,24 +509,24 @@ export default function LandingPage({ onNavigate }) {
               <button
                 onClick={heroPrev}
                 className="absolute left-4 md:left-10 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white/10 hover:bg-white/25 border border-white/20 flex items-center justify-center transition-all"
-                aria-label="Previous"
+                aria-label="Sebelumnya"
               >
                 <ChevronLeft size={22} className="text-white" />
               </button>
             )}
 
             <div className="relative z-10 max-w-4xl mx-auto">
-              {heroSlides[heroIdx].title && (
+              {heroSlides[safeHeroIdx].title && (
                 <h1
-                  key={heroSlides[heroIdx].id}
+                  key={heroSlides[safeHeroIdx].id}
                   className="text-5xl md:text-7xl font-extrabold text-white leading-tight mb-10 drop-shadow-lg animate-[fadeIn_0.6s_ease]"
                 >
-                  {heroSlides[heroIdx].title}
+                  {heroSlides[safeHeroIdx].title}
                 </h1>
               )}
 
               <div className="flex flex-wrap items-center justify-center gap-4">
-                {heroSlides[heroIdx].buttons
+                {heroSlides[safeHeroIdx].buttons
                   .filter((button) => button?.label?.trim() && button?.url?.trim())
                   .map((button, index) => (
                     <a
@@ -740,7 +547,7 @@ export default function LandingPage({ onNavigate }) {
                       onClick={() => setHeroIdx(i)}
                       aria-label={`Slide ${i + 1}`}
                       className={`rounded-full transition-all ${
-                        i === heroIdx
+                        i === safeHeroIdx
                           ? 'w-6 h-2 bg-sky-400'
                           : 'w-2 h-2 bg-white/30'
                       }`}
@@ -754,7 +561,7 @@ export default function LandingPage({ onNavigate }) {
               <button
                 onClick={heroNext}
                 className="absolute right-4 md:right-10 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white/10 hover:bg-white/25 border border-white/20 flex items-center justify-center transition-all"
-                aria-label="Next"
+                aria-label="Berikutnya"
               >
                 <ChevronRight size={22} className="text-white" />
               </button>
@@ -764,14 +571,14 @@ export default function LandingPage({ onNavigate }) {
 
         {heroLoading && (
           <div className="relative z-10 text-white/80 text-lg">
-            Loading slider...
+            Memuat slider...
           </div>
         )}
 
         {!heroLoading && heroSlides.length === 0 && (
           <div className="relative z-10 max-w-xl px-6 text-center">
             <h1 className="text-4xl md:text-6xl font-extrabold text-white leading-tight drop-shadow-lg">
-              {heroError ? 'Slider unavailable' : 'Welcome'}
+              {heroError ? 'Slider belum tersedia' : 'Selamat Datang'}
             </h1>
             {heroError && (
               <p className="mt-4 text-white/70">{heroError}</p>
@@ -784,17 +591,13 @@ export default function LandingPage({ onNavigate }) {
         </div>
       </section>
 
-      {/* ── 3. PARTNERSHIP ── */}
-
       <HomepageServicesSection services={services} />
 
-      {/* ── 4. EVENT UPDATE ── */}
-
-      <section className="px-6 py-20 bg-gray-50">
+      <section className="landing-section px-6 bg-gray-50">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between mb-10">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-8 md:mb-10">
             <h2 className="text-3xl font-extrabold text-gray-900">
-              Event Updates
+              Event Update
             </h2>
 
             <div className="flex gap-2">
@@ -817,20 +620,20 @@ export default function LandingPage({ onNavigate }) {
           </div>
 
           {eventsLoading && (
-            <div className="flex items-center justify-center py-20">
-              <p className="text-gray-400">Loading events...</p>
+            <div className="flex items-center justify-center py-6 md:py-8">
+              <p className="text-gray-400">Memuat event...</p>
             </div>
           )}
 
           {!eventsLoading && eventsError && (
-            <div className="flex items-center justify-center py-20">
+            <div className="flex items-center justify-center py-6 md:py-8">
               <p className="text-red-500">{eventsError}</p>
             </div>
           )}
 
           {!eventsLoading && !eventsError && eventItems.length === 0 && (
-            <div className="flex items-center justify-center py-20">
-              <p className="text-gray-400">No events published yet.</p>
+            <div className="flex items-center justify-center py-6 md:py-8">
+              <p className="text-gray-400">Belum ada event yang dipublikasikan.</p>
             </div>
           )}
 
@@ -839,13 +642,15 @@ export default function LandingPage({ onNavigate }) {
               <div
                 className="flex gap-5 transition-transform duration-500 ease-in-out"
                 style={{
-                  transform: `translateX(calc(-${eventC.idx} * (100% / 3 + 6.67px)))`,
+                  '--carousel-items': eventPerView,
+                  '--carousel-gap': 'calc(var(--spacing) * 5)',
+                  transform: `translateX(calc(-${eventC.idx} * ((100% + var(--carousel-gap)) / var(--carousel-items))))`,
                 }}
               >
                 {eventItems.map((ev) => (
                   <div
                     key={ev.id}
-                    className="group relative flex-shrink-0 w-[calc(33.333%-14px)] h-[400px] sm:h-[440px] rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-shadow duration-300 cursor-pointer bg-gray-200"
+                    className="group relative landing-carousel-item h-[400px] sm:h-[440px] rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-shadow duration-300 cursor-pointer bg-gray-200"
                   >
                     {ev.img ? (
                       <img
@@ -855,7 +660,7 @@ export default function LandingPage({ onNavigate }) {
                       />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">
-                        No image available
+                        Tidak ada gambar
                       </div>
                     )}
 
@@ -865,7 +670,7 @@ export default function LandingPage({ onNavigate }) {
                       {ev.title}
                     </h3>
 
-                    <div className="absolute bottom-6 left-6 flex flex-col gap-2.5">
+                    <div className="absolute bottom-20 left-6 right-6 flex flex-col gap-2.5">
                       {ev.date && (
                         <div className="flex items-center gap-2 text-white/95 text-sm font-medium">
                           <Calendar size={16} className="text-white/80" />
@@ -885,7 +690,7 @@ export default function LandingPage({ onNavigate }) {
                     </div>
 
                     <button className="absolute bottom-6 right-6 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold px-6 py-2.5 rounded-full transition-colors duration-300 shadow-md">
-                      View
+                      Lihat
                     </button>
                   </div>
                 ))}
@@ -895,13 +700,11 @@ export default function LandingPage({ onNavigate }) {
         </div>
       </section>
 
-      {/* ── ARTICLE ── */}
-
-      <section className="px-6 py-20 bg-gray-50">
+      <section className="px-6 pb-12 md:pb-16 bg-gray-50">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between mb-10">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-8 md:mb-10">
             <h2 className="text-3xl font-extrabold text-gray-900">
-              Articles
+              Article
             </h2>
 
             <div className="flex gap-2">
@@ -924,20 +727,20 @@ export default function LandingPage({ onNavigate }) {
           </div>
 
           {articlesLoading && (
-            <div className="flex items-center justify-center py-20">
-              <p className="text-gray-400">Loading articles...</p>
+            <div className="flex items-center justify-center py-6 md:py-8">
+              <p className="text-gray-400">Memuat artikel...</p>
             </div>
           )}
 
           {!articlesLoading && articlesError && (
-            <div className="flex items-center justify-center py-20">
+            <div className="flex items-center justify-center py-6 md:py-8">
               <p className="text-red-500">{articlesError}</p>
             </div>
           )}
 
           {!articlesLoading && !articlesError && articleItems.length === 0 && (
-            <div className="flex items-center justify-center py-20">
-              <p className="text-gray-400">No articles published yet.</p>
+            <div className="flex items-center justify-center py-6 md:py-8">
+              <p className="text-gray-400">Belum ada artikel yang dipublikasikan.</p>
             </div>
           )}
 
@@ -946,15 +749,17 @@ export default function LandingPage({ onNavigate }) {
               <div
                 className="flex gap-5 transition-transform duration-500 ease-in-out"
                 style={{
-                  transform: `translateX(calc(-${articleC.idx} * (100% / 3 + 6.67px)))`,
+                  '--carousel-items': articlePerView,
+                  '--carousel-gap': 'calc(var(--spacing) * 5)',
+                  transform: `translateX(calc(-${articleC.idx} * ((100% + var(--carousel-gap)) / var(--carousel-items))))`,
                 }}
               >
                 {articleItems.map((art) => (
                   <div
                     key={art.id}
-                    className="group flex-shrink-0 w-[calc(33.333%-14px)] rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col"
+                    className={`group landing-carousel-item rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col ${articleItems.length === 1 ? 'md:flex-row' : ''}`}
                   >
-                    <div className="aspect-[16/10] bg-gray-100 overflow-hidden">
+                    <div className={`aspect-[16/10] bg-gray-100 overflow-hidden ${articleItems.length === 1 ? 'md:w-2/5 md:shrink-0' : ''}`}>
                       {art.img ? (
                         <img
                           src={art.img}
@@ -963,7 +768,7 @@ export default function LandingPage({ onNavigate }) {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
-                          No image available
+                          Tidak ada gambar
                         </div>
                       )}
                     </div>
@@ -991,33 +796,31 @@ export default function LandingPage({ onNavigate }) {
         </div>
       </section>
 
-      {/* ── 5. SOSOK INSPIRASI ── */}
-
-      <section className="px-6 py-24 bg-white">
+      <section className="landing-section px-6 bg-white">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
+          <div className="text-center mb-8 md:mb-10">
             <h2 className="text-3xl md:text-4xl lg:text-[40px] font-bold text-[#1a202c] leading-tight max-w-3xl mx-auto">
-              Hundreds of partners across Indonesia,
+              Ratusan partner di seluruh Indonesia,
               <br />
-              growing together with full trust
+              tumbuh bersama dengan penuh kepercayaan
             </h2>
           </div>
 
           {testiLoading && (
-            <div className="flex items-center justify-center py-20">
-              <p className="text-gray-400">Loading testimonials...</p>
+            <div className="flex items-center justify-center py-6 md:py-8">
+              <p className="text-gray-400">Memuat testimoni...</p>
             </div>
           )}
 
           {!testiLoading && testiError && (
-            <div className="flex items-center justify-center py-20">
+            <div className="flex items-center justify-center py-6 md:py-8">
               <p className="text-red-500">{testiError}</p>
             </div>
           )}
 
           {!testiLoading && !testiError && testimonials.length === 0 && (
-            <div className="flex items-center justify-center py-20">
-              <p className="text-gray-400">No testimonials available yet.</p>
+            <div className="flex items-center justify-center py-6 md:py-8">
+              <p className="text-gray-400">Belum ada testimoni yang ditampilkan.</p>
             </div>
           )}
 
@@ -1032,7 +835,9 @@ export default function LandingPage({ onNavigate }) {
                 <div
                   className="flex gap-8 transition-transform duration-700 ease-in-out"
                   style={{
-                    transform: `translateX(calc(-${testiIdx} * (50% + 16px)))`,
+                    '--carousel-items': testiPerView,
+                    '--carousel-gap': 'calc(var(--spacing) * 8)',
+                    transform: `translateX(calc(-${testiIdx} * ((100% + var(--carousel-gap)) / var(--carousel-items))))`,
                   }}
                 >
                   {testimonials.map((t) => {
@@ -1042,7 +847,7 @@ export default function LandingPage({ onNavigate }) {
                     return (
                       <div
                         key={t.id}
-                        className="flex-shrink-0 w-[calc(50%-16px)] flex flex-col sm:flex-row items-center sm:items-start gap-5 sm:gap-6"
+                        className="landing-carousel-item flex flex-col sm:flex-row items-center sm:items-start gap-5 sm:gap-6"
                       >
                         <div className="w-24 h-24 sm:w-[110px] sm:h-[110px] flex-shrink-0 rounded-[1.25rem] overflow-hidden shadow-sm bg-gray-100 flex items-center justify-center">
                           {photoSrc ? (
@@ -1089,11 +894,11 @@ export default function LandingPage({ onNavigate }) {
               </div>
 
               {testiMaxIdx > 0 && (
-                <div className="flex items-center justify-center gap-4 mt-12 sm:mt-16">
+                <div className="flex items-center justify-center gap-4 mt-8">
                   <button
                     type="button"
                     onClick={handleTestiPrev}
-                    aria-label="Previous testimonial"
+                    aria-label="Testimonial sebelumnya"
                     className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-sky-400 hover:text-sky-500 hover:bg-sky-50 transition-all focus:outline-none focus:ring-2 focus:ring-sky-400"
                   >
                     <ChevronLeft size={18} />
@@ -1110,7 +915,7 @@ export default function LandingPage({ onNavigate }) {
                             ? 'w-3.5 h-3.5 bg-[#6366f1]'
                             : 'w-3.5 h-3.5 bg-gray-200 hover:bg-gray-300'
                         }`}
-                        aria-label={`Go to slide ${i + 1}`}
+                        aria-label={`Ke slide ${i + 1}`}
                       />
                     ))}
                   </div>
@@ -1118,7 +923,7 @@ export default function LandingPage({ onNavigate }) {
                   <button
                     type="button"
                     onClick={handleTestiNext}
-                    aria-label="Next testimonial"
+                    aria-label="Testimonial berikutnya"
                     className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:border-sky-400 hover:text-sky-500 hover:bg-sky-50 transition-all focus:outline-none focus:ring-2 focus:ring-sky-400"
                   >
                     <ChevronRight size={18} />
@@ -1130,13 +935,9 @@ export default function LandingPage({ onNavigate }) {
         </div>
       </section>
 
-      {/* ── 6. PARTNER KAMI ── */}
-
       <PublicPartnerSection />
 
-      {/* ── 7. SAATNYA BERSAMA BERAKSI ── */}
-
-      <section className="relative px-6 py-24 bg-white overflow-hidden">
+      <section className="relative px-6 pb-12 md:pb-16 bg-white overflow-hidden">
         <div
           className="absolute -top-24 -left-32 w-[480px] h-[480px] bg-gradient-to-br from-sky-200 to-sky-100 opacity-60 blur-3xl pointer-events-none"
           style={{
@@ -1162,17 +963,17 @@ export default function LandingPage({ onNavigate }) {
         />
 
         <div className="relative z-10 max-w-7xl mx-auto">
-          <div className="text-center mb-20">
+          <div className="text-center mb-8 md:mb-10">
             <p className="text-sky-500 text-sm font-bold tracking-[0.2em] uppercase mb-4">
-              Why Join Us
+              Mengapa Bergabung
             </p>
 
             <h2 className="text-4xl md:text-5xl font-extrabold text-[#0f172a] mb-5">
-              Time to Take Action Together
+              Saatnya Bersama Beraksi
             </h2>
 
             <p className="text-gray-500 text-lg max-w-2xl mx-auto">
-              Empowering the next generation for the 2045 golden future.
+              Indonesia butuh pemuda generasi masa depan emas 2045.
             </p>
           </div>
 
@@ -1183,7 +984,7 @@ export default function LandingPage({ onNavigate }) {
               ))}
             </div>
 
-            <div className="w-full sm:w-2/3 lg:w-[36%] flex items-center justify-center relative min-h-[380px] lg:min-h-[450px] my-10 lg:my-0">
+            <div className="w-full sm:w-2/3 lg:w-[36%] flex items-center justify-center relative min-h-[380px] lg:min-h-[450px]">
               <div className="absolute inset-0 m-auto w-3/4 h-3/4 bg-gradient-to-tr from-sky-200 to-violet-200 rounded-full blur-3xl opacity-50 pointer-events-none" />
 
               <HomepageJoinImages />
@@ -1198,14 +999,12 @@ export default function LandingPage({ onNavigate }) {
         </div>
       </section>
 
-      {/* ── 8. INFORMASI / BERITA ── */}
-
-      <section className="px-6 py-20 bg-gray-50">
+      <section className="landing-section px-6 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 pb-4 border-b border-gray-200 gap-4">
             <div>
               <h2 className="text-3xl md:text-4xl font-extrabold text-[#0f172a]">
-                News & Updates
+                Informasi & Berita
               </h2>
             </div>
 
@@ -1213,57 +1012,52 @@ export default function LandingPage({ onNavigate }) {
               href="#"
               className="flex items-center gap-1 text-sky-500 font-semibold hover:text-sky-600 transition-colors"
             >
-              View all
+              Lihat semua
               <ChevronRight size={18} />
             </a>
           </div>
 
-          {/* Loading */}
           {newsLoading && (
-            <div className="flex items-center justify-center py-20">
+            <div className="flex items-center justify-center py-6 md:py-8">
               <p className="text-gray-400">
-                Loading news...
+                Memuat berita...
               </p>
             </div>
           )}
 
-          {/* Error */}
           {!newsLoading && newsError && (
-            <div className="flex items-center justify-center py-20">
+            <div className="flex items-center justify-center py-6 md:py-8">
               <p className="text-red-500">
                 {newsError}
               </p>
             </div>
           )}
 
-          {/* Tidak ada berita */}
           {!newsLoading &&
             !newsError &&
             newsItems.length === 0 && (
-              <div className="flex items-center justify-center py-20">
+              <div className="flex items-center justify-center py-6 md:py-8">
                 <p className="text-gray-400">
-                  No news published yet.
+                  Belum ada berita yang dipublikasikan.
                 </p>
               </div>
             )}
 
-          {/* Data berita */}
           {!newsLoading &&
             !newsError &&
             newsItems.length > 0 && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                {/* Berita Utama */}
-                <div className="lg:col-span-7 group cursor-pointer">
+                <div className={`${newsItems.length > 1 ? 'lg:col-span-7' : 'lg:col-span-12'} group cursor-pointer`}>
                   <div className="overflow-hidden rounded-xl mb-5 bg-gray-100">
                     {newsItems[0].img ? (
                       <img
                         src={newsItems[0].img}
                         alt={newsItems[0].title}
-                        className="w-full aspect-[4/3] md:aspect-[16/9] lg:aspect-[4/3] object-cover group-hover:scale-105 transition-transform duration-500"
+                        className={`w-full aspect-[4/3] md:aspect-[16/9] ${newsItems.length > 1 ? 'lg:aspect-[4/3]' : ''} object-cover group-hover:scale-105 transition-transform duration-500`}
                       />
                     ) : (
-                      <div className="w-full aspect-[4/3] md:aspect-[16/9] lg:aspect-[4/3] flex items-center justify-center bg-gray-200 text-gray-400">
-                        No image available
+                      <div className={`w-full aspect-[4/3] md:aspect-[16/9] ${newsItems.length > 1 ? 'lg:aspect-[4/3]' : ''} flex items-center justify-center bg-gray-200 text-gray-400`}>
+                        Tidak ada gambar
                       </div>
                     )}
                   </div>
@@ -1285,8 +1079,7 @@ export default function LandingPage({ onNavigate }) {
                   </p>
                 </div>
 
-                {/* List berita lainnya */}
-                <div className="lg:col-span-5 flex flex-col gap-6">
+                {newsItems.length > 1 && <div className="lg:col-span-5 flex flex-col gap-6">
                   {newsItems.slice(1).map((news) => (
                     <div
                       key={news.id}
@@ -1301,7 +1094,7 @@ export default function LandingPage({ onNavigate }) {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400 text-xs text-center px-2">
-                            No image available
+                            Tidak ada gambar
                           </div>
                         )}
                       </div>
@@ -1321,15 +1114,13 @@ export default function LandingPage({ onNavigate }) {
                       </div>
                     </div>
                   ))}
-                </div>
+                </div>}
               </div>
             )}
         </div>
       </section>
 
-      {/* ── 9. CTA KONSULTASI ── */}
-
-      <section className="relative px-6 py-24 bg-gray-50 overflow-hidden">
+      <section className="relative px-6 pb-12 md:pb-16 bg-gray-50 overflow-hidden">
         <div
           className="absolute inset-0 opacity-50 pointer-events-none"
           style={{
@@ -1339,21 +1130,21 @@ export default function LandingPage({ onNavigate }) {
           }}
         />
 
-        <div className="relative z-10 max-w-6xl mx-auto bg-white rounded-[2rem] shadow-2xl border border-gray-100 flex flex-col md:flex-row items-center justify-between p-10 md:p-16 lg:p-20 gap-10">
+        <div className="relative z-10 max-w-6xl mx-auto bg-white rounded-[2rem] shadow-2xl border border-gray-100 flex flex-col md:flex-row items-center justify-between p-6 md:p-10 lg:p-12 gap-8">
           <div className="w-full md:w-3/5 flex flex-col items-center md:items-start text-center md:text-left">
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#0f172a] leading-tight mb-5">
-              READY to Be Part of INOTAL Partner?
+              SIAP Menjadi Bagian INOTAL Partner?
             </h2>
 
             <p className="text-gray-500 text-base md:text-lg leading-relaxed mb-8 max-w-lg">
-              Join stakeholders across industries in our digital programs and future transformation initiatives.
+              Bergabunglah dengan X stakeholder dalam program digital dan transformasi masa depan
             </p>
 
             <button
               onClick={() => onNavigate?.('register')}
               className="bg-sky-500 hover:bg-sky-600 text-white font-bold px-10 py-3.5 rounded-xl transition-all shadow-lg shadow-sky-500/30 text-sm tracking-wide"
             >
-              JOIN NOW
+              GABUNG SEKARANG
             </button>
           </div>
 
@@ -1366,8 +1157,6 @@ export default function LandingPage({ onNavigate }) {
           </div>
         </div>
       </section>
-
-      {/* ── 10. FOOTER ── */}
 
       <PublicFooter onNavigate={onNavigate} />
     </div>

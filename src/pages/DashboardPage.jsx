@@ -32,144 +32,81 @@ import ListVideoHighlightPage from './ListVideoHighlightPage'
 import KontakInboxPage from './KontakInboxPage'
 import KemitraanPage from './KemitraanPage'
 import KartuTentangPage from './KartuTentangPage'
+import AboutEmpoweringPage from './AboutEmpoweringPage'
 import AboutIntroPage from './AboutIntroPage'
 import PageBannerPage from './PageBannerPage'
 import HomepageJoinImagesPage from './HomepageJoinImagesPage'
 import HomepageJoinCardsPage from './HomepageJoinCardsPage'
 import HomepageServicesPage from './HomepageServicesPage'
 import { PAGE_BANNER_PAGES } from '../data/pageBanners'
+import CompanyInputPage from './CompanyInputPage'
 
 import { useAuth } from '../hooks/useAuth'
+
+const EDITOR_ROUTES = {
+  post: { form: 'createPost', list: 'listPost' },
+  slider: { form: 'createSlider', list: 'listSlider' },
+  testimonial: { form: 'createTestimonial', list: 'listTestimonial' },
+  joinInvitation: { form: 'createJoinInvitation', list: 'listJoinInvitation' },
+  statistic: { form: 'createStatistic', list: 'listStatistic' },
+  member: { form: 'formAboutMember', list: 'listAbout' },
+  video: { form: 'createVideo', list: 'listVideo' },
+  highlight: { form: 'createVideoHighlight', list: 'listVideoHighlight' },
+  faq: { form: 'createFAQ', list: 'listFAQ' },
+}
+const EMPTY_EDITING = Object.fromEntries(Object.keys(EDITOR_ROUTES).map((kind) => [kind, null]))
 
 export default function DashboardPage({ onNavigate }) {
   const [activeNav, setActiveNav] = useState('dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  
-  // State untuk mode edit 
-  const [editingPost, setEditingPost] = useState(null)
-  const [editingSlider, setEditingSlider] = useState(null)
-  const [editingTestimonial, setEditingTestimonial] = useState(null)
-  const [editingMember, setEditingMember] = useState(null)
-  const [editingVideo, setEditingVideo] = useState(null)
-  const [editingHighlight, setEditingHighlight] = useState(null)
-  const [editingFAQ, setEditingFAQ] = useState(null)
-  const [editingStatistic, setEditingStatistic] = useState(null)
-  const [editingJoinInvitation, setEditingJoinInvitation] = useState(null)
-
+  const [editing, setEditing] = useState(EMPTY_EDITING)
+  const {
+    post: editingPost,
+    slider: editingSlider,
+    testimonial: editingTestimonial,
+    joinInvitation: editingJoinInvitation,
+    statistic: editingStatistic,
+    member: editingMember,
+    video: editingVideo,
+    highlight: editingHighlight,
+    faq: editingFAQ,
+  } = editing
   const { user } = useAuth()
 
-  // Handler navigasi: Batalkan mode edit jika user klik menu sidebar lain
-  const handleNav = (key) => { 
-    setEditingPost(null);
-    setEditingSlider(null);
-    setEditingTestimonial(null);
-    setEditingMember(null);
-    setEditingVideo(null);
-    setEditingHighlight(null);
-    setEditingFAQ(null);
-    setEditingStatistic(null);
-    setEditingJoinInvitation(null);
-    setActiveNav(key) 
+  const handleNav = (key) => {
+    setEditing(EMPTY_EDITING)
+    setActiveNav(key)
   }
 
-  // Dipanggil dari PostList ketika tombol Edit ditekan
-  const handleEditPost = (postType, post) => {
-    setEditingPost({ postType, post })
-    setActiveNav('createPost')
+  const selectRecord = (kind, value) => {
+    setEditing((current) => (
+      Object.is(current[kind], value) ? current : { ...current, [kind]: value }
+    ))
   }
 
-  // Dipanggil dari CreatePost ketika berhasil update atau batal edit
-  const finishEdit = () => { 
-    setEditingPost(null); 
-    setActiveNav('listPost') 
+  const beginEdit = (kind, value) => {
+    selectRecord(kind, value)
+    setActiveNav(EDITOR_ROUTES[kind].form)
   }
 
-  const handleEditSlider = (slider) => {
-    setEditingSlider(slider)
-    setActiveNav('createSlider')
+  const finishEditing = (kind) => {
+    selectRecord(kind, null)
+    setActiveNav(EDITOR_ROUTES[kind].list)
   }
 
-  const finishEditSlider = () => {
-    setEditingSlider(null)
-    setActiveNav('listSlider')
-  }
-
-  // Testimonial handlers
-  const handleEditTestimonial = (testimonial) => {
-    setEditingTestimonial(testimonial)
-    setActiveNav('createTestimonial')
-  }
-
-  const finishEditTestimonial = () => {
-    setEditingTestimonial(null)
-    setActiveNav('listTestimonial')
-  }
-
-  // Join Invitation (Ajakan Bergabung) handlers
-  const handleEditJoinInvitation = (item) => {
-    setEditingJoinInvitation(item)
-    setActiveNav('createJoinInvitation')
-  }
-
-  const finishEditJoinInvitation = () => {
-    setEditingJoinInvitation(null)
-    setActiveNav('listJoinInvitation')
-  }
-
-  // Statistic handlers
-  const handleEditStatistic = (statistic) => {
-    setEditingStatistic(statistic)
-    setActiveNav('createStatistic')
-  }
-
-  const finishEditStatistic = () => {
-    setEditingStatistic(null)
-    setActiveNav('listStatistic')
-  }
-
-  // About member handlers
-  const handleEditMember = (member) => {
-    setEditingMember(member)
-    setActiveNav('formAboutMember')
-  }
-
-  const finishEditMember = () => {
-    setEditingMember(null)
-    setActiveNav('listAbout')
-  }
-
-  // Video handlers
-  const handleEditVideo = (video) => {
-    setEditingVideo(video)
-    setActiveNav('createVideo')
-  }
-
-  const finishEditVideo = () => {
-    setEditingVideo(null)
-    setActiveNav('listVideo')
-  }
-
-  // Highlight handlers
-  const handleEditHighlight = (highlight) => {
-    setEditingHighlight(highlight)
-    setActiveNav('createVideoHighlight')
-  }
-
-  const finishEditHighlight = () => {
-    setEditingHighlight(null)
-    setActiveNav('listVideoHighlight')
-  }
-
-  // FAQ handlers
-  const handleEditFAQ = (faq) => {
-    setEditingFAQ(faq)
-    setActiveNav('createFAQ')
-  }
-
-  const finishEditFAQ = () => {
-    setEditingFAQ(null)
-    setActiveNav('listFAQ')
-  }
+  const finishEdit = () => finishEditing('post')
+  const finishEditSlider = () => finishEditing('slider')
+  const finishEditTestimonial = () => finishEditing('testimonial')
+  const finishEditJoinInvitation = () => finishEditing('joinInvitation')
+  const finishEditStatistic = () => finishEditing('statistic')
+  const handleEditJoinInvitation = (item) => beginEdit('joinInvitation', item)
+  const handleEditStatistic = (statistic) => beginEdit('statistic', statistic)
+  const finishEditMember = () => finishEditing('member')
+  const finishEditVideo = () => finishEditing('video')
+  const finishEditHighlight = () => finishEditing('highlight')
+  const finishEditFAQ = () => finishEditing('faq')
+  const handleEditMember = (member) => beginEdit('member', member)
+  const addMember = () => beginEdit('member', null)
 
   const renderContent = () => {
     switch (activeNav) {
@@ -196,6 +133,13 @@ export default function DashboardPage({ onNavigate }) {
         return <ProfilePage />
       case 'changePassword':
         return <ChangePasswordPage />
+      case 'company':
+      case 'companyInternships':
+      case 'companyInvestments':
+      case 'companyJobs':
+      case 'companyCollaborations':
+      case 'companyProjects':
+        return <CompanyInputPage activeNav={activeNav === 'company' ? 'companyInternships' : activeNav} role={user?.role} />
       case 'users':
         return <UserPage />
 
@@ -207,6 +151,9 @@ export default function DashboardPage({ onNavigate }) {
 
       case 'aboutCards':
         return <KartuTentangPage role={user?.role} />
+
+      case 'aboutEmpowering':
+        return <AboutEmpoweringPage role={user?.role} />
 
       case 'aboutIntro':
         return <AboutIntroPage role={user?.role} />
@@ -235,7 +182,7 @@ export default function DashboardPage({ onNavigate }) {
         )
         
       case 'listPost':
-        return <PostList onEdit={handleEditPost} />
+        return <PostList onEdit={(postType, post) => beginEdit('post', { postType, post })} />
 
       case 'homeJoinImages':
         return <HomepageJoinImagesPage role={user?.role} />
@@ -256,17 +203,14 @@ export default function DashboardPage({ onNavigate }) {
             }
             editingSlider={editingSlider}
             onFinishEdit={finishEditSlider}
-            onOpenList={() => {
-              setEditingSlider(null)
-              setActiveNav('listSlider')
-            }}
+            onOpenList={finishEditSlider}
           />
         )
 
       case 'listSlider':
         return (
           <ListSliderPage
-            onEdit={handleEditSlider}
+            onEdit={(slider) => beginEdit('slider', slider)}
           />
         )
 
@@ -276,21 +220,15 @@ export default function DashboardPage({ onNavigate }) {
             key={editingTestimonial ? `edit-testi-${editingTestimonial.id}` : 'new-testi'}
             editingTestimonial={editingTestimonial}
             onFinish={finishEditTestimonial}
-            onOpenList={() => {
-              setEditingTestimonial(null)
-              setActiveNav('listTestimonial')
-            }}
+            onOpenList={finishEditTestimonial}
           />
         )
 
       case 'listTestimonial':
         return (
           <ListTestimonialPage
-            onAddNew={() => {
-              setEditingTestimonial(null)
-              setActiveNav('createTestimonial')
-            }}
-            onEdit={handleEditTestimonial}
+            onAddNew={() => beginEdit('testimonial', null)}
+            onEdit={(testimonial) => beginEdit('testimonial', testimonial)}
           />
         )
 
@@ -301,10 +239,7 @@ export default function DashboardPage({ onNavigate }) {
             key={editingJoinInvitation ? `edit-join-${editingJoinInvitation.id}` : 'new-join'}
             editingCTA={editingJoinInvitation}
             onFinish={finishEditJoinInvitation}
-            onOpenList={() => {
-              setEditingJoinInvitation(null)
-              setActiveNav('listJoinInvitation')
-            }}
+            onOpenList={finishEditJoinInvitation}
           />
         )
 
@@ -312,10 +247,7 @@ export default function DashboardPage({ onNavigate }) {
       case 'listHomeCTA':
         return (
           <ListJoinInvitationPage
-            onAddNew={() => {
-              setEditingJoinInvitation(null)
-              setActiveNav('createJoinInvitation')
-            }}
+            onAddNew={() => beginEdit('joinInvitation', null)}
             onEdit={handleEditJoinInvitation}
           />
         )
@@ -326,20 +258,14 @@ export default function DashboardPage({ onNavigate }) {
             key={editingStatistic ? `edit-stat-${editingStatistic.id}` : 'new-stat'}
             editingStatistic={editingStatistic}
             onFinish={finishEditStatistic}
-            onOpenList={() => {
-              setEditingStatistic(null)
-              setActiveNav('listStatistic')
-            }}
+            onOpenList={finishEditStatistic}
           />
         )
 
       case 'listStatistic':
         return (
           <ListStatisticPage
-            onAddNew={() => {
-              setEditingStatistic(null)
-              setActiveNav('createStatistic')
-            }}
+            onAddNew={() => beginEdit('statistic', null)}
             onEdit={handleEditStatistic}
           />
         )
@@ -348,11 +274,8 @@ export default function DashboardPage({ onNavigate }) {
         return (
           <CreateAboutPage
             onFinishEdit={finishEditMember}
-            onCancelEdit={() => setEditingMember(null)}
-            onAddNew={() => {
-              setEditingMember(null)
-              setActiveNav('createAbout')
-            }}
+            onCancelEdit={() => selectRecord('member', null)}
+            onAddNew={addMember}
             onEdit={handleEditMember}
             onOpenList={() => setActiveNav('listAbout')}
           />
@@ -361,10 +284,7 @@ export default function DashboardPage({ onNavigate }) {
       case 'listAbout':
         return (
           <ListAboutPage
-            onAddNew={() => {
-              setEditingMember(null)
-              setActiveNav('createAbout')
-            }}
+            onAddNew={addMember}
             onEdit={handleEditMember}
           />
         )
@@ -375,10 +295,7 @@ export default function DashboardPage({ onNavigate }) {
             key={editingMember ? `edit-member-${editingMember.id}` : 'new-member'}
             editingMember={editingMember}
             onFinish={finishEditMember}
-            onOpenList={() => {
-              setEditingMember(null)
-              setActiveNav('listAbout')
-            }}
+            onOpenList={finishEditMember}
           />
         )
 
@@ -388,21 +305,15 @@ export default function DashboardPage({ onNavigate }) {
             key={editingVideo ? `edit-video-${editingVideo.id}` : 'new-video'}
             editingVideo={editingVideo}
             onFinish={finishEditVideo}
-            onOpenList={() => {
-              setEditingVideo(null)
-              setActiveNav('listVideo')
-            }}
+            onOpenList={finishEditVideo}
           />
         )
 
       case 'listVideo':
         return (
           <ListVideoPage
-            onAddNew={() => {
-              setEditingVideo(null)
-              setActiveNav('createVideo')
-            }}
-            onEdit={handleEditVideo}
+            onAddNew={() => beginEdit('video', null)}
+            onEdit={(video) => beginEdit('video', video)}
           />
         )
 
@@ -415,21 +326,15 @@ export default function DashboardPage({ onNavigate }) {
             key={editingHighlight ? 'edit-highlight-' + editingHighlight.id : 'new-highlight'}
             editingHighlight={editingHighlight}
             onFinish={finishEditHighlight}
-            onOpenList={() => {
-              setEditingHighlight(null)
-              setActiveNav('listVideoHighlight')
-            }}
+            onOpenList={finishEditHighlight}
           />
         )
 
       case 'listVideoHighlight':
         return (
           <ListVideoHighlightPage
-            onAddNew={() => {
-              setEditingHighlight(null)
-              setActiveNav('createVideoHighlight')
-            }}
-            onEdit={handleEditHighlight}
+            onAddNew={() => beginEdit('highlight', null)}
+            onEdit={(highlight) => beginEdit('highlight', highlight)}
           />
         )
 
@@ -439,21 +344,15 @@ export default function DashboardPage({ onNavigate }) {
             key={editingFAQ ? `edit-faq-${editingFAQ.id}` : 'new-faq'}
             editingFAQ={editingFAQ}
             onFinish={finishEditFAQ}
-            onOpenList={() => {
-              setEditingFAQ(null)
-              setActiveNav('listFAQ')
-            }}
+            onOpenList={finishEditFAQ}
           />
         )
 
       case 'listFAQ':
         return (
           <ListFAQPage
-            onAddNew={() => {
-              setEditingFAQ(null)
-              setActiveNav('createFAQ')
-            }}
-            onEdit={handleEditFAQ}
+            onAddNew={() => beginEdit('faq', null)}
+            onEdit={(faq) => beginEdit('faq', faq)}
           />
         )
 
@@ -468,7 +367,7 @@ export default function DashboardPage({ onNavigate }) {
       <Sidebar 
         user={user} 
         activeNav={activeNav} 
-        setActiveNav={handleNav} // Gunakan handleNav di sini
+        setActiveNav={handleNav}
         sidebarOpen={sidebarOpen} 
         setSidebarOpen={setSidebarOpen} 
         onNavigate={onNavigate} 

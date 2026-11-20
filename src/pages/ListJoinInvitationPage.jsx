@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Search,
   Plus,
@@ -382,4 +382,3 @@ export default function ListJoinInvitationPage({ onAddNew, onEdit }) {
     </div>
   )
 }
-

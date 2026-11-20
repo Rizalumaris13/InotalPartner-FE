@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   Upload,
   Trash2,
@@ -12,6 +12,7 @@ import {
   createTeamMemberApi,
   uploadImageApi,
 } from '../api/about'
+import { availableMemberOrders } from '../utils/editorDrafts'
 
 const createEmptyMemberForm = (defaultOrder = 1) => ({
   name: '',
@@ -22,17 +23,23 @@ const createEmptyMemberForm = (defaultOrder = 1) => ({
   imagePreview: '',
 })
 
+const isFormEmpty = (form) => {
+  return (
+    !form.name?.trim() &&
+    !form.position?.trim() &&
+    !form.imageFile &&
+    !form.photoUrl?.trim()
+  )
+}
+
 export default function TeamMemberMultiForm({
   onSuccess,
   onOpenList,
   buttonLabel = 'Simpan Perubahan',
 }) {
-  const [memberForms, setMemberForms] = useState([
-    createEmptyMemberForm(1),
-    createEmptyMemberForm(2),
-    createEmptyMemberForm(3),
-    createEmptyMemberForm(4),
-  ])
+  const [memberForms, setMemberForms] = useState(() =>
+    Array.from({ length: 4 }, (_, index) => createEmptyMemberForm(index + 1))
+  )
   const [existingMembers, setExistingMembers] = useState([])
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -40,50 +47,35 @@ export default function TeamMemberMultiForm({
   const [successMsg, setSuccessMsg] = useState('')
   const fileInputRefs = useRef([])
 
-  // Fungsi untuk mengambil nomor urut berikutnya yang tersedia di database
+  const applyAvailableOrders = useCallback((all) => {
+    const membersList = Array.isArray(all) ? all : []
+    const orders = availableMemberOrders(membersList, 4)
+    setExistingMembers(membersList)
+    setMemberForms((previous) => previous.map((form, index) =>
+      isFormEmpty(form) ? { ...form, order: orders[index] || index + 1 } : form
+    ))
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    getTeamMembersApi()
+      .then((all) => {
+        if (!cancelled) applyAvailableOrders(all)
+      })
+      .catch((err) => {
+        console.warn('Gagal memuat nomor urut tersedia:', err)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [applyAvailableOrders])
+
   const refreshAvailableOrders = async () => {
     try {
-      const all = await getTeamMembersApi()
-      const membersList = Array.isArray(all) ? all : []
-      setExistingMembers(membersList)
-
-      const usedOrders = new Set(
-        membersList.filter((m) => m.is_active).map((m) => m.display_order)
-      )
-      const assignedOrders = []
-      let candidate = 1
-      while (assignedOrders.length < 4) {
-        if (!usedOrders.has(candidate)) {
-          assignedOrders.push(candidate)
-        }
-        candidate++
-      }
-
-      setMemberForms((prev) =>
-        prev.map((f, idx) => {
-          // Hanya ubah urutan jika form belum diisi
-          if (isFormEmpty(f)) {
-            return { ...f, order: assignedOrders[idx] || idx + 1 }
-          }
-          return f
-        })
-      )
+      applyAvailableOrders(await getTeamMembersApi())
     } catch (err) {
       console.warn('Gagal memuat nomor urut tersedia:', err)
     }
-  }
-
-  useEffect(() => {
-    refreshAvailableOrders()
-  }, [])
-
-  const isFormEmpty = (form) => {
-    return (
-      !form.name?.trim() &&
-      !form.position?.trim() &&
-      !form.imageFile &&
-      !form.photoUrl?.trim()
-    )
   }
 
   const handleUpdateField = (index, field, value) => {
@@ -151,14 +143,7 @@ export default function TeamMemberMultiForm({
       if (updated[index].imagePreview?.startsWith('blob:')) {
         URL.revokeObjectURL(updated[index].imagePreview)
       }
-      updated[index] = {
-        ...updated[index],
-        name: '',
-        position: '',
-        imageFile: null,
-        imagePreview: '',
-        photoUrl: '',
-      }
+      updated[index] = createEmptyMemberForm(updated[index].order)
       return updated
     })
     if (fileInputRefs.current[index]) {
@@ -222,7 +207,9 @@ export default function TeamMemberMultiForm({
         currentMembers = fresh
         setExistingMembers(fresh)
       }
-    } catch {}
+    } catch (err) {
+      console.warn('Gagal memperbarui daftar anggota; validasi urutan memakai data tersimpan:', err)
+    }
 
     for (const { form, index } of activeFormsWithIndex) {
       const orderNum = parseInt(form.order, 10)
@@ -253,7 +240,8 @@ export default function TeamMemberMultiForm({
           } catch (uploadErr) {
             throw new Error(
               `Anggota Tim ${index + 1}: ` +
-                (uploadErr.response?.data?.message || 'Gagal mengunggah foto.')
+                (uploadErr.response?.data?.message || 'Gagal mengunggah foto.'),
+              { cause: uploadErr }
             )
           } finally {
             setUploading(false)
@@ -288,14 +276,7 @@ export default function TeamMemberMultiForm({
       await refreshAvailableOrders()
 
       setMemberForms((prev) =>
-        prev.map((f) => ({
-          ...f,
-          name: '',
-          position: '',
-          imageFile: null,
-          imagePreview: '',
-          photoUrl: '',
-        }))
+        prev.map((form) => createEmptyMemberForm(form.order))
       )
 
       onSuccess?.(savedCount)
@@ -313,7 +294,6 @@ export default function TeamMemberMultiForm({
 
   return (
     <div className="space-y-6">
-      {/* ALERT FEEDBACK */}
       {successMsg && (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs text-emerald-800 flex items-center gap-2.5 shadow-sm">
           <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
@@ -331,7 +311,6 @@ export default function TeamMemberMultiForm({
         </div>
       )}
 
-      {/* 4 FORMS SEKALIGUS */}
       <div className="space-y-6">
         {memberForms.map((form, index) => {
           const formEmpty = isFormEmpty(form)
@@ -361,7 +340,6 @@ export default function TeamMemberMultiForm({
                   : 'border-sky-200 bg-white shadow-sm ring-1 ring-sky-100'
               } p-6`}
             >
-              {/* HEADER FORM PER ANGGOTA */}
               <div className="mb-5 flex items-center justify-between border-b border-gray-100 pb-3">
                 <div className="flex items-center gap-3">
                   <div
@@ -398,11 +376,8 @@ export default function TeamMemberMultiForm({
                 )}
               </div>
 
-              {/* BODY FORM (GRID 2 KOLOM) */}
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_260px]">
-                {/* KOLOM KIRI: NAMA, JABATAN, URUTAN */}
                 <div className="space-y-4">
-                  {/* NAMA */}
                   <div>
                     <label className="mb-1.5 block text-xs font-semibold text-gray-700">
                       Nama Anggota{' '}
@@ -421,9 +396,7 @@ export default function TeamMemberMultiForm({
                     />
                   </div>
 
-                  {/* JABATAN & URUTAN */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* JABATAN */}
                     <div>
                       <label className="mb-1.5 block text-xs font-semibold text-gray-700">
                         Jabatan / Posisi
@@ -439,7 +412,6 @@ export default function TeamMemberMultiForm({
                       />
                     </div>
 
-                    {/* URUTAN TAMPIL */}
                     <div>
                       <label className="mb-1.5 block text-xs font-semibold text-gray-700">
                         Urutan Tampil
@@ -478,7 +450,6 @@ export default function TeamMemberMultiForm({
                   </div>
                 </div>
 
-                {/* KOLOM KANAN: FOTO ANGGOTA */}
                 <div>
                   <label className="mb-1.5 block text-xs font-semibold text-gray-700">
                     Foto Anggota
@@ -539,7 +510,6 @@ export default function TeamMemberMultiForm({
         })}
       </div>
 
-      {/* ACTION BUTTON (BOTTOM) */}
       <div className="flex items-center justify-end gap-3 pt-2">
         {onOpenList && (
           <button

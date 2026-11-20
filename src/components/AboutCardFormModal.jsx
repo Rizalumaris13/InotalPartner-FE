@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Save, X } from 'lucide-react'
 import PartnerDialog from './PartnerDialog'
 import AboutCard from './AboutCard'
@@ -46,7 +46,7 @@ export default function AboutCardFormModal({
   onSaved,
 }) {
   const titleRef = useRef(null)
-  const operationRef = useRef(false)
+  const operationRef = useRef(null)
   const [form, setForm] = useState(() => ({
     title: card?.title ?? '',
     description: card?.description ?? '',
@@ -58,6 +58,10 @@ export default function AboutCardFormModal({
   const [errors, setErrors] = useState({})
   const [error, setError] = useState('')
   const [savedRecord, setSavedRecord] = useState(null)
+
+  useEffect(() => () => {
+    operationRef.current?.abort()
+  }, [])
 
   const updateField = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }))
@@ -71,8 +75,10 @@ export default function AboutCardFormModal({
   const close = () => {
     if (!operationRef.current) onClose(Boolean(savedRecord))
   }
-  const verify = async (saved) => {
-    const cards = await listAboutCardsApi()
+  const verify = async (saved, signal) => {
+    if (signal.aborted) return
+    const cards = await listAboutCardsApi({ signal })
+    if (signal.aborted) return
     const observed = cards.find((item) => item.id === saved.id)
     if (!observed || !sameAboutCardPayload(observed, saved))
       throw new Error(
@@ -92,7 +98,8 @@ export default function AboutCardFormModal({
         return
       }
     }
-    operationRef.current = true
+    const controller = new AbortController()
+    operationRef.current = controller
     setSaving(true)
     setError('')
     let accepted = savedRecord
@@ -102,10 +109,12 @@ export default function AboutCardFormModal({
         accepted = card
           ? await updateAboutCardApi(card.id, payload)
           : await createAboutCardApi(payload)
+        if (controller.signal.aborted) return
         setSavedRecord(accepted)
       }
-      await verify(accepted)
+      await verify(accepted, controller.signal)
     } catch (err) {
+      if (controller.signal.aborted) return
       const message = getAboutCardErrorMessage(
         err,
         err.response?.status === 404
@@ -118,8 +127,8 @@ export default function AboutCardFormModal({
           : message,
       )
     } finally {
-      operationRef.current = false
-      setSaving(false)
+      if (operationRef.current === controller) operationRef.current = null
+      if (!controller.signal.aborted) setSaving(false)
     }
   }
   const fieldProps = (field) => ({

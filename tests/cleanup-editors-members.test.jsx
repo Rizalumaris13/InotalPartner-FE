@@ -1,0 +1,292 @@
+import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { http, HttpResponse } from 'msw'
+import FormTeamMemberPage from '../src/pages/FormTeamMemberPage'
+import TeamMemberMultiForm from '../src/components/TeamMemberMultiForm'
+import * as about from '../src/api/about'
+import { server } from './setup'
+
+const namePlaceholder = 'Contoh: Dr. Budi Santoso, M.Kom'
+const member = { id: 41, name: 'Anggota A', position: 'Direktur', photo_url: '/uploads/member.png', display_order: 0, is_active: false }
+const active = { id: 99, name: 'Anggota aktif', display_order: 1, is_active: true }
+
+function deferred() {
+  let resolve
+  let reject
+  const promise = new Promise((done, fail) => { resolve = done; reject = fail })
+  return { promise, resolve, reject }
+}
+
+beforeEach(() => {
+  localStorage.setItem('inotal_token', 'cleanup-member-fixture-not-real')
+  localStorage.setItem('inotal_user', JSON.stringify({ role: { name: 'admin' } }))
+  vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+  vi.spyOn(window, 'alert').mockImplementation(() => {})
+})
+
+describe('single member editor', () => {
+  test('list must finish before detail; fresh detail wins over seeded props', async () => {
+    const list = deferred()
+    const loadList = vi.spyOn(about, 'getTeamMembersApi').mockReturnValue(list.promise)
+    const loadDetail = vi.spyOn(about, 'getTeamMemberByIdApi').mockResolvedValue({ ...member, name: 'Fresh member', display_order: 4, is_active: true })
+    render(<FormTeamMemberPage editingMember={member} />)
+    expect(loadList).toHaveBeenCalledOnce()
+    expect(loadDetail).not.toHaveBeenCalled()
+    expect(screen.queryByPlaceholderText(namePlaceholder)).toBeNull()
+    await act(async () => { list.resolve([active]) })
+    expect(await screen.findByDisplayValue('Fresh member')).not.toBeNull()
+    expect(loadDetail).toHaveBeenCalledExactlyOnceWith(41)
+    expect(screen.getByRole('spinbutton').value).toBe('4')
+    expect(screen.getByRole('combobox').value).toBe('active')
+  })
+
+  test('list failure blocks detail and does not apply partial props', async () => {
+    vi.spyOn(about, 'getTeamMembersApi').mockRejectedValue({ response: { data: { message: 'Daftar gagal' } } })
+    const loadDetail = vi.spyOn(about, 'getTeamMemberByIdApi')
+    render(<FormTeamMemberPage editingMember={member} />)
+    await screen.findByText('Daftar gagal')
+    expect(screen.getByPlaceholderText(namePlaceholder).value).toBe('')
+    expect(screen.getByRole('spinbutton').value).toBe('0')
+    expect(screen.getByRole('combobox').value).toBe('active')
+    expect(loadDetail).not.toHaveBeenCalled()
+  })
+
+  test('failed list on a replacement target preserves the prior draft and skips its detail', async () => {
+    const list = vi.spyOn(about, 'getTeamMembersApi').mockResolvedValueOnce([active]).mockRejectedValue(new Error('List unavailable'))
+    const load = vi.spyOn(about, 'getTeamMemberByIdApi').mockResolvedValue(member)
+    const { rerender } = render(<FormTeamMemberPage editingMember={member} />)
+    await screen.findByDisplayValue(member.name)
+    fireEvent.change(screen.getByPlaceholderText(namePlaceholder), { target: { value: 'Draf terakhir' } })
+    rerender(<FormTeamMemberPage editingMember={{ id: 42, name: 'Partial B' }} />)
+    await screen.findByText('Gagal memuat data anggota tim.')
+    expect(screen.getByPlaceholderText(namePlaceholder).value).toBe('Draf terakhir')
+    expect(list).toHaveBeenCalledTimes(2)
+    expect(load).toHaveBeenCalledExactlyOnceWith(41)
+  })
+
+  test('detail failure falls back to props; SAME-ID replacement and different ID reload; create returns four slots', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const loadList = vi.spyOn(about, 'getTeamMembersApi').mockResolvedValue([])
+    const loadDetail = vi.spyOn(about, 'getTeamMemberByIdApi').mockRejectedValue(new Error('Nonfatal'))
+    const { rerender } = render(<FormTeamMemberPage editingMember={member} />)
+    await screen.findByDisplayValue(member.name)
+    expect(screen.getByRole('combobox').value).toBe('inactive')
+    const sameId = { ...member, name: 'Same ID new props', display_order: 5 }
+    rerender(<FormTeamMemberPage editingMember={sameId} />)
+    await screen.findByDisplayValue('Same ID new props')
+    expect(screen.getByRole('spinbutton').value).toBe('5')
+    fireEvent.change(screen.getByPlaceholderText(namePlaceholder), { target: { value: 'Draf tetap' } })
+    rerender(<FormTeamMemberPage editingMember={sameId} onFinish={() => {}} />)
+    expect(screen.getByPlaceholderText(namePlaceholder).value).toBe('Draf tetap')
+    expect(loadDetail).toHaveBeenCalledTimes(2)
+    rerender(<FormTeamMemberPage editingMember={{ ...member, id: 42, name: 'Member B' }} />)
+    await screen.findByDisplayValue('Member B')
+    rerender(<FormTeamMemberPage />)
+    await waitFor(() => expect(screen.getAllByPlaceholderText(namePlaceholder)).toHaveLength(4))
+    expect(loadList).toHaveBeenCalledTimes(4)
+    expect(loadDetail.mock.calls).toEqual([[41], [41], [42]])
+  })
+
+  test('a cancelled member-list response must not start a detail request', async () => {
+    const staleList = deferred()
+    vi.spyOn(about, 'getTeamMembersApi').mockReturnValueOnce(staleList.promise).mockResolvedValue([])
+    const detail = vi.spyOn(about, 'getTeamMemberByIdApi').mockResolvedValue(member)
+    const { rerender } = render(<FormTeamMemberPage editingMember={member} />)
+    rerender(<FormTeamMemberPage />)
+    await act(async () => { staleList.resolve([active]) })
+    expect(detail).not.toHaveBeenCalled()
+    expect(screen.getAllByPlaceholderText(namePlaceholder)).toHaveLength(4)
+  })
+
+  test('late member detail cannot overwrite a replacement target or a remount', async () => {
+    const a = deferred()
+    const b = deferred()
+    vi.spyOn(about, 'getTeamMembersApi').mockResolvedValue([])
+    const load = vi.spyOn(about, 'getTeamMemberByIdApi').mockReturnValueOnce(a.promise).mockReturnValueOnce(b.promise)
+    const { rerender, unmount } = render(<FormTeamMemberPage editingMember={member} />)
+    await waitFor(() => expect(load).toHaveBeenCalledTimes(1))
+    rerender(<FormTeamMemberPage editingMember={{ ...member, id: 42 }} />)
+    await waitFor(() => expect(load).toHaveBeenCalledTimes(2))
+    await act(async () => { b.resolve({ ...member, id: 42, name: 'Target B' }) })
+    await act(async () => { a.resolve({ ...member, name: 'Respons basi' }) })
+    expect(screen.getByPlaceholderText(namePlaceholder).value).toBe('Target B')
+    const c = deferred()
+    load.mockReturnValueOnce(c.promise)
+    rerender(<FormTeamMemberPage editingMember={{ id: 43 }} />)
+    await waitFor(() => expect(load).toHaveBeenCalledTimes(3))
+    unmount()
+    render(<FormTeamMemberPage />)
+    await act(async () => { c.resolve(member) })
+    expect(screen.getAllByPlaceholderText(namePlaceholder).every((input) => input.value === '')).toBe(true)
+  })
+
+  test('failed pre-submit refresh validates against cache; retry preserves payload and upload error priority', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const list = vi.spyOn(about, 'getTeamMembersApi').mockResolvedValueOnce([active]).mockRejectedValue(new Error('Refresh gagal'))
+    vi.spyOn(about, 'getTeamMemberByIdApi').mockResolvedValue(member)
+    const upload = vi.spyOn(about, 'uploadImageApi').mockRejectedValueOnce(new Error('Pesan transport tidak dipakai')).mockResolvedValue('/uploads/new.png')
+    const update = vi.spyOn(about, 'updateTeamMemberApi').mockRejectedValueOnce({ response: { data: { message: 'Tulis gagal' } } }).mockResolvedValue(member)
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:member')
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+    const onFinish = vi.fn()
+    const { container } = render(<FormTeamMemberPage editingMember={member} onFinish={onFinish} />)
+    await screen.findByDisplayValue(member.name)
+    const user = userEvent.setup()
+    fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '1' } })
+    await user.click(screen.getByRole('button', { name: 'Simpan Perubahan' }))
+    await screen.findByText('Nomor urut tampil 1 sudah digunakan oleh anggota aktif "Anggota aktif". Silakan pilih nomor urut lain.')
+    expect(update).not.toHaveBeenCalled()
+    fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '2' } })
+    fireEvent.change(screen.getByPlaceholderText(namePlaceholder), { target: { value: '  Nama baru  ' } })
+    fireEvent.change(screen.getByPlaceholderText('Contoh: Chief Executive Officer'), { target: { value: '  Posisi baru  ' } })
+    await user.upload(container.querySelector('input[type="file"]'), new File(['image'], 'member.png', { type: 'image/png' }))
+    await user.click(screen.getByRole('button', { name: 'Simpan Perubahan' }))
+    await screen.findByText('Gagal mengunggah foto anggota.')
+    expect(update).not.toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: 'Simpan Perubahan' }))
+    await screen.findByText('Tulis gagal')
+    expect(onFinish).not.toHaveBeenCalled()
+    expect(screen.getByPlaceholderText(namePlaceholder).value).toBe('  Nama baru  ')
+    await user.click(screen.getByRole('button', { name: 'Simpan Perubahan' }))
+    await waitFor(() => expect(onFinish).toHaveBeenCalledOnce())
+    expect(upload).toHaveBeenCalledTimes(3)
+    expect(list).toHaveBeenCalledTimes(5)
+    expect(update.mock.calls).toEqual(Array.from({ length: 2 }, () => [41, { name: 'Nama baru', position: 'Posisi baru', photo_url: '/uploads/new.png', display_order: 2, is_active: false }]))
+    expect(window.alert).toHaveBeenCalledWith('Data anggota tim berhasil diperbarui.')
+  })
+
+  test('cancel returns to list and non-admin access remains blocked', async () => {
+    vi.spyOn(about, 'getTeamMembersApi').mockResolvedValue([])
+    vi.spyOn(about, 'getTeamMemberByIdApi').mockResolvedValue(member)
+    const onOpenList = vi.fn()
+    const { unmount } = render(<FormTeamMemberPage editingMember={member} onOpenList={onOpenList} />)
+    await screen.findByDisplayValue(member.name)
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Batal' }))
+    expect(onOpenList).toHaveBeenCalledOnce()
+    unmount()
+    localStorage.setItem('inotal_user', JSON.stringify({ role: 'operator' }))
+    render(<FormTeamMemberPage />)
+    expect(screen.getByText('Akses Ditolak')).not.toBeNull()
+    expect(screen.queryByPlaceholderText(namePlaceholder)).toBeNull()
+  })
+})
+
+describe('four-slot member form', () => {
+  test('mount fills only empty slots and does not reload while typing', async () => {
+    const response = deferred()
+    const list = vi.spyOn(about, 'getTeamMembersApi').mockReturnValue(response.promise)
+    render(<TeamMemberMultiForm />)
+    const names = screen.getAllByPlaceholderText(namePlaceholder)
+    const orders = screen.getAllByRole('spinbutton')
+    expect(orders.map((input) => input.value)).toEqual(['1', '2', '3', '4'])
+    fireEvent.change(names[0], { target: { value: 'Draft before load' } })
+    fireEvent.change(orders[0], { target: { value: '9' } })
+    await act(async () => { response.resolve([active, { display_order: 3, is_active: true }, { display_order: 2, is_active: false }]) })
+    expect(orders.map((input) => input.value)).toEqual(['9', '4', '5', '6'])
+    fireEvent.change(names[1], { target: { value: 'Slot kedua' } })
+    expect(list).toHaveBeenCalledOnce()
+    expect(names[0].value).toBe('Draft before load')
+    fireEvent.click(screen.getAllByRole('button', { name: 'Kosongkan Form' })[0])
+    expect(names[0].value).toBe('')
+    expect(orders[0].value).toBe('9')
+  })
+
+  test('saving is sequential, fails at second member without clearing partial work, and retry uses cache', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const list = vi.spyOn(about, 'getTeamMembersApi').mockResolvedValueOnce([]).mockRejectedValue(new Error('Cache fallback'))
+    const first = deferred()
+    const second = deferred()
+    const create = vi.spyOn(about, 'createTeamMemberApi').mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise).mockResolvedValue({ id: 50 })
+    const onSuccess = vi.fn()
+    render(<TeamMemberMultiForm onSuccess={onSuccess} />)
+    const names = screen.getAllByPlaceholderText(namePlaceholder)
+    await act(async () => { await list.mock.results[0].value })
+    fireEvent.change(names[0], { target: { value: '  Satu  ' } })
+    fireEvent.change(names[1], { target: { value: '  Dua  ' } })
+    fireEvent.change(names[2], { target: { value: '  Tiga  ' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan Perubahan' }))
+    await waitFor(() => expect(create).toHaveBeenCalledTimes(1))
+    await act(async () => { first.resolve({ id: 51 }) })
+    expect(create).toHaveBeenCalledTimes(2)
+    await act(async () => { second.reject(new Error('Anggota kedua gagal')) })
+    expect(screen.getByText('Anggota kedua gagal')).not.toBeNull()
+    expect(names.map((input) => input.value)).toEqual(['  Satu  ', '  Dua  ', '  Tiga  ', ''])
+    expect(onSuccess).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan Perubahan' }))
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledExactlyOnceWith(3))
+    expect(create.mock.calls.map(([payload]) => payload)).toEqual(['Satu', 'Dua', 'Satu', 'Dua', 'Tiga'].map((name) => ({
+      name, position: '', photo_url: '', display_order: { Satu: 1, Dua: 2, Tiga: 3 }[name], is_active: true,
+    })))
+    expect(names.every((input) => input.value === '')).toBe(true)
+    expect(screen.getAllByRole('spinbutton').map((input) => input.value)).toEqual(['1', '2', '3', '4'])
+    expect(list).toHaveBeenCalledTimes(4)
+  })
+
+  test('successful refresh preserves filled-slot orders and only assigns free orders to empty slots before reset', async () => {
+    let saved = false
+    server.use(
+      http.get('*/api/about/team', () => HttpResponse.json({ data: saved ? [{ id: 5, name: 'Satu', display_order: 1, is_active: true }] : [] })),
+      http.post('*/api/about/team', () => { saved = true; return HttpResponse.json({ data: { id: 5 } }) }),
+    )
+    const onSuccess = vi.fn()
+    render(<TeamMemberMultiForm onSuccess={onSuccess} />)
+    fireEvent.change(screen.getAllByPlaceholderText(namePlaceholder)[0], { target: { value: 'Satu' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan Perubahan' }))
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledExactlyOnceWith(1))
+    expect(screen.getAllByRole('spinbutton').map((input) => input.value)).toEqual(['1', '3', '4', '5'])
+  })
+
+  test('failed refresh uses cached active-member collisions instead of allowing a duplicate', async () => {
+    const refreshError = new Error('Refresh unavailable')
+    vi.spyOn(about, 'getTeamMembersApi').mockResolvedValueOnce([active]).mockRejectedValue(refreshError)
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const create = vi.spyOn(about, 'createTeamMemberApi')
+    render(<TeamMemberMultiForm />)
+    await waitFor(() => expect(screen.getAllByRole('spinbutton')[0].value).toBe('2'))
+    fireEvent.change(screen.getAllByPlaceholderText(namePlaceholder)[0], { target: { value: 'Satu' } })
+    fireEvent.change(screen.getAllByRole('spinbutton')[0], { target: { value: '1' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan Perubahan' }))
+    await screen.findByText('Anggota Tim 1: Nomor urut tampil 1 sudah digunakan oleh anggota aktif existing "Anggota aktif". Silakan pilih nomor urut lain.')
+    expect(create).not.toHaveBeenCalled()
+    expect(warn).toHaveBeenCalledWith('Gagal memperbarui daftar anggota; validasi urutan memakai data tersimpan:', refreshError)
+    expect(screen.getAllByPlaceholderText(namePlaceholder)[0].value).toBe('Satu')
+  })
+
+  test('failed multi-form photo upload prevents creation and keeps the member-specific message', async () => {
+    vi.spyOn(about, 'getTeamMembersApi').mockResolvedValue([])
+    vi.spyOn(about, 'uploadImageApi').mockRejectedValue({ response: { data: { message: 'Foto diblokir' } } })
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:multi')
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+    const create = vi.spyOn(about, 'createTeamMemberApi')
+    const { container } = render(<TeamMemberMultiForm />)
+    const user = userEvent.setup()
+    fireEvent.change(screen.getAllByPlaceholderText(namePlaceholder)[1], { target: { value: 'Anggota kedua' } })
+    await user.upload(container.querySelectorAll('input[type="file"]')[1], new File(['image'], 'second.png', { type: 'image/png' }))
+    await user.click(screen.getByRole('button', { name: 'Simpan Perubahan' }))
+    await screen.findByText('Anggota Tim 2: Foto diblokir')
+    expect(create).not.toHaveBeenCalled()
+    expect(screen.getByAltText('Preview Anggota 2').getAttribute('src')).toBe('blob:multi')
+  })
+
+  test('validation still ignores order-only slots, rejects partial names and duplicate orders', async () => {
+    vi.spyOn(about, 'getTeamMembersApi').mockResolvedValue([active])
+    const create = vi.spyOn(about, 'createTeamMemberApi')
+    render(<TeamMemberMultiForm />)
+    const orders = screen.getAllByRole('spinbutton')
+    await waitFor(() => expect(orders[0].value).toBe('2'))
+    fireEvent.change(orders[0], { target: { value: '10' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan Perubahan' }))
+    expect(screen.getByText('Seluruh form masih kosong. Silakan isi minimal satu form anggota tim untuk disimpan.')).not.toBeNull()
+    fireEvent.change(screen.getAllByPlaceholderText('Contoh: Chief Executive Officer')[0], { target: { value: 'Posisi' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan Perubahan' }))
+    expect(screen.getByText('Anggota Tim 1: Nama anggota wajib diisi jika form diisi.')).not.toBeNull()
+    const names = screen.getAllByPlaceholderText(namePlaceholder)
+    fireEvent.change(names[0], { target: { value: 'Satu' } })
+    fireEvent.change(names[1], { target: { value: 'Dua' } })
+    fireEvent.change(orders[1], { target: { value: '10' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan Perubahan' }))
+    expect(screen.getByText(/Nomor urut tampil 10 digunakan oleh lebih dari satu form/)).not.toBeNull()
+    expect(create).not.toHaveBeenCalled()
+  })
+})

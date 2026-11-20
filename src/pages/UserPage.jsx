@@ -1,18 +1,17 @@
-import { useFeedback } from '../components/FeedbackUI';
-import React, { useState, useEffect } from 'react';
-import { Search, Plus, Edit, Trash2, AlertCircle, ShieldAlert } from 'lucide-react';
+import { useFeedback } from '../hooks/useFeedback';
+import { useState, useEffect } from 'react';
+import { Search, Edit, Trash2, AlertCircle, ShieldAlert } from 'lucide-react';
 import { getUsersApi, deleteUserApi, updateUserApi } from '../api/users';
 import { useAuth } from '../hooks/useAuth';
 
 export default function UserPage() {
-  const { notify, confirmAction, FeedbackUI } = useFeedback();
+  const { notify, confirmAction, feedback } = useFeedback();
   const { role, user: currentUser } = useAuth();
   
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
-  // State untuk pencarian
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   
@@ -22,8 +21,6 @@ export default function UserPage() {
 
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // State untuk Modal Edit Role
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [newRole, setNewRole] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -38,7 +35,6 @@ export default function UserPage() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // 2. Effect untuk Mengambil Data
   useEffect(() => {
     let isMounted = true;
 
@@ -103,7 +99,6 @@ export default function UserPage() {
     }
   };
 
-  // Fungsi untuk membuka modal edit
   const openEditModal = (u) => {
     if (u.id === currentUser.id) {
       notify("Anda tidak bisa mengubah role Anda sendiri dari halaman ini.", "error");
@@ -121,16 +116,13 @@ export default function UserPage() {
     
     setEditingUser(u);
     setNewRole(targetRole || 'guest');
-    setIsEditModalOpen(true);
   };
 
   const closeEditModal = () => {
-    setIsEditModalOpen(false);
     setEditingUser(null);
     setNewRole('');
   };
 
-  // Fungsi untuk submit perubahan role ke API
   const handleUpdateRole = async (e) => {
     e.preventDefault();
     if (!editingUser) return;
@@ -165,7 +157,7 @@ export default function UserPage() {
 
   return (
     <div className="flex flex-col h-full relative">
-      <FeedbackUI />
+      {feedback}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
@@ -217,68 +209,63 @@ export default function UserPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {users.map((u) => (
-                  <tr key={u.id} className="hover:bg-sky-50/30 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center text-xs font-bold shrink-0">
-                          {u.full_name?.slice(0, 2).toUpperCase() || '??'}
+                {users.map((u) => {
+                  const targetRole = u.role?.name || u.role;
+                  const isProtected = canManage && (
+                    u.id === currentUser.id ||
+                    (role === 'admin' && (targetRole === 'super_admin' || targetRole === 'admin'))
+                  );
+                  return (
+                    <tr key={u.id} className="hover:bg-sky-50/30 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center text-xs font-bold shrink-0">
+                            {u.full_name?.slice(0, 2).toUpperCase() || '??'}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">{u.full_name}</p>
+                            <p className="text-xs text-gray-500">{u.email}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">{u.full_name}</p>
-                          <p className="text-xs text-gray-500">{u.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {u.company || <span className="text-gray-300 italic">-</span>}
-                    </td>
-                    <td className="px-6 py-4">
-                      {getRoleBadge(u.role?.name || u.role)}
-                    </td>
-                    
-                    {canManage && (
-                      <td className="px-6 py-4 text-right space-x-2">
-                      {(() => {
-                        const targetRole = u.role?.name || u.role;
-                        // Tentukan apakah baris ini dilindungi dari user yang sedang login
-                        const isProtected = u.id === currentUser.id || 
-                                            (role === 'admin' && (targetRole === 'super_admin' || targetRole === 'admin'));
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {u.company || <span className="text-gray-300 italic">-</span>}
+                      </td>
+                      <td className="px-6 py-4">
+                        {getRoleBadge(targetRole)}
+                      </td>
 
-                        return (
-                          <>
-                            <button 
-                              onClick={() => openEditModal(u)}
-                              className={`p-1.5 rounded-lg transition-colors ${
-                                isProtected 
-                                ? 'text-gray-300 cursor-not-allowed' 
+                      {canManage && (
+                        <td className="px-6 py-4 text-right space-x-2">
+                          <button
+                            onClick={() => openEditModal(u)}
+                            className={`p-1.5 rounded-lg transition-colors ${
+                              isProtected
+                                ? 'text-gray-300 cursor-not-allowed'
                                 : 'text-gray-400 hover:text-sky-500 hover:bg-sky-50'
-                              }`}
-                              title={isProtected ? "Tidak memiliki izin untuk mengubah akun ini" : "Edit Role User"}
-                              disabled={isProtected}
-                            >
-                              <Edit size={16} />
-                            </button>
-                            
-                            <button 
-                              onClick={() => handleDelete(u.id, u.full_name)}
-                              className={`p-1.5 rounded-lg transition-colors ${
-                                isProtected 
-                                ? 'text-gray-300 cursor-not-allowed' 
+                            }`}
+                            title={isProtected ? "Tidak memiliki izin untuk mengubah akun ini" : "Edit Role User"}
+                            disabled={isProtected}
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(u.id, u.full_name)}
+                            className={`p-1.5 rounded-lg transition-colors ${
+                              isProtected
+                                ? 'text-gray-300 cursor-not-allowed'
                                 : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
-                              }`}
-                              title={isProtected ? "Tidak memiliki izin untuk menghapus akun ini" : "Hapus User"}
-                              disabled={isProtected}
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </>
-                        );
-                      })()}
-                    </td>
-                  )}
-                  </tr>
-                ))}
+                            }`}
+                            title={isProtected ? "Tidak memiliki izin untuk menghapus akun ini" : "Hapus User"}
+                            disabled={isProtected}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
@@ -311,7 +298,7 @@ export default function UserPage() {
       </div>
 
       {/* Modal Edit Role */}
-      {isEditModalOpen && editingUser && (
+      {editingUser !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="px-6 py-4 border-b border-gray-100">

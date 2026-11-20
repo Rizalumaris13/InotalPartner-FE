@@ -1,20 +1,39 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
+import Reveal from '../../components/Reveal'
+import useInView from '../../hooks/useInView'
 import PublicNavbar from '../../components/PublicNavbar'
 import PublicPageBanner from '../../components/PublicPageBanner'
 import PublicAboutCards from '../../components/PublicAboutCards'
 import AboutIntroSection from '../../components/AboutIntroSection'
 import useAboutIntro from '../../hooks/useAboutIntro'
-import {
-  ChevronRight, Home, Lightbulb, Award, Headset, ArrowRight,
-  Phone, Mail, MapPin, Plus, User,
-} from 'lucide-react'
+import useAboutEmpowering from '../../hooks/useAboutEmpowering'
+import AboutEmpoweringHeader from '../../components/AboutEmpoweringHeader'
+import { ArrowRight, Plus, Minus, User } from 'lucide-react'
 import PublicFooter from '../../components/PublicFooter'
 import { getPublicAboutSettingApi, getPublicTeamMembersApi, getPublicAboutFAQsApi, getPublicAboutVideosApi, getPublicAboutVideoSettingApi, getPublicAboutVideoHighlightsApi, resolveImageUrl } from '../../api/about'
-import { DynamicHighlightIcon } from '../../components/HighlightIconHelper'
+import { DynamicHighlightIcon } from '../../components/HighlightIcon'
 import { getPublicStatisticsApi } from '../../api/statistics'
 import { DynamicStatisticIcon } from '../../components/StatisticIconHelper'
 import { getPublicJoinInvitationApi } from '../../api/joinInvitation'
 
+const DEFAULT_VIDEO_SETTING = {
+  section_label: 'Video Profil',
+  section_title: 'Lihat sendiri bagaimana kolaborasi bekerja.',
+  section_description:
+    'Keripitannya kami tampilkan apa adanya: obrolan panjang, request yang berubah, sampai proses panjang yang berakhir sesuai rencana. Video ini rekaman, bukan brosur.',
+}
+
+const DEFAULT_CTA = {
+  section_label: 'Kesempatan Terbuka',
+  title: 'Bangun masa depan bersama kami.',
+  button_text: 'Mulai Sekarang',
+  button_url: '/register',
+}
+
+function unwrapAboutList(value) {
+  if (Array.isArray(value?.data)) return value.data
+  return Array.isArray(value) ? value : []
+}
 
 const team = [
   { name: 'Andini Prameswari', role: 'Chief Executive', img: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&q=80' },
@@ -22,43 +41,6 @@ const team = [
   { name: 'Citra Maharani', role: 'Partnership Lead', img: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600&q=80' },
   { name: 'Dimas Saputra', role: 'Tech Director', img: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600&q=80' },
 ]
-
-
-// satu tempat buat "element ini udah keliatan di layar" — Reveal, kartu stat,
-// sama progress bar semuanya butuh hal yang sama: observer + jaring pengaman
-function useInView({ threshold = 0.1, fallbackMs = 700 } = {}) {
-  const ref = useRef(null)
-  const [seen, setSeen] = useState(false)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const io = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { setSeen(true); io.disconnect() } },
-      { threshold },
-    )
-    io.observe(el)
-    // kalau observer-nya nggak kepicu, nomornya bisa nyangkut di 0 — muncul
-    // agak telat jauh lebih enak daripada gitu
-    const t = setTimeout(() => setSeen(true), fallbackMs)
-    return () => { io.disconnect(); clearTimeout(t) }
-  }, [threshold, fallbackMs])
-
-  return [ref, seen]
-}
-
-function Reveal({ children, delay = 0, className = '' }) {
-  const [ref, seen] = useInView()
-  return (
-    <div
-      ref={ref}
-      className={`transition-all duration-700 ease-out ${seen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'} ${className}`}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
-      {children}
-    </div>
-  )
-}
 
 function SubTitle({ children }) {
   return (
@@ -86,23 +68,6 @@ function PillButton({ children, onClick, dark = false }) {
   )
 }
 
-// Iframe YouTube cuma dimount setelah diklik, jadi halaman ini nggak
-// request ke YouTube cuma karena orang kebetulan scroll lewat.
-
-
-const videoHighlights = [
-  {
-    icon: 'film',
-    title: 'Rekaman sesi & acara',
-    desc: 'Rangkuman diskusi komunitas, demo program, dan berbagi expertise dari mitra yang programnya sudah berjalan.',
-  },
-  {
-    icon: 'quote',
-    title: 'Suara dari mitra',
-    desc: 'Pendapat langsung soal apa yang berubah setelah bergabung — dari proses kerja sampai hasil yang dirasa.',
-  },
-]
-
 const SVG_BASE = {
   viewBox: '0 0 24 24',
   fill: 'none',
@@ -113,20 +78,6 @@ const SVG_BASE = {
 }
 
 const ICON_PATHS = {
-  film: (
-    <>
-      <rect x="3" y="4.5" width="18" height="15" rx="2.5" />
-      <path d="M3 9h18M8 4.5v3M16 4.5v3" />
-      <path d="M10.2 13.1v3.6l3-1.8-3-1.8Z" fill="currentColor" stroke="none" />
-    </>
-  ),
-  quote: (
-    <path
-      d="M9.7 5.1C6.5 6.5 4.5 9.3 4.5 13v5.9h6.1V11H7.5c0-2.2 1-3.8 3.1-4.7l-.9-1.2Zm9.4 0c-3.2 1.4-5.2 4.2-5.2 7.9v5.9H20V11h-3.1c0-2.2 1-3.8 3.1-4.7l-.9-1.2Z"
-      fill="currentColor"
-      stroke="none"
-    />
-  ),
   layers: (
     <>
       <path d="M12 3.4 21 8l-9 4.6L3 8l9-4.6Z" />
@@ -165,7 +116,6 @@ function SvgIcon({ shape, className = '' }) {
   )
 }
 
-
 function extractYouTubeId(url) {
   if (!url) return ''
   try {
@@ -194,15 +144,18 @@ function extractYouTubeId(url) {
   return ''
 }
 
+// Iframe YouTube cuma dimount setelah diklik, jadi halaman ini nggak
+// request ke YouTube cuma karena orang kebetulan scroll lewat.
+
 function VideoProfile({ video, loading }) {
   const [playing, setPlaying] = useState(false)
 
   if (loading) {
     return (
-      <div className="relative rounded-2xl overflow-hidden bg-[#0c4a6e]/90 aspect-[16/10] w-full flex items-center justify-center">
+      <div className="relative rounded-2xl overflow-hidden bg-[#0c4a6e]/90 min-h-[220px] sm:min-h-[260px] w-full flex items-center justify-center">
         <div className="text-center text-white/80 space-y-3">
           <div className="w-8 h-8 border-2 border-sky-400 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs font-medium tracking-wide">Loading profile video...</p>
+          <p className="text-xs font-medium tracking-wide">Memuat video profil...</p>
         </div>
       </div>
     )
@@ -210,7 +163,7 @@ function VideoProfile({ video, loading }) {
 
   if (!video) {
     return (
-      <div className="relative rounded-2xl overflow-hidden bg-[#0c4a6e] aspect-[16/10] w-full flex items-center justify-center p-8 border border-white/10">
+      <div className="relative rounded-2xl overflow-hidden bg-[#0c4a6e] min-h-[220px] sm:min-h-[260px] w-full flex items-center justify-center p-6 md:p-8 border border-white/10">
         <div className="text-center text-white/70 max-w-sm space-y-2">
           <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mx-auto text-sky-400">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -224,9 +177,9 @@ function VideoProfile({ video, loading }) {
               <line x1="17" y1="7" x2="22" y2="7" />
             </svg>
           </div>
-          <p className="text-sm font-semibold text-white">Profile Video Unavailable</p>
+          <p className="text-sm font-semibold text-white">Video Profil Belum Tersedia</p>
           <p className="text-xs text-white/60">
-            The official profile video is currently being updated by our team.
+            Video profil resmi sedang dalam proses pembaruan oleh tim kami.
           </p>
         </div>
       </div>
@@ -247,7 +200,7 @@ function VideoProfile({ video, loading }) {
             <iframe
               className="absolute inset-0 h-full w-full border-0"
               src={`https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1`}
-              title={video.title || 'Profile Video'}
+              title={video.title || 'Video Profil'}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
@@ -256,7 +209,7 @@ function VideoProfile({ video, loading }) {
               {poster ? (
                 <img
                   src={poster}
-                  alt={video.title || 'Profile Video'}
+                  alt={video.title || 'Video Profil'}
                   className="absolute inset-0 h-full w-full object-cover"
                   loading="lazy"
                 />
@@ -268,7 +221,7 @@ function VideoProfile({ video, loading }) {
               {ytId ? (
                 <button
                   onClick={() => setPlaying(true)}
-                  aria-label={`Play video: ${video.title || 'Profile Video'}`}
+                  aria-label={`Putar video: ${video.title || 'Video Profil'}`}
                   className="group absolute inset-0 flex items-center justify-center cursor-pointer"
                 >
                   <span className="absolute w-[104px] h-[104px] rounded-full border border-white/25 transition-transform duration-500 group-hover:scale-110" />
@@ -300,7 +253,7 @@ function VideoProfile({ video, loading }) {
                     {video.title}
                   </p>
                   <p className="text-white/70 text-[12.5px] mt-1 line-clamp-1">
-                    {video.description || 'Official INOTAL Partner Profile'}
+                    {video.description || 'Profil resmi INOTAL Partner'}
                   </p>
                 </div>
               </div>
@@ -313,10 +266,10 @@ function VideoProfile({ video, loading }) {
 }
 
 const impactStats = [
-  { icon: 'layers', value: 25.5, decimals: 1, suffix: 'K', label: 'Completed Collaborations', note: 'Joint projects delivered successfully with partners' },
-  { icon: 'users', value: 11.5, decimals: 1, suffix: 'K', label: 'Partner Satisfaction', note: 'Evaluated quarterly with partners, not guessed figures' },
-  { icon: 'award', value: 1.5, decimals: 1, suffix: 'K', label: 'Awards & Honors', note: 'Recognition from industry leaders and tech communities' },
-  { icon: 'link', value: 4.5, decimals: 1, suffix: 'K', label: 'Strategic Partners', note: 'Enterprises, campus ecosystems, and digital talents' },
+  { icon: 'layers', value: 25.5, decimals: 1, suffix: 'K', label: 'Kolaborasi Dituntaskan', note: 'Proyek bersama mitra yang sampai tahap serah terima' },
+  { icon: 'users', value: 11.5, decimals: 1, suffix: 'K', label: 'Kepuasan Mitra', note: 'Dinilai tiap kuartal bersama mitra, bukan angka tebakan' },
+  { icon: 'award', value: 1.5, decimals: 1, suffix: 'K', label: 'Penghargaan', note: 'Pengakuan industri dan komunitas teknologi' },
+  { icon: 'link', value: 4.5, decimals: 1, suffix: 'K', label: 'Mitra Strategis', note: 'Perusahaan, komunitas kampus, dan talenta digital' },
 ]
 
 function useCountUp(target, decimals, active) {
@@ -351,7 +304,7 @@ function StatCard({ icon, value, decimals, suffix, label, note, index }) {
   return (
     <div
       ref={ref}
-      className="group relative h-full bg-white border border-gray-200/80 rounded-xl px-7 py-8 overflow-hidden hover:border-[#0284c7]/50 transition-colors duration-300"
+      className="group relative h-full bg-white border border-gray-200/80 rounded-xl p-6 overflow-hidden hover:border-[#0284c7]/50 transition-colors duration-300"
     >
       <span className="absolute left-0 top-0 h-full w-1 bg-sky-500 origin-top scale-y-0 transition-transform duration-500 group-hover:scale-y-100" />
       <div className="flex items-start justify-between gap-4 mb-6">
@@ -392,48 +345,31 @@ function renderTeamHeading(title) {
 }
 
 export default function TentangPage({ onNavigate }) {
-  const [scrolled, setScrolled] = useState(false)
   const [openFaq, setOpenFaq] = useState(0)
   const intro = useAboutIntro()
+  const empowering = useAboutEmpowering()
 
-  // ─── DATA DINAMIS DARI BACKEND ─────────────────────────────────────────────
-  const [teamSectionTitle, setTeamSectionTitle] = useState('The Minds Behind This Ecosystem.')
+  const [teamSectionTitle, setTeamSectionTitle] = useState('Orang-orang di Balik Ekosistem Ini.')
   const [teamMembers, setTeamMembers] = useState([])
-  const [teamLoading, setTeamLoading] = useState(true)
 
   const [faqList, setFaqList] = useState([])
   const [faqLoading, setFaqLoading] = useState(true)
   const [faqError, setFaqError] = useState('')
 
-  // Statistik Pencapaian (Dinamis dari GET /api/public/about/statistics)
   const [statList, setStatList] = useState(impactStats)
-
-  // Video Profil State
   const [profileVideo, setProfileVideo] = useState(null)
   const [videoLoading, setVideoLoading] = useState(true)
-  const [videoSetting, setVideoSetting] = useState({
-    section_label: 'Profile Video',
-    section_title: 'See How Collaboration Really Works.',
-    section_description:
-      'We show things as they are: in-depth discussions, evolving requests, and the journey that leads to success as planned. This video is our real story, not a brochure.',
-  })
+  const [videoSetting, setVideoSetting] = useState(DEFAULT_VIDEO_SETTING)
   const [videoHighlightsList, setVideoHighlightsList] = useState([])
 
-  // CTA State (Dinamis dari GET /api/public/home/cta)
-  const defaultCTA = {
-    section_label: 'Open Opportunities',
-    title: 'Build the future together with us.',
-    button_text: 'Get Started',
-    button_url: '/register',
-  }
-  const [ctaData, setCtaData] = useState(defaultCTA)
+  const [ctaData, setCtaData] = useState(DEFAULT_CTA)
 
   useEffect(() => {
     let isMounted = true
+    const optionalContent = new AbortController()
 
     const loadAboutData = async () => {
       try {
-        setTeamLoading(true)
         setFaqLoading(true)
         setFaqError('')
         setVideoLoading(true)
@@ -444,140 +380,104 @@ export default function TentangPage({ onNavigate }) {
           getPublicAboutVideosApi(),
           getPublicAboutVideoSettingApi(),
           getPublicAboutVideoHighlightsApi(),
-          getPublicStatisticsApi(),
-          getPublicJoinInvitationApi(),
+          getPublicStatisticsApi({ signal: optionalContent.signal }),
+          getPublicJoinInvitationApi({ signal: optionalContent.signal }),
         ])
 
-        if (isMounted) {
-          if (settingRes.status === 'fulfilled') {
-            const rawTeamTitle =
-              settingRes.value?.data?.team_title ||
-              (typeof settingRes.value?.team_title === 'string' ? settingRes.value.team_title : null)
-            if (rawTeamTitle && typeof rawTeamTitle === 'string' && rawTeamTitle.trim()) {
-              setTeamSectionTitle(rawTeamTitle.trim())
-            }
-          }
+        if (!isMounted) return
 
-          if (teamRes.status === 'fulfilled') {
-            const data = Array.isArray(teamRes.value?.data)
-              ? teamRes.value.data
-              : Array.isArray(teamRes.value)
-                ? teamRes.value
-                : []
-            // Filter hanya yang memiliki nama dan foto valid
-            const validMembers = data.filter(m => m?.name && m?.photo_url)
-            setTeamMembers(validMembers.length > 0 ? validMembers : team)
-          } else {
-            setTeamMembers(team)
+        if (settingRes.status === 'fulfilled') {
+          const rawTeamTitle =
+            settingRes.value?.data?.team_title ||
+            (typeof settingRes.value?.team_title === 'string' ? settingRes.value.team_title : null)
+          if (rawTeamTitle && typeof rawTeamTitle === 'string' && rawTeamTitle.trim()) {
+            setTeamSectionTitle(rawTeamTitle.trim())
           }
+        }
 
-          if (faqRes.status === 'fulfilled') {
-            const rawFaqs = Array.isArray(faqRes.value?.data)
-              ? faqRes.value.data
-              : Array.isArray(faqRes.value)
-                ? faqRes.value
-                : []
-            setFaqList(rawFaqs)
-          } else {
-            setFaqError(
-              faqRes.reason?.response?.data?.message ||
-              faqRes.reason?.message ||
-              'Failed to load FAQ items at this time.'
-            )
-          }
+        if (teamRes.status === 'fulfilled') {
+          const data = unwrapAboutList(teamRes.value)
+          const validMembers = data.filter(m => m?.name && m?.photo_url)
+          setTeamMembers(validMembers.length > 0 ? validMembers : team)
+        } else {
+          setTeamMembers(team)
+        }
 
-          if (videoRes.status === 'fulfilled') {
-            const rawVideos = Array.isArray(videoRes.value?.data)
-              ? videoRes.value.data
-              : Array.isArray(videoRes.value)
-                ? videoRes.value
-                : []
-            // Ambil video profil aktif terbaru (elemen pertama karena backend sudah urut ID DESC)
-            if (rawVideos.length > 0) {
-              setProfileVideo(rawVideos[0])
-            } else {
-              setProfileVideo(null)
-            }
+        if (faqRes.status === 'fulfilled') {
+          const rawFaqs = unwrapAboutList(faqRes.value)
+          setFaqList(rawFaqs)
+        } else {
+          setFaqError(
+            faqRes.reason?.response?.data?.message ||
+            faqRes.reason?.message ||
+            'Gagal memuat pertanyaan FAQ saat ini.'
+          )
+        }
+
+        if (videoRes.status === 'fulfilled') {
+          const rawVideos = unwrapAboutList(videoRes.value)
+          // Ambil video profil aktif terbaru (elemen pertama karena backend sudah urut ID DESC)
+          if (rawVideos.length > 0) {
+            setProfileVideo(rawVideos[0])
           } else {
             setProfileVideo(null)
           }
+        } else {
+          setProfileVideo(null)
+        }
 
-          if (videoSettingRes.status === 'fulfilled' && videoSettingRes.value?.data) {
-            const sData = videoSettingRes.value.data
-            setVideoSetting({
-              section_label: sData.section_label?.trim() || 'Video Profil',
-              section_title: sData.section_title?.trim() || 'Lihat sendiri bagaimana kolaborasi bekerja.',
-              section_description:
-                sData.section_description?.trim() ||
-                'Keripitannya kami tampilkan apa adanya: obrolan panjang, request yang berubah, sampai proses panjang yang berakhir sesuai rencana. Video ini rekaman, bukan brosur.',
-            })
+        if (videoSettingRes.status === 'fulfilled' && videoSettingRes.value?.data) {
+          const sData = videoSettingRes.value.data
+          setVideoSetting({
+            section_label: sData.section_label?.trim() || DEFAULT_VIDEO_SETTING.section_label,
+            section_title: sData.section_title?.trim() || DEFAULT_VIDEO_SETTING.section_title,
+            section_description:
+              sData.section_description?.trim() || DEFAULT_VIDEO_SETTING.section_description,
+          })
+        }
+
+        if (videoHighlightsRes.status === 'fulfilled') {
+          const rawHighlights = unwrapAboutList(videoHighlightsRes.value)
+          setVideoHighlightsList(rawHighlights)
+        }
+
+        if (statRes.status === 'fulfilled') {
+          const activeStats = unwrapAboutList(statRes.value)
+            .filter((item) => item && item.is_active !== false && typeof item.title === 'string' &&
+              (typeof item.statistic_value === 'string' || typeof item.statistic_value === 'number'))
+            .sort((a, b) => (Number(a.display_order) || 0) - (Number(b.display_order) || 0) ||
+              (Number(a.id) || 0) - (Number(b.id) || 0))
+          if (activeStats.length > 0) {
+            setStatList(activeStats.map((item) => {
+              const valStr = String(item.statistic_value).trim()
+              const value = valStr ? Number(valStr) : NaN
+              return {
+                icon: typeof item.icon === 'string' ? item.icon : 'layers',
+                value: Number.isFinite(value) ? value : 0,
+                decimals: Number.isFinite(value) ? Math.min(6, (valStr.split('.')[1] || '').length) : 0,
+                suffix: typeof item.statistic_suffix === 'string' ? item.statistic_suffix : '',
+                label: item.title,
+                note: typeof item.description === 'string' ? item.description : '',
+              }
+            }))
           }
+        }
 
-          if (videoHighlightsRes.status === 'fulfilled') {
-            const rawHighlights = Array.isArray(videoHighlightsRes.value?.data)
-              ? videoHighlightsRes.value.data
-              : Array.isArray(videoHighlightsRes.value)
-                ? videoHighlightsRes.value
-                : []
-            setVideoHighlightsList(rawHighlights)
+        if (ctaRes.status === 'fulfilled' && ctaRes.value) {
+          const rawCTA = ctaRes.value.data || ctaRes.value
+          if (rawCTA.is_active !== false && (typeof rawCTA.title === 'string' || typeof rawCTA.section_label === 'string')) {
+            setCtaData(Object.fromEntries(Object.entries(DEFAULT_CTA).map(([key, fallback]) =>
+              [key, typeof rawCTA[key] === 'string' ? rawCTA[key] : fallback])))
           }
-
-          if (statRes.status === 'fulfilled' && statRes.value) {
-            const rawStats = Array.isArray(statRes.value?.data)
-              ? statRes.value.data
-              : Array.isArray(statRes.value)
-                ? statRes.value
-                : []
-            const activeStats = rawStats
-              .filter((item) => item?.is_active !== false)
-              .sort((a, b) => {
-                const orderA = Number(a?.display_order) || 0
-                const orderB = Number(b?.display_order) || 0
-                return orderA - orderB || (Number(a?.id) || 0) - (Number(b?.id) || 0)
-              })
-
-            if (activeStats.length > 0) {
-              const mapped = activeStats.map((item) => {
-                const numVal = parseFloat(item.statistic_value)
-                const isNumeric = !Number.isNaN(numVal)
-                const valStr = String(item.statistic_value || '')
-                const decimals = isNumeric && valStr.includes('.') ? (valStr.split('.')[1] || '').length : 0
-
-                return {
-                  icon: item.icon || 'layers',
-                  value: isNumeric ? numVal : 0,
-                  decimals,
-                  suffix: item.statistic_suffix || '',
-                  label: item.title || '',
-                  note: item.description || '',
-                }
-              })
-              setStatList(mapped)
-            }
-          }
-
-          if (ctaRes.status === 'fulfilled' && ctaRes.value) {
-            const rawCTA = ctaRes.value?.data || ctaRes.value
-            if (rawCTA && (rawCTA.title || rawCTA.section_label)) {
-              setCtaData({
-                section_label: rawCTA.section_label || defaultCTA.section_label,
-                title: rawCTA.title || defaultCTA.title,
-                button_text: rawCTA.button_text || defaultCTA.button_text,
-                button_url: rawCTA.button_url || defaultCTA.button_url,
-              })
-            }
-          }
-
         }
       } catch (err) {
         console.error('Gagal mengambil data Tentang Kami:', err)
         if (isMounted) {
           setTeamMembers(team)
-          setFaqError('Failed to load FAQ items at this time.')
+          setFaqError('Gagal memuat pertanyaan FAQ saat ini.')
         }
       } finally {
         if (isMounted) {
-          setTeamLoading(false)
           setFaqLoading(false)
           setVideoLoading(false)
         }
@@ -588,18 +488,12 @@ export default function TentangPage({ onNavigate }) {
 
     return () => {
       isMounted = false
+      optionalContent.abort()
     }
   }, [])
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24)
-    onScroll()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
   const handleCTANavigation = (url) => {
-    if (!url) return
+    if (typeof url !== 'string' || !url.trim()) return
     const trimmed = url.trim()
 
     // Cek jika URL eksternal (http://, https://, mailto:, tel:)
@@ -609,6 +503,7 @@ export default function TentangPage({ onNavigate }) {
     }
 
     // Jika internal path (contoh: /kontak, #kontak, register, /register)
+    if (trimmed.startsWith('//') || trimmed.includes(':') || trimmed.includes('\\')) return
     let internalTarget = trimmed.replace(/^[/#]+/, '')
     if (!internalTarget) internalTarget = 'landing'
 
@@ -623,33 +518,29 @@ export default function TentangPage({ onNavigate }) {
     <div className="min-h-screen bg-white text-[#0c4a6e]" style={{ fontFamily: "'Mona Sans', system-ui, sans-serif" }}>
 
       <div className="h-[68px]">
-        <PublicNavbar onNavigate={onNavigate} activePage="tentang" scrolled={scrolled} />
+        <PublicNavbar onNavigate={onNavigate} activePage="tentang" />
       </div>
-      <PublicPageBanner pageKey="tentang" breadcrumb="About Us" onNavigate={onNavigate} />
-      <section className="max-w-7xl mx-auto px-6 py-20 md:py-28">
-        <div className="mb-14">
+      <PublicPageBanner pageKey="tentang" breadcrumb="Tentang Kami" onNavigate={onNavigate} />
+      <section className="max-w-7xl mx-auto px-6 py-12 md:py-16">
+        <div className="mb-8 md:mb-10">
           <Reveal>
-            <SubTitle>Choose the Best</SubTitle>
-            <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight leading-[1.15] max-w-2xl">
-              Empowering Businesses with{' '}
-              <span className="text-[#0284c7]">Expertise.</span>
-            </h2>
+            <AboutEmpoweringHeader configuration={empowering} />
           </Reveal>
         </div>
 
         <PublicAboutCards onNavigate={onNavigate} />
       </section>
-      <section className="max-w-7xl mx-auto px-6 pb-20 md:pb-28">
-        <div className="grid lg:grid-cols-[1.35fr_1fr] gap-10 lg:gap-14 items-center">
+      <section className="max-w-7xl mx-auto px-6 pb-12 md:pb-16">
+        <div className="grid lg:grid-cols-[1.35fr_1fr] gap-8 lg:gap-10 items-center">
           <Reveal>
             <VideoProfile video={profileVideo} loading={videoLoading} />
           </Reveal>
 
-          <div className="pt-6 lg:pt-0">
+          <div>
             <Reveal>
-              <SubTitle>{videoSetting.section_label || 'Profile Video'}</SubTitle>
+              <SubTitle>{videoSetting.section_label || 'Video Profil'}</SubTitle>
               <h2 className="text-3xl md:text-[42px] font-extrabold tracking-tight leading-[1.18] mb-6">
-                {renderTeamHeading(videoSetting.section_title || 'See How Collaboration Really Works.')}
+                {renderTeamHeading(videoSetting.section_title || 'Lihat sendiri bagaimana kolaborasi bekerja.')}
               </h2>
               {videoSetting.section_description && (
                 <p className="text-[14.5px] leading-relaxed text-[#364e52] max-w-lg whitespace-pre-line">
@@ -659,7 +550,7 @@ export default function TentangPage({ onNavigate }) {
             </Reveal>
 
             {videoHighlightsList.length > 0 ? (
-              <div className="mt-9 space-y-5">
+              <div className="mt-8 space-y-5">
                 {videoHighlightsList.map((item, i) => (
                   <Reveal key={item.id || item.title || i} delay={i * 120}>
                     <div className="flex items-start gap-4">
@@ -678,17 +569,17 @@ export default function TentangPage({ onNavigate }) {
           </div>
         </div>
       </section>
-      <section className="max-w-7xl mx-auto px-6 pb-20 md:pb-28">
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <section className="max-w-7xl mx-auto px-6 pb-12 md:pb-16">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {statList.map((stat, i) => (
             <StatCard key={stat.label || i} {...stat} index={i} />
           ))}
         </div>
       </section>
       <AboutIntroSection intro={intro} onNavigate={onNavigate} />
-      <section className="max-w-7xl mx-auto px-6 py-20 md:py-28">
-        <Reveal className="text-center max-w-xl mx-auto mb-14">
-          <SubTitle>Our Team</SubTitle>
+      <section className="max-w-7xl mx-auto px-6 py-12 md:py-16">
+        <Reveal className="text-center max-w-xl mx-auto mb-8 md:mb-10">
+          <SubTitle>Tim Kami</SubTitle>
           <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight leading-[1.15]">
             {renderTeamHeading(teamSectionTitle)}
           </h2>
@@ -738,40 +629,41 @@ export default function TentangPage({ onNavigate }) {
           })}
         </div>
       </section>
-      <section className="bg-[#F0F4F8] py-20 md:py-28">
-        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-[0.85fr_1.4fr] gap-12 lg:gap-16 items-start">
+      <section className="bg-[#F0F4F8] py-12 md:py-16">
+        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-[0.85fr_1.4fr] gap-8 lg:gap-10 items-start">
 
           <Reveal>
-            <SubTitle>Frequently Asked Questions</SubTitle>
+            <SubTitle>Pertanyaan Umum</SubTitle>
             <h2 className="text-3xl md:text-[42px] font-extrabold tracking-tight leading-[1.18] mb-5">
-              Need Help? <span className="text-[#0284c7]">Start Here.</span>
+              Butuh Bantuan? <span className="text-[#0284c7]">Mulai di Sini.</span>
             </h2>
             <p className="text-[14.5px] leading-relaxed text-[#364e52] mb-8 max-w-sm">
-              Didn't find what you were looking for? Send your question via our Partnership page —
-              we reply personally to each inquiry.
+              Tidak menemukan jawabanmu? Kirim pertanyaan lewat halaman Partnership —
+              kami balas satu per satu, tanpa template.
             </p>
-            <PillButton onClick={() => onNavigate?.('partnership')}>Ask a Question</PillButton>
+            <PillButton onClick={() => onNavigate?.('partnership')}>Ajukan Pertanyaan</PillButton>
           </Reveal>
 
           <div className="space-y-4">
             {faqLoading ? (
               <div className="p-8 text-center bg-white/60 border border-gray-200/80 rounded-xl text-gray-500">
                 <div className="w-7 h-7 border-2 border-[#0284c7] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-                <p className="text-[13.5px] font-medium text-[#364e52]">Loading FAQs...</p>
+                <p className="text-[13.5px] font-medium text-[#364e52]">Memuat pertanyaan umum...</p>
               </div>
             ) : faqError ? (
               <div className="p-6 text-center bg-white/80 border border-red-200/80 rounded-xl text-red-600">
                 <p className="text-[13.5px] font-medium mb-1">{faqError}</p>
-                <p className="text-[12px] text-gray-500">Please reload the page in a moment.</p>
+                <p className="text-[12px] text-gray-500">Silakan muat ulang halaman beberapa saat lagi.</p>
               </div>
             ) : faqList.length === 0 ? (
               <div className="p-8 text-center bg-white/60 border border-gray-200/80 rounded-xl text-gray-500">
-                <p className="text-[14px] font-medium text-[#364e52]">No questions available at this time.</p>
-                <p className="text-[12.5px] text-gray-400 mt-1">Use the button on the left to submit your question.</p>
+                <p className="text-[14px] font-medium text-[#364e52]">Belum ada pertanyaan yang tersedia saat ini.</p>
+                <p className="text-[12.5px] text-gray-400 mt-1">Gunakan tombol di samping untuk mengajukan pertanyaan Anda.</p>
               </div>
             ) : (
               faqList.map((f, i) => {
                 const open = openFaq === i
+                const ToggleIcon = open ? Minus : Plus
                 return (
                   <Reveal key={f.id || f.question || i} delay={i * 60}>
                     <div className={`rounded-xl border transition-all duration-300 ${
@@ -782,7 +674,7 @@ export default function TentangPage({ onNavigate }) {
                       <button
                         onClick={() => setOpenFaq(open ? -1 : i)}
                         aria-expanded={open}
-                        className="w-full flex items-center justify-between gap-4 px-7 py-5 text-left cursor-pointer"
+                        className="w-full flex items-center justify-between gap-4 px-5 sm:px-7 py-5 text-left cursor-pointer"
                       >
                         <span className={`font-semibold text-[15px] leading-relaxed transition-colors ${
                           open ? 'text-[#0284c7]' : 'text-[#0c4a6e]'
@@ -790,16 +682,16 @@ export default function TentangPage({ onNavigate }) {
                           {f.question}
                         </span>
                         <span className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 ${
-                          open ? 'bg-[#0284c7] rotate-45' : 'bg-[#F0F4F8]'
+                          open ? 'bg-[#0284c7]' : 'bg-[#F0F4F8]'
                         }`}>
-                          <Plus size={16} className={open ? 'text-white' : 'text-[#0c4a6e]'} strokeWidth={2.5} />
+                          <ToggleIcon size={16} className={open ? 'text-white' : 'text-[#0c4a6e]'} strokeWidth={2.5} />
                         </span>
                       </button>
                       <div className={`grid transition-all duration-300 ease-out ${
                         open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
                       }`}>
                         <div className="overflow-hidden">
-                          <p className="px-7 pb-6 text-[14px] leading-relaxed text-[#364e52] whitespace-pre-wrap">{f.answer}</p>
+                          <p className="px-5 sm:px-7 pb-6 text-[14px] leading-relaxed text-[#364e52] whitespace-pre-wrap">{f.answer}</p>
                         </div>
                       </div>
                     </div>
@@ -813,7 +705,7 @@ export default function TentangPage({ onNavigate }) {
       <section className="bg-[#0284c7] text-white relative overflow-hidden">
         <div className="absolute -top-40 -right-40 w-[480px] h-[480px] rounded-full border-[40px] border-white/10" />
         <div className="absolute -bottom-52 -left-32 w-[420px] h-[420px] rounded-full border-[32px] border-[#0c4a6e]/20" />
-        <div className="relative max-w-7xl mx-auto px-6 py-20 md:py-28 text-center">
+        <div className="relative max-w-7xl mx-auto px-6 py-12 md:py-16 text-center">
           {ctaData.section_label && (
             <p className="text-[12px] font-bold tracking-[0.2em] uppercase text-sky-400 mb-5">
               {ctaData.section_label}
@@ -828,7 +720,6 @@ export default function TentangPage({ onNavigate }) {
         </div>
       </section>
 
-      {/* Footer */}
       <PublicFooter onNavigate={onNavigate} />
 
     </div>

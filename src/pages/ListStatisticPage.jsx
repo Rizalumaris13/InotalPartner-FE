@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Search,
   Plus,
@@ -9,7 +9,6 @@ import {
   BarChart3,
   CheckCircle2,
   X,
-  ArrowUpDown,
   RefreshCw,
   Eye,
 } from 'lucide-react'
@@ -570,4 +569,3 @@ export default function ListStatisticPage({ onAddNew, onEdit }) {
     </div>
   )
 }
-

@@ -1,5 +1,5 @@
-import { useFeedback } from '../components/FeedbackUI';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useFeedback } from '../hooks/useFeedback';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Search,
   Edit,
@@ -21,12 +21,8 @@ import {
 } from '../api/homepageBanners';
 
 import { useAuth } from '../hooks/useAuth';
-
-const STATUS_FILTERS = [
-  { key: 'all', label: 'Semua' },
-  { key: 'active', label: 'Aktif' },
-  { key: 'inactive', label: 'Tidak Aktif' },
-];
+import { toBannerStatusPayload, unwrapBannerList } from '../utils/sliders';
+import { STATUS_FILTERS } from '../data/statusFilters';
 
 const PAGE_SIZE = 10;
 
@@ -43,138 +39,82 @@ const StatusBadge = ({ active }) => (
 );
 
 export default function ListSliderPage({ onEdit }) {
-  const { notify, confirmAction, FeedbackUI } = useFeedback();
+  const { notify, confirmAction, feedback } = useFeedback();
   const { role } = useAuth();
 
-  const isAdmin =
-    role === 'admin' || role === 'super_admin';
+  const isAdmin = role === 'admin' || role === 'super_admin';
 
   const [banners, setBanners] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [loadState, setLoadState] = useState({ request: null, error: '' });
 
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] =
-    useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   const [page, setPage] = useState(1);
 
-  const [previewBanner, setPreviewBanner] =
-    useState(null);
+  const [previewBanner, setPreviewBanner] = useState(null);
 
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // ---------------------------------------------------------
-  // LOAD
-  // ---------------------------------------------------------
+  const request = useMemo(() => ({ refreshKey, isAdmin }), [refreshKey, isAdmin]);
+  const loading = isAdmin && loadState.request !== request;
+  const error = loading ? '' : loadState.error;
 
   useEffect(() => {
+    if (!request.isAdmin) return;
     let mounted = true;
 
     const loadBanners = async () => {
-      setLoading(true);
-      setError('');
-
       try {
         const response = await getBannersApi();
-
-        /*
-         * Antisipasi beberapa bentuk response:
-         *
-         * []
-         * { data: [] }
-         * { banners: [] }
-         */
-
-        let data = [];
-
-        if (Array.isArray(response)) {
-          data = response;
-        } else if (Array.isArray(response?.data)) {
-          data = response.data;
-        } else if (Array.isArray(response?.banners)) {
-          data = response.banners;
-        }
-
         if (mounted) {
-          setBanners(data);
+          setBanners(unwrapBannerList(response));
+          setLoadState({ request, error: '' });
         }
       } catch (err) {
         if (mounted) {
-          setError(
-            err.message ||
-              'Gagal mengambil data slider.'
-          );
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
+          setLoadState({ request, error: err.message || 'Gagal mengambil data slider.' });
         }
       }
     };
 
-    if (isAdmin) {
-      loadBanners();
-    } else {
-      setLoading(false);
-    }
+    loadBanners();
 
     return () => {
       mounted = false;
     };
-  }, [refreshKey, isAdmin]);
+  }, [request]);
 
-  // ---------------------------------------------------------
-  // FILTER
-  // ---------------------------------------------------------
-
-  useEffect(() => {
+  const changeSearch = (value) => {
+    if (value === search) return;
+    setSearch(value);
     setPage(1);
-  }, [search, statusFilter]);
+  };
+
+  const changeStatusFilter = (value) => {
+    if (value === statusFilter) return;
+    setStatusFilter(value);
+    setPage(1);
+  };
 
   const filtered = useMemo(() => {
-    const keyword =
-      search.trim().toLowerCase();
+    const keyword = search.trim().toLowerCase();
 
     return banners.filter((banner) => {
-      const matchesSearch =
-        !keyword ||
-        banner.title
-          ?.toLowerCase()
-          .includes(keyword);
+      const matchesSearch = !keyword || banner.title?.toLowerCase().includes(keyword);
 
       const matchesStatus =
         statusFilter === 'all' ||
-        (statusFilter === 'active' &&
-          banner.is_active) ||
-        (statusFilter === 'inactive' &&
-          !banner.is_active);
+        (statusFilter === 'active' && banner.is_active) ||
+        (statusFilter === 'inactive' && !banner.is_active);
 
-      return (
-        matchesSearch && matchesStatus
-      );
+      return matchesSearch && matchesStatus;
     });
-  }, [
-    banners,
-    search,
-    statusFilter,
-  ]);
+  }, [banners, search, statusFilter]);
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(
-      filtered.length / PAGE_SIZE
-    )
-  );
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
 
-  const pageItems = filtered.slice(
-    (page - 1) * PAGE_SIZE,
-    page * PAGE_SIZE
-  );
-
-  // ---------------------------------------------------------
-  // ACTIONS
-  // ---------------------------------------------------------
+  const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const handlePublish = async (banner) => {
     if (!(await confirmAction(
@@ -183,25 +123,7 @@ export default function ListSliderPage({ onEdit }) {
     ))) return;
 
     try {
-      /*
-       * Tidak membuat banner baru.
-       * Hanya mengubah is_active menjadi true.
-       */
-      await updateBannerApi(
-        banner.id,
-        {
-          title: banner.title || '',
-          background_image:
-            banner.background_image || '',
-          order:
-            Number(banner.order) || 1,
-          is_active: true,
-          buttons:
-            Array.isArray(banner.buttons)
-              ? banner.buttons
-              : [],
-        }
-      );
+      await updateBannerApi(banner.id, toBannerStatusPayload(banner, true));
 
       notify('Slider berhasil di-upload ke Landing Page.');
 
@@ -218,26 +140,8 @@ export default function ListSliderPage({ onEdit }) {
     ))) return;
 
     try {
-      /*
-       * Untuk take down kita gunakan PUT
-       * agar data slider tetap tersimpan,
-       * tetapi is_active menjadi false.
-       */
-      await updateBannerApi(
-        banner.id,
-        {
-          title: banner.title || '',
-          background_image:
-            banner.background_image || '',
-          order:
-            Number(banner.order) || 1,
-          is_active: false,
-          buttons:
-            Array.isArray(banner.buttons)
-              ? banner.buttons
-              : [],
-        }
-      );
+      // PUT mempertahankan data slider saat diturunkan dari halaman publik.
+      await updateBannerApi(banner.id, toBannerStatusPayload(banner, false));
 
       notify('Slider berhasil diturunkan dari Landing Page.');
 
@@ -263,10 +167,6 @@ export default function ListSliderPage({ onEdit }) {
       notify(err.message || 'Gagal menghapus slider.', 'error');
     }
   };
-
-  // ---------------------------------------------------------
-  // ADMIN GUARD
-  // ---------------------------------------------------------
 
   if (!isAdmin) {
     return (
@@ -295,8 +195,8 @@ export default function ListSliderPage({ onEdit }) {
 
   return (
     <div className="flex h-full flex-col">
-      <FeedbackUI />
-      {/* HEADER */}
+      {feedback}
+
       <div className="mb-6">
         <h1 className="text-xl font-extrabold tracking-tight text-gray-900">
           List Slider
@@ -305,7 +205,7 @@ export default function ListSliderPage({ onEdit }) {
       </div>
 
       <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
-        {/* TOOLBAR */}
+
         <div className="flex flex-col justify-between gap-3 border-b border-gray-100 p-4 sm:flex-row sm:items-center">
           <div className="relative w-full max-w-sm">
             <Search
@@ -317,7 +217,7 @@ export default function ListSliderPage({ onEdit }) {
               type="text"
               value={search}
               onChange={(e) =>
-                setSearch(e.target.value)
+                changeSearch(e.target.value)
               }
               placeholder="Cari judul slider..."
               className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-4 text-sm transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500"
@@ -329,7 +229,7 @@ export default function ListSliderPage({ onEdit }) {
               <button
                 key={status.key}
                 onClick={() =>
-                  setStatusFilter(status.key)
+                  changeStatusFilter(status.key)
                 }
                 className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
                   statusFilter === status.key
@@ -343,7 +243,6 @@ export default function ListSliderPage({ onEdit }) {
           </div>
         </div>
 
-        {/* TABLE */}
         <div className="flex-1 overflow-auto">
           {loading ? (
             <div className="flex h-40 items-center justify-center">
@@ -399,7 +298,7 @@ export default function ListSliderPage({ onEdit }) {
                     key={banner.id}
                     className="transition-colors hover:bg-sky-50/30"
                   >
-                    {/* SLIDER */}
+
                     <td className="max-w-md px-6 py-4">
                       <div className="flex items-center gap-4">
                         <div className="h-16 w-28 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
@@ -436,7 +335,6 @@ export default function ListSliderPage({ onEdit }) {
                       </div>
                     </td>
 
-                    {/* BUTTONS */}
                     <td className="px-6 py-4">
                       {banner.buttons?.length ? (
                         <div className="flex max-w-xs flex-wrap gap-1">
@@ -466,19 +364,16 @@ export default function ListSliderPage({ onEdit }) {
                       )}
                     </td>
 
-                    {/* ORDER */}
                     <td className="px-6 py-4 text-sm text-gray-500">
                       {banner.order ?? '-'}
                     </td>
 
-                    {/* STATUS */}
                     <td className="px-6 py-4">
                       <StatusBadge
                         active={!!banner.is_active}
                       />
                     </td>
 
-                    {/* ACTION */}
                     <td className="whitespace-nowrap px-6 py-4 text-right">
                       <button
                         onClick={() =>
@@ -551,7 +446,6 @@ export default function ListSliderPage({ onEdit }) {
           )}
         </div>
 
-        {/* PAGINATION */}
         {!loading &&
           !error &&
           totalPages > 1 && (
@@ -601,11 +495,10 @@ export default function ListSliderPage({ onEdit }) {
           )}
       </div>
 
-      {/* PREVIEW MODAL */}
       {previewBanner && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
           <div className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-slate-50 shadow-xl">
-            {/* HEADER */}
+
             <div className="flex items-center justify-between border-b border-gray-100 bg-white px-6 py-4">
               <div>
                 <h2 className="text-base font-bold text-gray-900">
@@ -631,7 +524,6 @@ export default function ListSliderPage({ onEdit }) {
               </button>
             </div>
 
-            {/* PREVIEW */}
             <div className="overflow-y-auto p-6">
               <div className="relative overflow-hidden rounded-xl bg-slate-900">
                 {previewBanner.background_image && (
@@ -689,7 +581,6 @@ export default function ListSliderPage({ onEdit }) {
               </div>
             </div>
 
-            {/* FOOTER */}
             <div className="flex justify-end gap-2 border-t border-gray-100 bg-white px-6 py-4">
               <button
                 onClick={() =>

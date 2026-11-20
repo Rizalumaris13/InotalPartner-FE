@@ -1,19 +1,26 @@
 import api from './axios'
+import { readNullableContent, requireContentAcknowledgement } from './contentResponse'
+import { positiveResourceId } from '../utils/resourceId'
+
+const isInvitation = (value) => Boolean(value && typeof value === 'object' && !Array.isArray(value)) &&
+  Number.isSafeInteger(value.id) && value.id > 0 &&
+  ['section_label', 'title', 'button_text', 'button_url'].every((key) => typeof value[key] === 'string') &&
+  (value.is_active === undefined || typeof value.is_active === 'boolean')
 
 /**
  * Mengambil data Ajakan Bergabung aktif untuk publik.
  * GET /api/public/home/cta
  */
-export const getPublicJoinInvitationApi = async () => {
+export const getPublicJoinInvitationApi = async (options = {}) => {
   try {
-    const response = await api.get('/public/home/cta')
-    return response.data?.data || null
+    const response = await api.get('/public/home/cta', options)
+    return readNullableContent(response.data, isInvitation, 'Format data Ajakan Bergabung tidak sesuai kontrak.')
   } catch (error) {
     const message =
       error?.response?.data?.message ||
       error?.message ||
       'Gagal mengambil data Ajakan Bergabung'
-    throw new Error(message)
+    throw new Error(message, { cause: error })
   }
 }
 
@@ -24,13 +31,14 @@ export const getPublicJoinInvitationApi = async () => {
 export const getJoinInvitationsApi = async () => {
   try {
     const response = await api.get('/home/cta')
-    return response.data?.data || []
+    return readNullableContent(response.data, (value) => Array.isArray(value) && value.every(isInvitation),
+      'Format daftar Ajakan Bergabung tidak sesuai kontrak.') ?? []
   } catch (error) {
     const message =
       error?.response?.data?.message ||
       error?.message ||
       'Gagal mengambil daftar Ajakan Bergabung'
-    throw new Error(message)
+    throw new Error(message, { cause: error })
   }
 }
 
@@ -40,14 +48,14 @@ export const getJoinInvitationsApi = async () => {
  */
 export const getJoinInvitationByIdApi = async (id) => {
   try {
-    const response = await api.get(`/home/cta/${id}`)
-    return response.data?.data || null
+    const response = await api.get(`/home/cta/${positiveResourceId(id)}`)
+    return readNullableContent(response.data, isInvitation, 'Format detail Ajakan Bergabung tidak sesuai kontrak.')
   } catch (error) {
     const message =
       error?.response?.data?.message ||
       error?.message ||
       'Gagal mengambil detail Ajakan Bergabung'
-    throw new Error(message)
+    throw new Error(message, { cause: error })
   }
 }
 
@@ -58,13 +66,14 @@ export const getJoinInvitationByIdApi = async (id) => {
 export const createJoinInvitationApi = async (payload) => {
   try {
     const response = await api.post('/home/cta', payload)
+    requireContentAcknowledgement(response.data, 'Backend belum mengonfirmasi penerimaan Ajakan Bergabung.')
     return response.data?.data || response.data
   } catch (error) {
     const message =
       error?.response?.data?.message ||
       error?.message ||
       'Gagal membuat Ajakan Bergabung'
-    throw new Error(message)
+    throw new Error(message, { cause: error })
   }
 }
 
@@ -74,14 +83,15 @@ export const createJoinInvitationApi = async (payload) => {
  */
 export const updateJoinInvitationApi = async (id, payload) => {
   try {
-    const response = await api.put(`/home/cta/${id}`, payload)
+    const response = await api.put(`/home/cta/${positiveResourceId(id)}`, payload)
+    requireContentAcknowledgement(response.data, 'Backend belum mengonfirmasi penerimaan Ajakan Bergabung.')
     return response.data?.data || response.data
   } catch (error) {
     const message =
       error?.response?.data?.message ||
       error?.message ||
       'Gagal memperbarui Ajakan Bergabung'
-    throw new Error(message)
+    throw new Error(message, { cause: error })
   }
 }
 
@@ -91,14 +101,15 @@ export const updateJoinInvitationApi = async (id, payload) => {
  */
 export const deleteJoinInvitationApi = async (id) => {
   try {
-    const response = await api.delete(`/home/cta/${id}`)
+    const response = await api.delete(`/home/cta/${positiveResourceId(id)}`)
+    requireContentAcknowledgement(response.data, 'Backend belum mengonfirmasi penghapusan Ajakan Bergabung.')
     return response.data
   } catch (error) {
     const message =
       error?.response?.data?.message ||
       error?.message ||
       'Gagal menghapus Ajakan Bergabung'
-    throw new Error(message)
+    throw new Error(message, { cause: error })
   }
 }
 
@@ -109,4 +120,3 @@ export const getHomeCTAByIdApi = getJoinInvitationByIdApi
 export const createHomeCTAApi = createJoinInvitationApi
 export const updateHomeCTAApi = updateJoinInvitationApi
 export const deleteHomeCTAApi = deleteJoinInvitationApi
-

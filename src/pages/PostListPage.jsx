@@ -1,5 +1,5 @@
-import { useFeedback } from '../components/FeedbackUI';
-import React, { useState, useEffect, useMemo } from 'react';
+import { useFeedback } from '../hooks/useFeedback';
+import { useState, useEffect, useMemo } from 'react';
 import { Search, Edit, Eye, Send, ArrowDownCircle, AlertCircle, ShieldAlert, X } from 'lucide-react';
 import { getPostsApi, publishPostApi, takedownPostApi, resolveImageUrl } from '../api/posts';
 import PostPreview from '../components/Postpreview';
@@ -19,6 +19,9 @@ const STATUS_FILTERS = [
 ];
 
 const PAGE_SIZE = 10;
+
+const getPostCategories = (post) =>
+  post.categories?.length ? post.categories : post.category?.name ? [post.category] : [];
 
 const formatDate = (iso) =>
   iso
@@ -40,7 +43,7 @@ const StatusBadge = ({ status }) => {
 };
 
 export default function PostListPage({ onEdit }) {
-  const { notify, confirmAction, FeedbackUI } = useFeedback();
+  const { notify, confirmAction, feedback } = useFeedback();
   const { role, user: currentUser } = useAuth();
 
   const isOperator = role === 'operator';
@@ -82,9 +85,23 @@ export default function PostListPage({ onEdit }) {
     };
   }, [postType, refreshKey]);
 
-  useEffect(() => {
+  const changePostType = (value) => {
+    if (value === postType) return;
+    setPostType(value);
     setPage(1);
-  }, [postType, statusFilter, search]);
+  };
+
+  const changeStatusFilter = (value) => {
+    if (value === statusFilter) return;
+    setStatusFilter(value);
+    setPage(1);
+  };
+
+  const changeSearch = (value) => {
+    if (value === search) return;
+    setSearch(value);
+    setPage(1);
+  };
 
   const filtered = useMemo(() => {
     const keyword = search.trim().toLowerCase();
@@ -111,7 +128,7 @@ export default function PostListPage({ onEdit }) {
   const closePreview = () => setPreviewPost(null);
 
   const categoryNames = (p) =>
-    (p.categories?.length ? p.categories : p.category?.name ? [p.category] : []).map((c) => c.name).join(', ');
+    getPostCategories(p).map((c) => c.name).join(', ');
 
   const handlePublish = async (p) => {
     if (!(await confirmAction(`Publikasikan "${p.title}" ke Landing Page?`, {
@@ -143,7 +160,7 @@ export default function PostListPage({ onEdit }) {
 
   return (
     <div className="flex flex-col h-full relative">
-      <FeedbackUI />
+      {feedback}
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-xl font-extrabold text-gray-900 tracking-tight">
@@ -163,7 +180,7 @@ export default function PostListPage({ onEdit }) {
           {POST_TYPES.map((t) => (
             <button
               key={t.key}
-              onClick={() => setPostType(t.key)}
+              onClick={() => changePostType(t.key)}
               className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
                 postType === t.key
                   ? 'border-sky-500 text-sky-600'
@@ -182,7 +199,7 @@ export default function PostListPage({ onEdit }) {
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => changeSearch(e.target.value)}
               placeholder="Cari judul post..."
               className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition-colors"
             />
@@ -191,7 +208,7 @@ export default function PostListPage({ onEdit }) {
             {STATUS_FILTERS.map((s) => (
               <button
                 key={s.key}
-                onClick={() => setStatusFilter(s.key)}
+                onClick={() => changeStatusFilter(s.key)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
                   statusFilter === s.key
                     ? 'bg-sky-50 text-sky-600 border-sky-200'
@@ -236,7 +253,7 @@ export default function PostListPage({ onEdit }) {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {pageItems.map((p) => {
-                  const cats = p.categories?.length ? p.categories : p.category?.name ? [p.category] : [];
+                  const cats = getPostCategories(p);
                   return (
                     <tr key={p.id} className="hover:bg-sky-50/30 transition-colors">
                       <td className="px-6 py-4 max-w-xs">

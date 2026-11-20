@@ -1,11 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Save,
   List,
   AlertCircle,
   ShieldAlert,
-  ChevronRight,
-  HelpCircle,
   X,
 } from 'lucide-react'
 import {
@@ -14,6 +12,15 @@ import {
   updateAboutFAQApi,
 } from '../api/about'
 import { useAuth } from '../hooks/useAuth'
+
+function toFAQDraft(data) {
+  return {
+    question: data?.question || '',
+    answer: data?.answer || '',
+    displayOrder: typeof data?.display_order === 'number' ? data.display_order : 0,
+    isActive: data?.is_active !== false,
+  }
+}
 
 export default function FormFAQPage({
   editingFAQ = null,
@@ -29,78 +36,46 @@ export default function FormFAQPage({
 
   const isEditing = !!editingFAQ
 
-  // Form states
-  const [question, setQuestion] = useState('')
-  const [answer, setAnswer] = useState('')
-  const [displayOrder, setDisplayOrder] = useState(0)
-  const [isActive, setIsActive] = useState(true)
-
-  const [loadingDetail, setLoadingDetail] = useState(isEditing)
+  const [source, setSource] = useState(editingFAQ)
+  const [draft, setDraft] = useState(() => toFAQDraft(editingFAQ))
+  const { question, answer, displayOrder, isActive } = draft
+  const [loadingDetail, setLoadingDetail] = useState(!!editingFAQ?.id)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  // Inisialisasi data form saat mode tambah atau edit
-  useEffect(() => {
-    let isMounted = true
+  // Prop identity matters: a refreshed record with the same ID is a new source.
+  // Adjust before commit rather than remounting inputs or resetting in an effect.
+  if (source !== editingFAQ) {
+    setSource(editingFAQ)
+    setDraft(toFAQDraft(editingFAQ))
+    setLoadingDetail(!!editingFAQ?.id)
+    setError('')
+  }
 
-    if (!isEditing) {
-      setQuestion('')
-      setAnswer('')
-      setDisplayOrder(0)
-      setIsActive(true)
-      setError('')
-      setLoadingDetail(false)
-      return
-    }
+  const updateDraft = (changes) => setDraft((previous) => ({ ...previous, ...changes }))
+
+  useEffect(() => {
+    if (!editingFAQ?.id) return
+    let cancelled = false
 
     const loadDetail = async () => {
-      setLoadingDetail(true)
-      setError('')
-
-      // Isi dari props jika sudah ada
-      if (editingFAQ) {
-        setQuestion(editingFAQ.question || '')
-        setAnswer(editingFAQ.answer || '')
-        setDisplayOrder(
-          typeof editingFAQ.display_order === 'number'
-            ? editingFAQ.display_order
-            : 0
-        )
-        setIsActive(editingFAQ.is_active !== false)
-      }
-
-      // Ambil data fresh dari API jika ada ID
-      if (editingFAQ?.id) {
-        try {
-          const freshData = await getAboutFAQByIdApi(editingFAQ.id)
-          if (isMounted && freshData) {
-            setQuestion(freshData.question || '')
-            setAnswer(freshData.answer || '')
-            setDisplayOrder(
-              typeof freshData.display_order === 'number'
-                ? freshData.display_order
-                : 0
-            )
-            setIsActive(freshData.is_active !== false)
-          }
-        } catch (err) {
-          console.warn('Gagal memuat detail terbaru FAQ:', err)
-        }
-      }
-
-      if (isMounted) {
-        setLoadingDetail(false)
+      try {
+        const freshData = await getAboutFAQByIdApi(editingFAQ.id)
+        if (!cancelled && freshData) setDraft(toFAQDraft(freshData))
+      } catch (err) {
+        // The seeded props remain usable when the optional refresh fails.
+        console.warn('Gagal memuat detail terbaru FAQ:', err)
+      } finally {
+        if (!cancelled) setLoadingDetail(false)
       }
     }
 
     loadDetail()
-
     return () => {
-      isMounted = false
+      cancelled = true
     }
-  }, [editingFAQ, isEditing])
+  }, [editingFAQ])
 
-  // Handle Submit Form
   const handleSubmit = async (e) => {
     e.preventDefault()
 
@@ -112,7 +87,6 @@ export default function FormFAQPage({
     const trimmedQuestion = question.trim()
     const trimmedAnswer = answer.trim()
 
-    // Validasi frontend
     if (!trimmedQuestion) {
       setError('Pertanyaan FAQ wajib diisi.')
       return
@@ -167,7 +141,6 @@ export default function FormFAQPage({
 
   return (
     <div className="space-y-6 w-full max-w-none">
-      {/* ── Breadcrumb & Action bar ────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
@@ -185,7 +158,6 @@ export default function FormFAQPage({
         </button>
       </div>
 
-      {/* ── Banner Proteksi Non-Admin ──────────────────────────────────── */}
       {!isAdmin && (
         <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-2xl text-amber-800 text-xs">
           <ShieldAlert size={18} className="shrink-0 text-amber-600" />
@@ -196,7 +168,6 @@ export default function FormFAQPage({
         </div>
       )}
 
-      {/* ── Notifikasi Error ───────────────────────────────────────────── */}
       {error && (
         <div className="flex items-center justify-between p-4 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-xs animate-in fade-in duration-200">
           <div className="flex items-center gap-2">
@@ -213,7 +184,6 @@ export default function FormFAQPage({
         </div>
       )}
 
-      {/* ── Form Card ─────────────────────────────────────────────────── */}
       <div className="bg-white border border-sky-100 rounded-2xl shadow-sm p-6 sm:p-8">
         {loadingDetail ? (
           <div className="py-16 text-center text-gray-400">
@@ -222,10 +192,9 @@ export default function FormFAQPage({
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Input Pertanyaan */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-gray-700">
+                <label htmlFor="faq-question" className="text-xs font-semibold text-gray-700">
                   Pertanyaan <span className="text-red-500">*</span>
                 </label>
                 <span
@@ -239,32 +208,31 @@ export default function FormFAQPage({
                 </span>
               </div>
               <input
+                id="faq-question"
                 type="text"
                 value={question}
-                onChange={(e) => setQuestion(e.target.value)}
+                onChange={(e) => updateDraft({ question: e.target.value })}
                 maxLength={255}
                 disabled={!isAdmin || saving}
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-sky-500 focus:bg-white transition-colors"
               />
             </div>
 
-            {/* Input Jawaban */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-gray-700">
+              <label htmlFor="faq-answer" className="text-xs font-semibold text-gray-700">
                 Jawaban <span className="text-red-500">*</span>
               </label>
               <textarea
+                id="faq-answer"
                 rows={7}
                 value={answer}
-                onChange={(e) => setAnswer(e.target.value)}
+                onChange={(e) => updateDraft({ answer: e.target.value })}
                 disabled={!isAdmin || saving}
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-sky-500 focus:bg-white transition-colors resize-y leading-relaxed"
               />
             </div>
 
-            {/* Grid: Urutan Tampil & Status */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
-              {/* Urutan Tampil */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-gray-700">
                   Urutan Tampil (Display Order)
@@ -273,30 +241,40 @@ export default function FormFAQPage({
                   type="number"
                   min={0}
                   value={displayOrder}
-                  onChange={(e) => setDisplayOrder(e.target.value)}
+                  onChange={(e) => updateDraft({ displayOrder: e.target.value })}
                   disabled={!isAdmin || saving}
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:border-sky-500 focus:bg-white transition-colors"
                 />
               </div>
 
-              {/* Status Aktif / Tidak Aktif */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-gray-700">
+              <div>
+                <label id="faq-publication-label" htmlFor="faq-publication-toggle" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
                   Status Publikasi
                 </label>
-                <select
-                  value={isActive ? 'true' : 'false'}
-                  onChange={(e) => setIsActive(e.target.value === 'true')}
+                <button
+                  id="faq-publication-toggle"
+                  type="button"
+                  role="switch"
+                  aria-checked={isActive}
+                  aria-labelledby="faq-publication-label"
+                  aria-describedby="faq-publication-help"
+                  onClick={() => setDraft((previous) => ({ ...previous, isActive: !previous.isActive }))}
                   disabled={!isAdmin || saving}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:border-sky-500 focus:bg-white transition-colors cursor-pointer"
+                  className="w-full min-h-[46px] flex items-center gap-3 px-4 bg-gray-50/50 border border-gray-200 rounded-xl text-left text-xs font-bold text-gray-700 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  <option value="true">Aktif</option>
-                  <option value="false">Tidak Aktif</option>
-                </select>
+                  <span aria-hidden="true" className={`relative h-6 w-11 shrink-0 rounded-full transition-colors motion-reduce:transition-none ${isActive ? 'bg-sky-500' : 'bg-gray-200'}`}>
+                    <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full border bg-white transition-transform motion-reduce:transition-none ${isActive ? 'translate-x-5 border-white' : 'translate-x-0 border-gray-300'}`} />
+                  </span>
+                  <span className={isActive ? 'text-emerald-600' : 'text-gray-400'}>
+                    {isActive ? 'Aktif (Ditampilkan)' : 'Nonaktif (Disembunyikan)'}
+                  </span>
+                </button>
+                <p id="faq-publication-help" className="text-[11px] text-gray-400 mt-1">
+                  Pilih apakah FAQ ini langsung dapat dilihat oleh publik.
+                </p>
               </div>
             </div>
 
-            {/* Tombol Aksi */}
             <div className="pt-6 border-t border-gray-100 flex items-center justify-end gap-3">
               <button
                 type="button"
@@ -333,4 +311,3 @@ export default function FormFAQPage({
     </div>
   )
 }
-

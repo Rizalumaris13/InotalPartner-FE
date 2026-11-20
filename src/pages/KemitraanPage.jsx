@@ -15,7 +15,7 @@ import {
 import PartnerFormModal from '../components/PartnerFormModal'
 import PartnerDeleteModal from '../components/PartnerDeleteModal'
 import PartnerLogo from '../components/PartnerLogo'
-import { useFeedback } from '../components/FeedbackUI'
+import { useFeedback } from '../hooks/useFeedback'
 import {
   deletePartnerApi,
   listPartnersApi,
@@ -42,7 +42,7 @@ export default function KemitraanPage({ role }) {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
   const [page, setPage] = useState(1)
-  const { notify, FeedbackUI } = useFeedback()
+  const { notify, feedback } = useFeedback()
 
   useEffect(() => {
     if (!canManage) return undefined
@@ -409,7 +409,7 @@ export default function KemitraanPage({ role }) {
           onConfirm={deleteNow}
         />
       )}
-      <FeedbackUI />
+      {feedback}
     </div>
   )
 }

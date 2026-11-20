@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Save,
   AlertCircle,
   CheckCircle2,
   ShieldAlert,
-  Sliders,
   X,
 } from 'lucide-react'
 import {
@@ -12,6 +11,12 @@ import {
   saveAboutVideoSettingApi,
 } from '../api/about'
 import { useAuth } from '../hooks/useAuth'
+
+const DEFAULT_VIDEO_SETTING = {
+  section_label: 'VIDEO PROFIL',
+  section_title: 'Lihat sendiri bagaimana kolaborasi bekerja.',
+  section_description: 'Keripitannya kami tampilkan apa adanya: ruang kerja nyata, interaksi harian, dan energi tim yang menghidupkan setiap ide.',
+}
 
 export default function FormVideoSettingPage() {
   const { role, user } = useAuth()
@@ -21,12 +26,9 @@ export default function FormVideoSettingPage() {
     ''
   const isAdmin = currentRole === 'admin' || currentRole === 'super_admin'
 
-  // Form states
-  const [sectionLabel, setSectionLabel] = useState('VIDEO PROFIL')
-  const [sectionTitle, setSectionTitle] = useState('Lihat sendiri bagaimana kolaborasi bekerja.')
-  const [sectionDescription, setSectionDescription] = useState(
-    'Keripitannya kami tampilkan apa adanya: ruang kerja nyata, interaksi harian, dan energi tim yang menghidupkan setiap ide.'
-  )
+  const [sectionLabel, setSectionLabel] = useState(DEFAULT_VIDEO_SETTING.section_label)
+  const [sectionTitle, setSectionTitle] = useState(DEFAULT_VIDEO_SETTING.section_title)
+  const [sectionDescription, setSectionDescription] = useState(DEFAULT_VIDEO_SETTING.section_description)
   const [isActive, setIsActive] = useState(true)
 
   const [loading, setLoading] = useState(true)
@@ -43,12 +45,9 @@ export default function FormVideoSettingPage() {
       try {
         const data = await getAboutVideoSettingApi()
         if (isMounted && data) {
-          setSectionLabel(data.section_label ?? 'VIDEO PROFIL')
-          setSectionTitle(data.section_title ?? 'Lihat sendiri bagaimana kolaborasi bekerja.')
-          setSectionDescription(
-            data.section_description ??
-              'Keripitannya kami tampilkan apa adanya: ruang kerja nyata, interaksi harian, dan energi tim yang menghidupkan setiap ide.'
-          )
+          setSectionLabel(data.section_label ?? DEFAULT_VIDEO_SETTING.section_label)
+          setSectionTitle(data.section_title ?? DEFAULT_VIDEO_SETTING.section_title)
+          setSectionDescription(data.section_description ?? DEFAULT_VIDEO_SETTING.section_description)
           setIsActive(data.is_active !== false)
         }
       } catch (err) {
@@ -111,7 +110,7 @@ export default function FormVideoSettingPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2">
-            Pengaturan Video Tentang 
+            Pengaturan Video Tentang
           </h1>
         </div>
       </div>
@@ -272,4 +271,3 @@ export default function FormVideoSettingPage() {
     </div>
   )
 }
-

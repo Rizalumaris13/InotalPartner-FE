@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import Reveal from '../../components/Reveal'
 import PublicNavbar from '../../components/PublicNavbar'
 import PublicPageBanner from '../../components/PublicPageBanner'
 import {
@@ -8,57 +9,17 @@ import {
 import { articles, articleCategories, ARTICLES_PER_PAGE } from '../../data/articles'
 import PublicFooter from '../../components/PublicFooter'
 
-function useInView({ threshold = 0.1, fallbackMs = 700 } = {}) {
-  const ref = useRef(null)
-  const [seen, setSeen] = useState(false)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const io = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { setSeen(true); io.disconnect() } },
-      { threshold },
-    )
-    io.observe(el)
-    const t = setTimeout(() => setSeen(true), fallbackMs)
-    return () => { io.disconnect(); clearTimeout(t) }
-  }, [threshold, fallbackMs])
-
-  return [ref, seen]
-}
-
-function Reveal({ children, delay = 0, className = '' }) {
-  const [ref, seen] = useInView()
-  return (
-    <div
-      ref={ref}
-      className={`h-full transition-all duration-700 ease-out ${seen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'} ${className}`}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
-      {children}
-    </div>
-  )
-}
-
 function formatDate(iso) {
-  return new Date(iso).toLocaleDateString('en-US', {
+  return new Date(iso).toLocaleDateString('id-ID', {
     day: 'numeric', month: 'long', year: 'numeric',
   })
 }
 
 export default function ArtikelPage({ onNavigate }) {
-  const [scrolled, setScrolled] = useState(false)
   const [page, setPage] = useState(1)
   const [category, setCategory] = useState('Semua')
   const [query, setQuery] = useState('')
   const [sortNewest, setSortNewest] = useState(true)
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24)
-    onScroll()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -104,7 +65,6 @@ export default function ArtikelPage({ onNavigate }) {
     return [...pool].sort((a, b) => b.views - a.views).slice(0, 5)
   }, [category])
 
-  // tag populer dari seluruh artikel
   const popularTags = useMemo(() => {
     const counts = {}
     articles.forEach(a => a.tags.forEach(t => { counts[t] = (counts[t] || 0) + 1 }))
@@ -117,28 +77,24 @@ export default function ArtikelPage({ onNavigate }) {
     <div className="min-h-screen bg-white text-[#0c4a6e]" style={{ fontFamily: "'Mona Sans', system-ui, sans-serif" }}>
 
       <div className="h-[68px]">
-        <PublicNavbar onNavigate={onNavigate} activePage="artikel" scrolled={scrolled} />
+        <PublicNavbar onNavigate={onNavigate} activePage="artikel" />
       </div>
 
-      {/* ============ PAGE HEADER ============ */}
-      <PublicPageBanner pageKey="artikel" breadcrumb="Articles" onNavigate={onNavigate} />
+      <PublicPageBanner pageKey="artikel" breadcrumb="Artikel" onNavigate={onNavigate} />
 
-      {/* ============ CONTENT ============ */}
-      <section className="max-w-7xl mx-auto px-6 py-16 md:py-20">
-        <div className="grid lg:grid-cols-[1fr_320px] gap-10 lg:gap-12">
+      <section className="max-w-7xl mx-auto px-6 py-12 md:py-16">
+        <div className="grid xl:grid-cols-[minmax(0,1fr)_320px] gap-8 xl:gap-10">
 
-          {/* ---------- KOLOM KIRI ---------- */}
           <div id="daftar-artikel" className="scroll-mt-24 min-w-0">
 
-            {/* search + sort */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
               <div className="relative flex-1">
                 <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                 <input
                   type="text"
                   value={query}
                   onChange={(e) => { setQuery(e.target.value); setPage(1) }}
-                  placeholder="Search title, content, tag, or author..."
+                  placeholder="Cari judul, isi, tag, atau penulis..."
                   className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 bg-white text-[14px] placeholder:text-gray-400 focus:outline-none focus:border-[#0284c7] focus:ring-2 focus:ring-[#0284c7]/15 transition-all"
                 />
               </div>
@@ -146,13 +102,12 @@ export default function ArtikelPage({ onNavigate }) {
                 onClick={() => setSortNewest(v => !v)}
                 className="shrink-0 inline-flex items-center gap-2 px-4 py-3.5 rounded-xl border border-gray-200 bg-white text-[13.5px] font-semibold text-[#0c4a6e] hover:border-[#0284c7]/50 transition-colors"
               >
-                {sortNewest ? 'Latest' : 'Oldest'}
+                {sortNewest ? 'Terbaru' : 'Terlama'}
                 <ChevronDown size={15} className={sortNewest ? 'rotate-180 transition-transform' : 'transition-transform'} />
               </button>
             </div>
 
-            {/* kategoriler — horizontal pills */}
-            <div className="flex flex-wrap gap-2 mb-10">
+            <div className="flex flex-wrap gap-2 mb-6 md:mb-8">
               {articleCategories.map(c => (
                 <button
                   key={c.name}
@@ -163,7 +118,7 @@ export default function ArtikelPage({ onNavigate }) {
                       : 'bg-[#F0F4F8] text-[#0c4a6e] hover:bg-[#0284c7]/10'
                   }`}
                 >
-                  {c.name === 'Semua' ? 'All' : c.name}
+                  {c.name}
                   <span className={`ml-1.5 text-[11px] ${category === c.name ? 'text-white/70' : 'text-gray-400'}`}>
                     {c.count}
                   </span>
@@ -171,25 +126,24 @@ export default function ArtikelPage({ onNavigate }) {
               ))}
             </div>
 
-            {/* section header */}
-            <div className="flex items-baseline justify-between mb-8">
+            <div className="flex flex-wrap items-baseline justify-between gap-2 mb-6">
               <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">
-                {category === 'Semua' ? 'Latest Articles' : category}
+                {category === 'Semua' ? 'Artikel Terbaru' : category}
               </h2>
-              <span className="text-[12px] text-gray-400">{filtered.length} {filtered.length === 1 ? 'article' : 'articles'}</span>
+              <span className="text-[12px] text-gray-400">{filtered.length} tulisan</span>
             </div>
 
             {visible.length === 0 ? (
-              <div className="text-center py-20 border border-dashed border-gray-200 rounded-2xl">
-                <p className="text-[#0c4a6e] font-bold text-lg mb-2">No results found</p>
+              <div className="text-center px-6 py-10 border border-dashed border-gray-200 rounded-2xl">
+                <p className="text-[#0c4a6e] font-bold text-lg mb-2">Nggak ada hasilnya</p>
                 <p className="text-[14px] text-[#364e52] mb-6">
-                  Try other keywords or choose a different category.
+                  Coba kata kunci lain atau ganti kategorinya.
                 </p>
                 <button
                   onClick={() => { setQuery(''); setCategory('Semua'); setPage(1) }}
                   className="text-[13.5px] font-bold text-[#0284c7] hover:text-[#0c4a6e] transition-colors"
                 >
-                  Reset all filters
+                  Reset semua filter
                 </button>
               </div>
             ) : (
@@ -197,31 +151,29 @@ export default function ArtikelPage({ onNavigate }) {
                 {visible.map((a, i) => (
                   <Reveal key={a.id} delay={(i % 2) * 80} className="h-full">
                     <article className="group h-full bg-white border border-gray-200/80 rounded-xl overflow-hidden hover:border-[#0284c7]/50 transition-colors flex flex-col md:flex-row">
-                      {/* thumbnail */}
-                      <div className="relative md:w-[300px] md:shrink-0 overflow-hidden">
+                      <div className="relative aspect-[16/10] md:aspect-auto md:w-[240px] xl:w-[280px] md:shrink-0 overflow-hidden">
                         <img
                           src={a.image}
                           alt={a.title}
-                          className="w-full h-[200px] md:h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                           loading="lazy"
                         />
                         <span className="absolute left-3 top-3 bg-white/95 backdrop-blur rounded-md px-2.5 py-1 text-[11px] font-bold text-[#0284c7]">
                           {a.category}
                         </span>
                       </div>
-                      {/* isi */}
-                      <div className="p-6 md:p-7 flex flex-col flex-1 min-w-0">
+                      <div className="p-5 md:p-6 flex flex-col flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-gray-400 mb-3">
                           <span>{formatDate(a.date)}</span>
                           <span className="w-1 h-1 rounded-full bg-gray-300" />
                           <span className="inline-flex items-center gap-1">
                             <Clock size={12} />
-                            {a.readTime} min read
+                            {a.readTime} menit
                           </span>
                           <span className="w-1 h-1 rounded-full bg-gray-300" />
                           <span className="inline-flex items-center gap-1">
                             <Eye size={12} />
-                            {a.views.toLocaleString('en-US')}
+                            {a.views.toLocaleString('id-ID')}
                           </span>
                         </div>
                         <h3 className="text-[19px] md:text-[21px] font-extrabold leading-[1.3] mb-3 group-hover:text-[#0284c7] transition-colors line-clamp-2">
@@ -235,10 +187,10 @@ export default function ArtikelPage({ onNavigate }) {
                             </span>
                           ))}
                         </div>
-                        <div className="mt-auto flex items-center justify-between">
+                        <div className="mt-auto flex flex-wrap items-center justify-between gap-2">
                           <span className="text-[12.5px] font-semibold text-gray-400">{a.author}</span>
                           <span className="inline-flex items-center gap-1.5 text-[12.5px] font-bold text-[#0284c7]">
-                            Read More
+                            Baca
                             <ArrowRight size={13} className="transition-transform duration-300 group-hover:translate-x-1" />
                           </span>
                         </div>
@@ -249,9 +201,8 @@ export default function ArtikelPage({ onNavigate }) {
               </div>
             )}
 
-            {/* pagination */}
             {totalPages > 1 && (
-              <div className="mt-14 flex items-center justify-center gap-2">
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
                 <button
                   onClick={() => go(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
@@ -282,15 +233,13 @@ export default function ArtikelPage({ onNavigate }) {
             )}
           </div>
 
-          {/* ---------- SIDEBAR KANAN ---------- */}
-          <aside className="space-y-8 lg:sticky lg:top-24 lg:self-start">
+          <aside className="min-w-0 space-y-6 xl:sticky xl:top-24 xl:self-start">
 
-            {/* Trending */}
             <div className="bg-white border border-gray-200/80 rounded-xl overflow-hidden">
               <div className="bg-[#0c4a6e] px-5 py-3.5 flex items-center gap-2">
                 <TrendingUp size={16} className="text-sky-400" />
                 <h3 className="text-white font-extrabold text-[13px] tracking-[0.12em] uppercase">
-                  Trending
+                  TrENDING
                 </h3>
               </div>
               <div className="divide-y divide-gray-100">
@@ -306,10 +255,10 @@ export default function ArtikelPage({ onNavigate }) {
                       <div className="flex items-center gap-2 text-[11px] text-gray-400 mt-1.5">
                         <span className="inline-flex items-center gap-1">
                           <Eye size={11} />
-                          {a.views.toLocaleString('en-US')}
+                          {a.views.toLocaleString('id-ID')}
                         </span>
                         <span className="w-1 h-1 rounded-full bg-gray-300" />
-                        <span>{a.readTime} min read</span>
+                        <span>{a.readTime} mnt</span>
                       </div>
                     </div>
                   </div>
@@ -317,11 +266,10 @@ export default function ArtikelPage({ onNavigate }) {
               </div>
             </div>
 
-            {/* Kategori */}
             <div className="bg-white border border-gray-200/80 rounded-xl overflow-hidden">
               <div className="bg-[#0c4a6e] px-5 py-3.5 flex items-center gap-2">
                 <span className="text-white font-extrabold text-[13px] tracking-[0.12em] uppercase">
-                  Categories
+                  Kategori
                 </span>
               </div>
               <div className="p-5 space-y-3">
@@ -338,12 +286,11 @@ export default function ArtikelPage({ onNavigate }) {
               </div>
             </div>
 
-            {/* Tag populer */}
             <div className="bg-white border border-gray-200/80 rounded-xl overflow-hidden">
               <div className="bg-[#0c4a6e] px-5 py-3.5 flex items-center gap-2">
                 <Tag size={16} className="text-sky-400" />
                 <h3 className="text-white font-extrabold text-[13px] tracking-[0.12em] uppercase">
-                  Popular Tags
+                  Tag Populer
                 </h3>
               </div>
               <div className="p-5 flex flex-wrap gap-2">
@@ -360,19 +307,18 @@ export default function ArtikelPage({ onNavigate }) {
               </div>
             </div>
 
-            {/* CTA sidebar */}
             <div className="bg-[#0284c7] text-white rounded-xl overflow-hidden relative">
               <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
               <div className="relative p-6">
-                <h3 className="font-extrabold text-lg mb-2">Want to Discuss with Us?</h3>
+                <h3 className="font-extrabold text-lg mb-2">Mau Diskusi Bersama Kami?</h3>
                 <p className="text-[13px] text-white/80 leading-relaxed mb-5">
-                  Have an interesting topic to share? Send your ideas to our team.
+                  Punya topik yang menarik untuk dibahas? Kirim ide lo ke tim kami.
                 </p>
                 <button
                   onClick={() => onNavigate?.('partnership')}
                   className="inline-flex items-center gap-2 bg-white text-[#0284c7] font-bold text-[13px] px-4 py-2.5 rounded-lg transition-transform hover:translateY(-1px)"
                 >
-                  Submit Proposal
+                  Kirim Usulan
                   <ArrowRight size={14} />
                 </button>
               </div>
@@ -382,7 +328,6 @@ export default function ArtikelPage({ onNavigate }) {
         </div>
       </section>
 
-      {/* ============ FOOTER ============ */}
       <PublicFooter onNavigate={onNavigate} />
 
     </div>

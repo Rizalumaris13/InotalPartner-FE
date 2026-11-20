@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Mail, Lock, Eye, EyeOff, Save } from 'lucide-react';
+import { Mail, Save } from 'lucide-react';
 import { changePasswordApi } from '../api/users'; 
 import { useAuth } from '../hooks/useAuth';
+import PasswordField from '../components/PasswordField';
 
 export default function ChangePasswordPage() {
   const { user } = useAuth();
@@ -69,80 +70,30 @@ export default function ChangePasswordPage() {
           </div>
         </div>
 
-        {/* Old Password */}
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-gray-700">Password Saat Ini</label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Lock className="h-5 w-5 text-gray-400" />
-            </div>
-            <input
-              type={showOldPassword ? "text" : "password"}
-              value={oldPassword}
-              onChange={(e) => setOldPassword(e.target.value)}
-              placeholder="Masukkan password saat ini"
-              required
-              className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            />
-            <button
-              type="button"
-              onClick={() => setShowOldPassword(!showOldPassword)}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-            >
-              {showOldPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-          </div>
-        </div>
-
-        {/* New Password */}
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-gray-700">Password Baru</label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Lock className="h-5 w-5 text-gray-400" />
-            </div>
-            <input
-              type={showNewPassword ? "text" : "password"}
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="Masukkan password baru"
-              required
-              className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            />
-            <button
-              type="button"
-              onClick={() => setShowNewPassword(!showNewPassword)}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-            >
-              {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Confirm New Password */}
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-gray-700">Konfirmasi Password Baru</label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Lock className="h-5 w-5 text-gray-400" />
-            </div>
-            <input
-              type={showConfirmPassword ? "text" : "password"}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Ulangi password baru"
-              required
-              className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-            >
-              {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-          </div>
-        </div>
+        <PasswordField
+          label="Password Saat Ini"
+          value={oldPassword}
+          onChange={(e) => setOldPassword(e.target.value)}
+          placeholder="Masukkan password saat ini"
+          visible={showOldPassword}
+          onToggle={() => setShowOldPassword(!showOldPassword)}
+        />
+        <PasswordField
+          label="Password Baru"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          placeholder="Masukkan password baru"
+          visible={showNewPassword}
+          onToggle={() => setShowNewPassword(!showNewPassword)}
+        />
+        <PasswordField
+          label="Konfirmasi Password Baru"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          placeholder="Ulangi password baru"
+          visible={showConfirmPassword}
+          onToggle={() => setShowConfirmPassword(!showConfirmPassword)}
+        />
 
         {error && <p className="text-sm text-red-600 font-medium">{error}</p>}
         {success && <p className="text-sm text-green-600 font-medium">Password berhasil diperbarui!</p>}

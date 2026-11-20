@@ -388,7 +388,7 @@ export default function PageBannerPage({ pageKey, role }) {
                     JPG, PNG, atau WEBP. Maksimal 5 MB. Rasio lebar disarankan sekitar 1600 × 500.
                   </p>
                   <FieldError id="banner-image-error" message={errors.image_url} />
-                  <div className="mt-3">
+                  <div className="relative mt-3">
                     <input
                       id="banner-image-file"
                       type="file"

@@ -4,7 +4,7 @@ import { previewAboutCards } from '../data/aboutCards'
 import { getAboutCardErrorMessage, sortAboutCards } from '../utils/aboutCards'
 import AboutCard from './AboutCard'
 
-export default function PublicAboutCards({ onNavigate }) {
+export default function PublicAboutCards({ onNavigate, preview = false }) {
   const [result, setResult] = useState({
     status: 'loading',
     cards: [],
@@ -52,8 +52,8 @@ export default function PublicAboutCards({ onNavigate }) {
 
   if (result.status === 'loading')
     return (
-      <p role="status" className="py-12 text-center text-sm text-gray-500">
-        Loading About cards...
+      <p role="status" className="py-6 text-center text-sm text-gray-500">
+        Memuat kartu Tentang...
       </p>
     )
   if (result.status === 'error')
@@ -86,14 +86,14 @@ export default function PublicAboutCards({ onNavigate }) {
         </p>
       )}
       {result.cards.length ? (
-        <div className="grid gap-5 md:grid-cols-3">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,17rem),1fr))] gap-6">
           {result.cards.map((card) => (
-            <AboutCard key={card.id} card={card} onNavigate={onNavigate} />
+            <AboutCard key={card.id} card={card} onNavigate={onNavigate} preview={preview} />
           ))}
         </div>
       ) : (
-        <p className="py-12 text-center text-sm text-gray-500">
-          No cards available in this section.
+        <p className="py-6 text-center text-sm text-gray-500">
+          Belum ada kartu pada bagian ini.
         </p>
       )}
     </>

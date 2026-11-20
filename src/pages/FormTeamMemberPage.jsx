@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   Upload,
   Trash2,
@@ -13,9 +13,9 @@ import {
   getTeamMembersApi,
   updateTeamMemberApi,
   uploadImageApi,
-  resolveImageUrl,
 } from '../api/about'
 import { useAuth } from '../hooks/useAuth'
+import { toMemberDraft } from '../utils/editorDrafts'
 import TeamMemberMultiForm from '../components/TeamMemberMultiForm'
 
 export default function FormTeamMemberPage({
@@ -29,39 +29,42 @@ export default function FormTeamMemberPage({
 
   const isEditing = !!editingMember
 
-  // ─── STATE MODE EDIT (1 ANGGOTA) ──────────────────────────────────────────
-  const [editName, setEditName] = useState('')
-  const [editPosition, setEditPosition] = useState('')
-  const [editDisplayOrder, setEditDisplayOrder] = useState(0)
-  const [editIsActive, setEditIsActive] = useState(true)
-  const [editPhotoUrl, setEditPhotoUrl] = useState('')
-  const [editImageFile, setEditImageFile] = useState(null)
-  const [editImagePreview, setEditImagePreview] = useState('')
+  const [source, setSource] = useState(editingMember)
+  const [draft, setDraft] = useState(() => toMemberDraft())
+  const {
+    name: editName,
+    position: editPosition,
+    displayOrder: editDisplayOrder,
+    isActive: editIsActive,
+    photoUrl: editPhotoUrl,
+    imageFile: editImageFile,
+    imagePreview: editImagePreview,
+  } = draft
   const editFileInputRef = useRef(null)
-
   const [loading, setLoading] = useState(isEditing)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
   const [existingMembers, setExistingMembers] = useState([])
 
-  // Load data anggota saat edit
-  useEffect(() => {
-    let isMounted = true
+  if (source !== editingMember) {
+    setSource(editingMember)
+    setLoading(isEditing)
+    if (isEditing) setError('')
+  }
 
-    if (!isEditing) {
-      setLoading(false)
-      return
-    }
+  const updateDraft = (changes) => setDraft((previous) => ({ ...previous, ...changes }))
+
+  useEffect(() => {
+    if (!editingMember) return
+    let cancelled = false
 
     const loadMemberDetail = async () => {
-      setLoading(true)
-      setError('')
       try {
+        // Unlike the other editors, a failed list load must prevent detail/seed.
         const all = await getTeamMembersApi()
-        if (isMounted && Array.isArray(all)) {
-          setExistingMembers(all)
-        }
+        if (cancelled) return
+        if (Array.isArray(all)) setExistingMembers(all)
 
         let memberData = editingMember
         if (editingMember.id) {
@@ -73,36 +76,21 @@ export default function FormTeamMemberPage({
           }
         }
 
-        if (isMounted) {
-          setEditName(memberData.name || '')
-          setEditPosition(memberData.position || '')
-          setEditDisplayOrder(
-            typeof memberData.display_order === 'number'
-              ? memberData.display_order
-              : 0
-          )
-          setEditIsActive(
-            memberData.is_active !== undefined ? memberData.is_active : true
-          )
-          setEditPhotoUrl(memberData.photo_url || '')
-          setEditImagePreview(resolveImageUrl(memberData.photo_url) || '')
-          setEditImageFile(null)
-        }
+        if (!cancelled) setDraft(toMemberDraft(memberData))
       } catch (err) {
-        if (isMounted) {
+        if (!cancelled) {
           setError(err.response?.data?.message || 'Gagal memuat data anggota tim.')
         }
       } finally {
-        if (isMounted) setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
 
     loadMemberDetail()
-
     return () => {
-      isMounted = false
+      cancelled = true
     }
-  }, [editingMember, isEditing])
+  }, [editingMember])
 
   if (!isAdmin) {
     return (
@@ -118,7 +106,6 @@ export default function FormTeamMemberPage({
     )
   }
 
-  // ─── HANDLERS FOTO SAAT EDIT ──────────────────────────────────────────────
   const handleEditImageChange = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -137,8 +124,7 @@ export default function FormTeamMemberPage({
       URL.revokeObjectURL(editImagePreview)
     }
 
-    setEditImageFile(file)
-    setEditImagePreview(URL.createObjectURL(file))
+    updateDraft({ imageFile: file, imagePreview: URL.createObjectURL(file) })
     if (error) setError('')
   }
 
@@ -146,15 +132,12 @@ export default function FormTeamMemberPage({
     if (editImagePreview?.startsWith('blob:')) {
       URL.revokeObjectURL(editImagePreview)
     }
-    setEditImageFile(null)
-    setEditImagePreview('')
-    setEditPhotoUrl('')
+    updateDraft({ imageFile: null, imagePreview: '', photoUrl: '' })
     if (editFileInputRef.current) {
       editFileInputRef.current.value = ''
     }
   }
 
-  // ─── SUBMIT HANDLER: EDIT ANGGOTA ─────────────────────────────────────────
   const handleSubmitEdit = async () => {
     setError('')
 
@@ -180,7 +163,9 @@ export default function FormTeamMemberPage({
         currentMembers = fresh
         setExistingMembers(fresh)
       }
-    } catch {}
+    } catch (err) {
+      console.warn('Gagal memperbarui daftar anggota; validasi urutan memakai data tersimpan:', err)
+    }
 
     const duplicate = currentMembers.find(
       (m) => m.is_active && m.display_order === orderNum && m.id !== editingMember?.id
@@ -202,7 +187,8 @@ export default function FormTeamMemberPage({
           finalPhotoUrl = await uploadImageApi(editImageFile)
         } catch (uploadErr) {
           throw new Error(
-            uploadErr.response?.data?.message || 'Gagal mengunggah foto anggota.'
+            uploadErr.response?.data?.message || 'Gagal mengunggah foto anggota.',
+            { cause: uploadErr }
           )
         } finally {
           setUploading(false)
@@ -241,7 +227,6 @@ export default function FormTeamMemberPage({
     )
   }
 
-  // ─── JIKA MODE EDIT: TAMPILKAN FORM EDIT SINGLE ANGGOTA ───────────────────
   if (isEditing) {
     const editOrderNum = parseInt(editDisplayOrder, 10)
     const duplicateMember = !isNaN(editOrderNum)
@@ -252,7 +237,6 @@ export default function FormTeamMemberPage({
 
     return (
       <div className="flex flex-col pb-12">
-        {/* HEADER */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-1.5">
@@ -280,7 +264,6 @@ export default function FormTeamMemberPage({
           )}
         </div>
 
-        {/* ERROR ALERT */}
         {error && (
           <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-start gap-2.5">
             <AlertCircle size={18} className="text-red-500 shrink-0 mt-0.5" />
@@ -292,9 +275,7 @@ export default function FormTeamMemberPage({
         )}
 
         <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-          {/* FORM GRID — sama dengan CreateAboutPage: lg:grid-cols-12 */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Kolom Kiri: Nama, Jabatan, Status (7 cols) */}
             <div className="lg:col-span-7 space-y-5">
               <div>
                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
@@ -303,7 +284,7 @@ export default function FormTeamMemberPage({
                 <input
                   type="text"
                   value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
+                  onChange={(e) => updateDraft({ name: e.target.value })}
                   placeholder="Contoh: Dr. Budi Santoso, M.Kom"
                   className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
                   required
@@ -317,20 +298,19 @@ export default function FormTeamMemberPage({
                 <input
                   type="text"
                   value={editPosition}
-                  onChange={(e) => setEditPosition(e.target.value)}
+                  onChange={(e) => updateDraft({ position: e.target.value })}
                   placeholder="Contoh: Chief Executive Officer"
                   className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
                 />
               </div>
 
-              {/* Status Anggota — sama dengan CreateAboutPage: select dropdown */}
               <div className="pt-2">
                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
                   Status Anggota
                 </label>
                 <select
                   value={editIsActive ? 'active' : 'inactive'}
-                  onChange={(e) => setEditIsActive(e.target.value === 'active')}
+                  onChange={(e) => updateDraft({ isActive: e.target.value === 'active' })}
                   className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 cursor-pointer"
                 >
                   <option value="active">Aktif</option>
@@ -344,7 +324,6 @@ export default function FormTeamMemberPage({
               </div>
             </div>
 
-            {/* Kolom Kanan: Foto & Urutan Tampil (5 cols) */}
             <div className="lg:col-span-5 space-y-5">
               <div>
                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">
@@ -405,7 +384,7 @@ export default function FormTeamMemberPage({
                   min="0"
                   step="1"
                   value={editDisplayOrder}
-                  onChange={(e) => setEditDisplayOrder(e.target.value)}
+                  onChange={(e) => updateDraft({ displayOrder: e.target.value })}
                   className={`w-full rounded-lg border px-4 py-2.5 text-sm outline-none transition ${
                     duplicateMember
                       ? 'border-red-300 bg-red-50/30 text-red-900 focus:border-red-500 focus:ring-2 focus:ring-red-100'
@@ -428,7 +407,6 @@ export default function FormTeamMemberPage({
             </div>
           </div>
 
-          {/* BOTTOM ACTION */}
           <div className="mt-6 flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
             {onOpenList && (
               <button
@@ -464,10 +442,8 @@ export default function FormTeamMemberPage({
     )
   }
 
-  // ─── JIKA MODE TAMBAH: REUSE TeamMemberMultiForm ───────────────────────────
   return (
     <div className="flex flex-col pb-12">
-      {/* HEADER */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-1.5">

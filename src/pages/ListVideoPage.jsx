@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Search,
   Plus,
@@ -21,11 +21,8 @@ import {
 } from '../api/about'
 import { useAuth } from '../hooks/useAuth'
 
-const STATUS_FILTERS = [
-  { key: 'all', label: 'Semua' },
-  { key: 'active', label: 'Aktif' },
-  { key: 'inactive', label: 'Tidak Aktif' },
-]
+import { STATUS_FILTERS } from '../data/statusFilters'
+import { getYouTubeThumbnail } from '../utils/youtube'
 
 export default function ListVideoPage({ onAddNew, onEdit }) {
   const { role, user } = useAuth()
@@ -52,30 +49,6 @@ export default function ListVideoPage({ onAddNew, onEdit }) {
 
   const handleThumbnailError = (id) => {
     setBrokenThumbnails((prev) => (prev[id] ? prev : { ...prev, [id]: true }))
-  }
-
-  // Ekstrak YouTube ID untuk fallback thumbnail jika thumbnail_url kosong
-  const getYouTubeThumbnail = (url) => {
-    if (!url) return null
-    try {
-      const parsed = new URL(url)
-      let videoId = ''
-      if (parsed.hostname.includes('youtu.be')) {
-        videoId = parsed.pathname.slice(1).split('/')[0]
-      } else if (parsed.hostname.includes('youtube.com')) {
-        if (parsed.pathname.startsWith('/watch')) {
-          videoId = parsed.searchParams.get('v')
-        } else if (parsed.pathname.startsWith('/embed/') || parsed.pathname.startsWith('/shorts/') || parsed.pathname.startsWith('/live/')) {
-          videoId = parsed.pathname.split('/')[2]
-        }
-      }
-      if (videoId) {
-        return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
-      }
-    } catch {
-      // Abaikan jika parsing URL gagal
-    }
-    return null
   }
 
   useEffect(() => {
@@ -113,15 +86,17 @@ export default function ListVideoPage({ onAddNew, onEdit }) {
 
   // Filter list data berdasarkan search dan status
   const filteredVideos = useMemo(() => {
+    const query = search.toLowerCase()
+    const isEmptySearch = search === ''
     return videos.filter((item) => {
       const matchSearch =
-        search === '' ||
+        isEmptySearch ||
         (item.title &&
-          item.title.toLowerCase().includes(search.toLowerCase())) ||
+          item.title.toLowerCase().includes(query)) ||
         (item.description &&
-          item.description.toLowerCase().includes(search.toLowerCase())) ||
+          item.description.toLowerCase().includes(query)) ||
         (item.video_url &&
-          item.video_url.toLowerCase().includes(search.toLowerCase()))
+          item.video_url.toLowerCase().includes(query))
 
       const matchStatus =
         statusFilter === 'all' ||

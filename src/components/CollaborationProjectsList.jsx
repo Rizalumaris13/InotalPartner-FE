@@ -1,4 +1,3 @@
-import React from 'react'
 import { MoreHorizontal, Code2, GraduationCap, Layers, ServerCog, MonitorCog } from 'lucide-react'
 
 const collaborationProjects = [
@@ -11,7 +10,6 @@ const collaborationProjects = [
     service: 'Software Development',
     icon: Code2,
     progress: 72,
-    status: 'active',
   },
   {
     id: 2,
@@ -22,7 +20,6 @@ const collaborationProjects = [
     service: 'Training Development',
     icon: GraduationCap,
     progress: 45,
-    status: 'active',
   },
   {
     id: 3,
@@ -33,7 +30,6 @@ const collaborationProjects = [
     service: 'System Integration',
     icon: Layers,
     progress: 88,
-    status: 'active',
   },
   {
     id: 4,
@@ -44,7 +40,6 @@ const collaborationProjects = [
     service: 'Ops & Maintenance',
     icon: ServerCog,
     progress: 31,
-    status: 'active',
   },
   {
     id: 5,
@@ -55,7 +50,6 @@ const collaborationProjects = [
     service: 'IT Consultant',
     icon: MonitorCog,
     progress: 60,
-    status: 'active',
   },
 ]
 

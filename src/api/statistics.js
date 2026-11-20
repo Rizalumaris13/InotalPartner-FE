@@ -1,4 +1,16 @@
 import api from './axios'
+import { readNullableContent, requireContentAcknowledgement } from './contentResponse'
+import { positiveResourceId } from '../utils/resourceId'
+
+const isStatistic = (value) => Boolean(value && typeof value === 'object' && !Array.isArray(value)) &&
+  Number.isSafeInteger(value.id) && value.id > 0 &&
+  ['title', 'icon', 'statistic_value'].every((key) => typeof value[key] === 'string') &&
+  ['statistic_suffix', 'description'].every((key) => value[key] === undefined || typeof value[key] === 'string') &&
+  (value.display_order === undefined || (Number.isInteger(value.display_order) && value.display_order >= 0)) &&
+  (value.is_active === undefined || typeof value.is_active === 'boolean')
+
+const readList = (body) => readNullableContent(body,
+  (value) => Array.isArray(value) && value.every(isStatistic), 'Format data statistik tidak sesuai kontrak.') ?? []
 
 // ─── PUBLIC API ─────────────────────────────────────────────────────────────
 
@@ -6,9 +18,9 @@ import api from './axios'
  * Mengambil daftar statistik aktif untuk halaman publik.
  * GET /api/public/about/statistics
  */
-export const getPublicStatisticsApi = async () => {
-  const response = await api.get('/public/about/statistics')
-  return response.data?.data || []
+export const getPublicStatisticsApi = async (options = {}) => {
+  const response = await api.get('/public/about/statistics', options)
+  return readList(response.data)
 }
 
 // ─── ADMIN API ──────────────────────────────────────────────────────────────
@@ -19,7 +31,7 @@ export const getPublicStatisticsApi = async () => {
  */
 export const getStatisticsApi = async () => {
   const response = await api.get('/about/statistics')
-  return response.data?.data || []
+  return readList(response.data)
 }
 
 /**
@@ -28,8 +40,8 @@ export const getStatisticsApi = async () => {
  * @param {number|string} id
  */
 export const getStatisticByIdApi = async (id) => {
-  const response = await api.get(`/about/statistics/${id}`)
-  return response.data?.data
+  const response = await api.get(`/about/statistics/${positiveResourceId(id)}`)
+  return readNullableContent(response.data, isStatistic, 'Format detail statistik tidak sesuai kontrak.')
 }
 
 /**
@@ -39,6 +51,7 @@ export const getStatisticByIdApi = async (id) => {
  */
 export const createStatisticApi = async (payload) => {
   const response = await api.post('/about/statistics', payload)
+  requireContentAcknowledgement(response.data, 'Backend belum mengonfirmasi penerimaan statistik.')
   return response.data?.data
 }
 
@@ -49,7 +62,8 @@ export const createStatisticApi = async (payload) => {
  * @param {{ title: string, icon: string, statistic_value: string, statistic_suffix?: string, description?: string, display_order?: number, is_active?: boolean }} payload
  */
 export const updateStatisticApi = async (id, payload) => {
-  const response = await api.put(`/about/statistics/${id}`, payload)
+  const response = await api.put(`/about/statistics/${positiveResourceId(id)}`, payload)
+  requireContentAcknowledgement(response.data, 'Backend belum mengonfirmasi penerimaan statistik.')
   return response.data?.data
 }
 
@@ -59,7 +73,7 @@ export const updateStatisticApi = async (id, payload) => {
  * @param {number|string} id
  */
 export const deleteStatisticApi = async (id) => {
-  const response = await api.delete(`/about/statistics/${id}`)
+  const response = await api.delete(`/about/statistics/${positiveResourceId(id)}`)
+  requireContentAcknowledgement(response.data, 'Backend belum mengonfirmasi penghapusan statistik.')
   return response.data
 }
-

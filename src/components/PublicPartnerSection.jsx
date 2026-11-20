@@ -47,38 +47,38 @@ export default function PublicPartnerSection() {
   return (
     <section
       aria-labelledby="homepage-partners-title"
-      className="py-24 bg-white overflow-hidden"
+      className="pb-12 md:pb-16 bg-white overflow-hidden"
     >
-      <div className="max-w-6xl mx-auto px-6 mb-14 text-center">
+      <div className="max-w-6xl mx-auto px-6 mb-8 md:mb-10 text-center">
         <h2
           id="homepage-partners-title"
           className="text-3xl md:text-5xl font-bold text-[#1a202c]"
         >
-          Join Our Ecosystem, Accelerate Your Partnerships!
+          Bergabunglah dengan Ekosistem Kami, Akselerasi Kemitraan Anda!
         </h2>
       </div>
       <div className="max-w-5xl mx-auto px-4">
         {state.status === 'loading' ? (
-          <p role="status" className="py-10 text-center text-sm text-gray-500">
-            Loading partners list...
+          <p role="status" className="py-6 text-center text-sm text-gray-500">
+            Memuat daftar mitra...
           </p>
         ) : state.status === 'error' ? (
           <div
             role="status"
-            className="py-10 text-center text-sm text-gray-500"
+            className="py-6 text-center text-sm text-gray-500"
           >
-            <p>Unable to load partners list.</p>
+            <p>Daftar mitra belum dapat dimuat.</p>
             <button
               type="button"
               onClick={reload}
               className="mt-3 rounded-xl bg-sky-50 px-4 py-2 font-semibold text-sky-700 hover:bg-sky-100"
             >
-              Try Again
+              Coba Lagi
             </button>
           </div>
         ) : state.partners.length === 0 ? (
-          <p role="status" className="py-10 text-center text-sm text-gray-500">
-            No partners to display at this time.
+          <p role="status" className="py-6 text-center text-sm text-gray-500">
+            Belum ada mitra yang ditampilkan.
           </p>
         ) : (
           <>
@@ -87,7 +87,8 @@ export default function PublicPartnerSection() {
                 role="status"
                 className="mb-5 text-center text-xs text-gray-500"
               >
-                Sample partner preview. Official data will appear once the partnership API is connected.
+                Pratinjau mitra contoh. Data resmi akan tampil setelah API
+                kemitraan tersedia.
               </p>
             )}
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 md:gap-5">
